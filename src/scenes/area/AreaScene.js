@@ -2,10 +2,12 @@
 // 이야기 컷신은 없고(아직), 기후·빛·떨어지는 것만 있다. 맵 끝 출구를 밟으면 이웃 칸으로.
 // 시작 마을 칸으로 돌아가면 이야기 필드(Field)로 돌아간다.
 import Phaser from 'phaser';
-import { ZOOM } from '../../config/game.js';
+import { ZOOM, TALK_RANGE } from '../../config/game.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { season } from '../../core/util/daily.js';
 import { HUBS, BIOMES, cellKey } from '../../../content/world/world.js';
+import { OBJECTS } from '../../../content/art/pack.js';
+import { signText, fillText, ringBell } from '../../world/features.js';
 import { buildArea, OPPOSITE } from '../../world/buildArea.js';
 import { MapRenderer } from '../../field/MapRenderer.js';
 import { Player } from '../../field/Player.js';
@@ -14,7 +16,7 @@ import { Ambient } from '../../field/Ambient.js';
 
 const HOME = cellKey('surface', HUBS.home.at);
 const FACE = { n: 'down', s: 'up', w: 'right', e: 'left' };
-const FALLING = { snow: 'snow', leaf: 'leaf', rain: 'rain' };
+const FALLING = { snow: 'snow', leaf: 'leaf', rain: 'rain', star: 'snow' }; // 은하의 별가루는 눈 입자로
 
 export default class AreaScene extends Phaser.Scene {
   constructor() { super('Area'); }
@@ -26,6 +28,8 @@ export default class AreaScene extends Phaser.Scene {
     this.entryDir = entry;
     this.back = back;
     this.leaving = false;
+    this.cooldown = 0;
+    this.rings = 0;
   }
 
   create() {
@@ -41,7 +45,14 @@ export default class AreaScene extends Phaser.Scene {
     const [tx, ty] = area.entry(this.entryDir);
     this.player = new Player(this, tx, ty, FACE[this.entryDir] ?? 'down');
 
-    const time = this.back?.time ?? 'day';
+    // 살펴볼 거리: 그림의 아래쪽 가운데가 서는 자리
+    this.features = area.features.map((f) => {
+      const [, , w, h] = OBJECTS[f.type].rect;
+      return { ...f, x: f.at[0] * 16 + w / 2, y: f.at[1] * 16 + h };
+    });
+
+    // 지하와 은하는 늘 어둡다
+    const time = this.layerId === 'surface' ? (this.back?.time ?? 'day') : 'night';
     const erased = WorldMemory.world.erased.length;
     this.lighting = new Lighting(this, { time, lights: [], erasedCount: erased, spots: area.spots, width: this.map.width, height: this.map.height });
     this.ambient = new Ambient(this, { time, map: area, erasedCount: erased, falling: FALLING[BIOMES[area.biome].falling] ?? null });
@@ -65,13 +76,76 @@ export default class AreaScene extends Phaser.Scene {
 
   update(_, deltaMs) {
     const dt = Math.min(deltaMs / 1000, 0.05);
+    this.cooldown = Math.max(0, this.cooldown - dt);
     this.player.update(dt, (x, y) => this.area.isSolidPx(x, y));
     this.player.sync();
     this.lighting.follow(this.player.x, this.player.y);
     this.lighting.update(dt);
-    if (this.leaving) return;
+    if (this.leaving || this.ui.talking || this.player.frozen) { this.ui.hud.showPrompt(null); return; }
     const e = this.area.exitAt(this.player.x, this.player.y);
-    if (e) this.go(e);
+    if (e) { this.go(e); return; }
+    // 계단을 밟으면 다른 층으로
+    const tx = Math.floor(this.player.x / 16), ty = Math.floor(this.player.y / 16);
+    const stairs = this.features.find((f) => f.kind === 'portal' && f.at[0] === tx && f.at[1] === ty);
+    if (stairs) { this.through(stairs.to); return; }
+    this.updateInteraction();
+  }
+
+  // 가까운 살펴볼 거리 → E
+  updateInteraction() {
+    let best = null, bestD = TALK_RANGE + 6;
+    for (const f of this.features) {
+      if (f.kind === 'portal') continue;
+      const d = Math.hypot(f.x - this.player.x, f.y - this.player.y);
+      if (d < bestD) { best = f; bestD = d; }
+    }
+    this.ui.hud.showPrompt(best ? this.worldToScreen(best.x, best.y - 22) : null);
+    if (!best || this.cooldown > 0 || !this.player.justPressed('act')) return;
+    this.examine(best);
+  }
+
+  async say(text) {
+    this.player.frozen = true;
+    await this.ui.say('', '#cfc9dd', text);
+    this.ui.closeDialog();
+    this.player.frozen = false;
+    this.cooldown = 0.3;
+  }
+
+  examine(f) {
+    const flags = WorldMemory.run.flags;
+    if (f.kind === 'sign') return this.say(signText(f.sign, (k) => k === HOME || Boolean(flags[`visited.${k}`])));
+    if (f.kind === 'bell') return this.ring(f);
+    if (f.kind === 'side') WorldMemory.setFlag(`found.side.${this.area.key}`);
+    return this.say(fillText(f.text, { loads: WorldMemory.world.loads }));
+  }
+
+  // 종 걸린 절벽: 열세 번 (밤에, 빈자리를 다 찾은 사람만)
+  ring(f) {
+    const r = ringBell(this.rings, { hour: new Date().getHours(), foundAll: Boolean(WorldMemory.run.flags['found.all']) });
+    this.rings = r.rings;
+    this.cooldown = 0.35;
+    this.cameras.main.shake(140, 0.003);
+    this.ui.bubbles.show(this.player, `댕— (${r.rings})`, '#ffffff', 900);
+    if (r.opens) {
+      this.leaving = true;
+      this.ui.bubbles.narrate(this.player, '열셋. 종소리가 하늘에 부딪혀 돌아오지 않았다. 발밑이 보랏빛으로 젖는다.', 3200);
+      this.cameras.main.flash(900, 190, 160, 255);
+      this.time.delayedCall(2400, () => { this.leaving = false; this.through(f.to); });
+      return;
+    }
+    if (r.rings >= 13) {
+      this.rings = 0;
+      this.ui.bubbles.narrate(this.player, r.night ? '열셋. …아무 일도 일어나지 않았다. 아직 뭔가 잊고 있다.' : '열셋. 한낮의 종소리는 금방 흩어졌다.', 2600);
+    }
+  }
+
+  // 층 사이 문
+  through(to) {
+    if (this.leaving) return;
+    this.leaving = true;
+    this.cameras.main.fadeOut(450, 0, 0, 0);
+    this.time.delayedCall(480, () => this.scene.restart({ layer: to.layer, at: to.at, entry: 'portal', back: this.back }));
   }
 
   go(exit) {

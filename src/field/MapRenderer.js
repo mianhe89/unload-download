@@ -80,6 +80,14 @@ export class MapRenderer {
       }
     }
 
+    // 테마 색 덮기 (용암·갱도·은하)
+    if (this.theme.tint) {
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = this.theme.tint;
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
     // 가장자리 안개: 세계가 거기서 끝난다
     for (let y = 0; y < this.rows; y += 1) {
       for (let x = 0; x < this.cols; x += 1) {

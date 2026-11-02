@@ -34,6 +34,10 @@ export const THEMES = {
   snow: { offset: [-11, 7], decor: false },                 // 눈 + 다져진 눈길
   sand: { offset: [-11, -7], decor: false },                // 모래 + 모랫길
   earth: { offset: [0, 7], decor: false },                  // 마른 땅 + 흙길
+  // tint: 바닥 위에 곱하기로 덮는 색 (팩에 따로 없는 땅을 만든다)
+  cave: { offset: [0, 7], decor: false, tint: 'rgb(150,130,150)' },        // 갱도: 어두운 흙
+  lava: { offset: [0, 7], decor: false, tint: 'rgb(255,120,70)' },          // 불의 산·용암 지대: 달궈진 땅
+  void: { offset: [-11, 7], decor: false, tint: 'rgb(120,90,200)' },        // 은하: 보랏빛 바닥
 };
 
 export const DECOR = {
@@ -94,6 +98,14 @@ export const OBJECTS = {
   bench: { sheet: 'element', rect: [176, 16, 64, 16], foot: [2, 6, 60, 10] },
   clothesline: { sheet: 'element', rect: [192, 32, 64, 32], foot: [0, 24, 6, 8] },
   cart: { sheet: 'element', rect: [0, 48, 32, 32], foot: [2, 14, 28, 18] },
+  // 길 맵의 살펴볼 거리와 층 사이 계단 (계단은 밟고 지나간다)
+  signpost: { sheet: 'element', rect: [48, 32, 16, 16], foot: [5, 10, 6, 6] },
+  runestone: { sheet: 'element', rect: [64, 32, 16, 16], foot: [2, 8, 12, 8] },
+  runestone2: { sheet: 'element', rect: [80, 32, 16, 16], foot: [3, 8, 10, 8] },
+  stairs_down: { sheet: 'element', rect: [96, 176, 16, 16] },
+  stairs_down_stone: { sheet: 'element', rect: [144, 176, 16, 16] },
+  stairs_up: { sheet: 'element', rect: [96, 192, 16, 16] },
+  stairs_up_stone: { sheet: 'element', rect: [144, 192, 16, 16] },
 };
 
 // 움직이는 장식

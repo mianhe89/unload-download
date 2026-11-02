@@ -4,7 +4,9 @@
 // - 같은 칸은 늘 같은 모양 (칸 좌표로 시드)
 // 결과는 content/maps/village.js와 같은 모양(terrain, objects, isSolidPx …)이라 같은 렌더러·필드 부품을 쓴다.
 import { OBJECTS } from '../../content/art/pack.js';
-import { HUBS, SIDES, BIOMES, biomeAt, cells, links, cellKey } from '../../content/world/world.js';
+import { HUBS, SIDES, BIOMES, PORTALS, biomeAt, cells, links, cellKey } from '../../content/world/world.js';
+import { FLAVOR, SIDE_OBJECT } from '../../content/world/features.js';
+import { signAt } from './features.js';
 
 export const TILE = 16;
 export const W = 48;
@@ -14,7 +16,7 @@ const EDGE = FOG + 1;
 const GAP = 3; // 출구 너비(칸)
 
 // 바닥 → 테마 (content/art/pack.js THEMES)
-const THEME_OF = { grass: 'grass', darkGrass: 'village', dryGrass: 'grass', snow: 'snow', snowGrass: 'snow', sand: 'sand', beach: 'sand', dirt: 'earth', lava: 'earth', cave: 'earth', water: 'sand', void: 'snow' };
+const THEME_OF = { grass: 'grass', darkGrass: 'village', dryGrass: 'grass', snow: 'snow', snowGrass: 'snow', sand: 'sand', beach: 'sand', dirt: 'earth', lava: 'lava', cave: 'cave', water: 'sand', void: 'void' };
 
 // 기후별 나무·바위 (큰 것, 작은 것)
 const FLORA = {
@@ -28,6 +30,11 @@ const FLORA = {
   desert: { big: ['rocks_brown'], small: ['tree_dead'] },
   coast: { big: ['tree_grove_green', 'rocks_grey'], small: ['tree_round', 'bush'] },
   volcano: { big: ['rocks_brown', 'dead_grove'], small: ['tree_dead'] },
+  cave: { big: ['rocks_brown', 'rocks_grey'], small: ['stump'] },
+  deepCave: { big: ['rocks_grey', 'rocks_brown'], small: [] },
+  lava: { big: ['rocks_brown'], small: [] },
+  ancientHall: { big: ['rocks_grey'], small: ['runestone', 'runestone2'] },
+  galaxy: { big: [], small: [] },
 };
 const DIRS = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] };
 export const OPPOSITE = { n: 's', s: 'n', e: 'w', w: 'e' };
@@ -121,21 +128,53 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
   };
 
   // 거점: 가운데 빈터 둘레에 집 몇 채 (아직 이야기가 없는 마을의 자리)
-  if (cell.kind === 'hub' && cell.id !== 'home') {
+  if (cell.kind === 'hub' && cell.id !== 'home' && layer === 'surface') {
     const houses = { frost: ['house_stone', 'house_plain'], elf: ['house_wood', 'house_wood'], dwarf: ['house_stone', 'forge'], empty: ['house_plain', 'house_wood', 'house_red'], harbor: ['house_red', 'house_plain'], castle: ['house_tall'] }[cell.id] ?? ['house_plain'];
     const slots = [[cx - 9, cy - 6], [cx + 5, cy - 6], [cx - 9, cy + 3], [cx + 5, cy + 3]];
     houses.forEach((t, i) => tryPlace(t, ...slots[i], 0));
   }
-  // 곁가지: 가운데에 표지 하나
-  if (cell.kind === 'side') tryPlace(biome.includes('snow') || biome === 'frost' ? 'rocks_grey' : 'rocks_brown', cx - 1, cy - 6, 0);
+  // ── 살펴볼 거리 (content/world/features.js). 빈터 둘레의 빈자리에 놓는다
+  const features = [];
+  const spotFor = (type) => {
+    const [, , pw, ph] = OBJECTS[type].rect;
+    const tw = Math.ceil(pw / TILE), th = Math.ceil(ph / TILE);
+    const cands = [[cx + 3, cy - 2 - th], [cx - 2 - tw, cy - 2 - th], [cx + 3, cy + 3], [cx - 2 - tw, cy + 3], [cx + 6, cy - 1], [cx - 4 - tw, cy - 1]];
+    for (const [x, y] of cands) if (tryPlace(type, x, y, 0)) return [x, y];
+    return null;
+  };
+  const addFeature = (kind, type, extra) => {
+    const at2 = spotFor(type);
+    if (at2) features.push({ kind, type, at: at2, ...extra });
+  };
+  // 층 사이 문: 빈터 안에 계단 (밟고 지나간다)
+  for (const p of PORTALS) {
+    const ends = [[p.a, p.b], [p.b, p.a]];
+    for (const [me, other] of ends) {
+      if (me.layer !== layer || me.at[0] !== at[0] || me.at[1] !== at[1]) continue;
+      if (p.kind === 'hidden' && layer === 'surface') { addFeature('bell', SIDE_OBJECT.bellCliff, { to: other, text: SIDES.bellCliff?.note }); continue; }
+      const down = layer === 'surface';
+      const type = down ? (biome === 'desert' ? 'stairs_down' : 'stairs_down_stone') : (biome === 'ancientHall' ? 'stairs_up' : 'stairs_up_stone');
+      const sx = cx + 2, sy = cy - 1;
+      objects.push({ type, at: [sx, sy] });
+      features.push({ kind: 'portal', type, at: [sx, sy], to: other, down });
+    }
+  }
+  if (cell.kind === 'side' && cell.id !== 'bellCliff') addFeature('side', SIDE_OBJECT[cell.id] ?? 'runestone', { text: SIDES[cell.id].note });
+  const sign = cell.kind === 'route' ? signAt(layer, at) : null;
+  if (sign) addFeature('sign', 'signpost', { sign });
+  else if (cell.kind === 'route' && FLAVOR[biome]?.length) {
+    const [type, text] = FLAVOR[biome][Math.floor(r() * FLAVOR[biome].length)];
+    addFeature('flavor', type, { text });
+  }
 
   // 가장자리 숲(출구 자리는 비움) → 안쪽에 듬성듬성
-  for (let x = 0; x < W - 3; x += 4) { tryPlace(flora.big[Math.floor(r() * flora.big.length)], x, 0, 0); tryPlace(flora.big[Math.floor(r() * flora.big.length)], x, H - 4, 0); }
-  for (let y = 3; y < H - 4; y += 3) { tryPlace(flora.big[Math.floor(r() * flora.big.length)], 0, y, 0); tryPlace(flora.big[Math.floor(r() * flora.big.length)], W - 4, y, 0); }
+  if (flora.big.length) for (let x = 0; x < W - 3; x += 4) { tryPlace(flora.big[Math.floor(r() * flora.big.length)], x, 0, 0); tryPlace(flora.big[Math.floor(r() * flora.big.length)], x, H - 4, 0); }
+  if (flora.big.length) for (let y = 3; y < H - 4; y += 3) { tryPlace(flora.big[Math.floor(r() * flora.big.length)], 0, y, 0); tryPlace(flora.big[Math.floor(r() * flora.big.length)], W - 4, y, 0); }
   const density = { deepForest: 0.55, frost: 0.45, snow: 0.4, temperate: 0.35, lateAutumn: 0.3, blackSnow: 0.3, coast: 0.2, dry: 0.18, desert: 0.12, volcano: 0.15 }[biome] ?? 0.3;
   for (let y = EDGE; y < H - EDGE - 1; y += 2) for (let x = EDGE; x < W - EDGE - 1; x += 2) {
     if (r() > density) continue;
-    const list = r() < 0.3 ? flora.big : flora.small;
+    const list = r() < 0.3 || !flora.small.length ? flora.big : flora.small;
+    if (!list.length) continue;
     tryPlace(list[Math.floor(r() * list.length)], x + Math.floor(r() * 2), y + Math.floor(r() * 2), 1);
   }
 
@@ -165,6 +204,10 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
   }
   // 그 출구로 들어왔을 때 서는 자리 (칸 좌표)
   function entry(dir) {
+    if (dir === 'portal') {
+      const p = features.find((f) => f.kind === 'portal' || f.kind === 'bell');
+      if (p) return p.kind === 'bell' ? [p.at[0] + 1, p.at[1] + 6] : [p.at[0], p.at[1] + 2];
+    }
     const e = exits.find((x) => x.dir === dir);
     if (!e) return [cx, cy];
     const m = e.from + 1;
@@ -177,7 +220,7 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
     key, layer, at, biome, theme, kind: cell.kind,
     name: hub?.name ?? side?.name ?? BIOMES[biome].name,
     note: hub?.note ?? side?.note ?? null,
-    TILE, W, H, FOG, terrain, objects, animated: [], solids, exits,
+    TILE, W, H, FOG, terrain, objects, animated: [], solids, exits, features,
     isSolidPx, isSolidTile, exitAt, entry,
     spots: { center: { x: cx + 1, y: cy + 1 } }, zones: {}, bonfire: null,
   };

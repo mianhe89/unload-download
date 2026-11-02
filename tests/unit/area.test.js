@@ -88,3 +88,74 @@ describe('길 맵 생성', () => {
     expect(a.objects.some((o) => o.type.startsWith('house'))).toBe(true);
   });
 });
+
+describe('길 맵의 살펴볼 거리와 층 사이 문', async () => {
+  const { signAt, signText, ringBell, fillText } = await import('../../src/world/features.js');
+  const { PORTALS, HUBS } = await import('../../content/world/world.js');
+  const { corrupt } = await import('../../src/core/script/speech.js');
+  const walkable = [...cells().values()].filter((c) => c.layer !== 'sky' && c.by !== 'boat' && c.id !== 'home' && biomeAt(...c.at, 'autumn', c.layer) !== 'sea');
+
+  it.each(walkable.filter((c) => c.kind !== 'hub').map((c) => [`${c.layer}:${c.at}`, c]))('%s: 살펴볼 거리가 하나 있고 걸어서 닿는다', (_, c) => {
+    const a = buildArea(c.layer, c.at);
+    expect(a.features.length, '거리 없음').toBeGreaterThan(0);
+    const r = reach(a, a.entry(a.exits[0]?.dir ?? 'portal'));
+    for (const f of a.features) {
+      const [, , pw, ph] = OBJECTS[f.type].rect;
+      const near = [];
+      for (let x = f.at[0] - 1; x <= f.at[0] + Math.ceil(pw / 16); x += 1) for (const y of [f.at[1] + Math.ceil(ph / 16), f.at[1] + Math.ceil(ph / 16) - 1]) near.push(`${x},${y}`);
+      expect(near.some((k) => r.has(k)), `${f.kind} ${f.type}`).toBe(true);
+    }
+  });
+
+  it('지하 칸들도 출구끼리 이어진다', () => {
+    for (const c of [...cells().values()].filter((x) => x.layer === 'under')) {
+      const a = buildArea('under', c.at);
+      const start = a.entry(a.exits[0]?.dir ?? 'portal');
+      const r = reach(a, start);
+      for (const e of a.exits) expect(r.has(a.entry(e.dir).join(',')), `${c.at} ${e.dir}`).toBe(true);
+    }
+  });
+
+  it('계단은 양쪽 층에 있고 서로를 가리킨다', () => {
+    for (const p of PORTALS.filter((x) => x.kind !== 'hidden')) {
+      const a = buildArea(p.a.layer, p.a.at).features.find((f) => f.kind === 'portal');
+      const b = buildArea(p.b.layer, p.b.at).features.find((f) => f.kind === 'portal');
+      expect(a.to).toEqual(p.b);
+      expect(b.to).toEqual(p.a);
+      expect(a.down).toBe(true);
+      expect(b.down).toBe(false);
+    }
+  });
+
+  it('종 걸린 절벽에는 종이 있고, 은하로 이어진다', () => {
+    const bell = buildArea('surface', [9, 2]).features.find((f) => f.kind === 'bell');
+    expect(bell.to.layer).toBe('sky');
+    // 은하 쪽에는 종이 아니라 돌아가는 계단
+    const back = buildArea('sky', [0, 1]).features;
+    expect(back.some((f) => f.kind === 'bell')).toBe(false);
+    expect(back.find((f) => f.kind === 'portal').to).toEqual({ layer: 'surface', at: [9, 2] });
+  });
+
+  it('종: 밤에, 빈자리를 다 찾은 사람이, 열세 번 쳐야 열린다', () => {
+    expect(ringBell(12, { hour: 23, foundAll: true }).opens).toBe(true);
+    expect(ringBell(11, { hour: 23, foundAll: true }).opens).toBe(false);
+    expect(ringBell(12, { hour: 13, foundAll: true }).opens).toBe(false);
+    expect(ringBell(12, { hour: 2, foundAll: true }).opens).toBe(true);
+    expect(ringBell(12, { hour: 23, foundAll: false }).opens).toBe(false);
+  });
+
+  it('이정표: 거점 옆 칸에 서고, 가 보지 않은 마을 이름은 깨져 있다', () => {
+    const s = signAt('surface', [7, 10]);
+    expect(s).toEqual({ route: 'home-frost', here: 'home', there: 'frost' });
+    const text = signText(s, (k) => k === 'surface:7,11');
+    expect(text).toContain('수확제 마을');
+    expect(text).toContain(corrupt('서리 마을'));
+    expect(signText(s, () => true)).toContain('서리 마을');
+    expect(signAt('surface', [7, 8])).toBe(null);
+    expect(HUBS.frost.name).toBe('서리 마을');
+  });
+
+  it('글 속 {loads}는 로드 횟수로', () => {
+    expect(fillText('숫자: {loads}.', { loads: 4 })).toBe('숫자: 4.');
+  });
+});
