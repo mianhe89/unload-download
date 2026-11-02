@@ -62,7 +62,9 @@ export function exitsOf(layer, [x, y], { boat = false } = {}) {
 }
 
 // opts.lowTide: 썰물인가 (바다 유적의 섬이 드러난다)
-export function buildArea(layer, at, { season = 'autumn', lowTide = false } = {}) {
+// opts.felled: 이 칸에서 베어 낸 나무 자리 ['x,y', …] — 영영 사라진다
+// opts.elfGone: 깊은 숲을 너무 베어 엘프 마을이 보이지 않는다
+export function buildArea(layer, at, { season = 'autumn', lowTide = false, felled = [], elfGone = false } = {}) {
   const key = cellKey(layer, at);
   const cell = cells().get(key);
   if (!cell) throw new Error(`지도에 없는 칸: ${key}`);
@@ -139,7 +141,10 @@ export function buildArea(layer, at, { season = 'autumn', lowTide = false } = {}
   };
 
   // 거점: 가운데 빈터 둘레에 집 몇 채 (아직 이야기가 없는 마을의 자리)
-  if (cell.kind === 'hub' && cell.id !== 'home' && layer === 'surface') {
+  if (cell.id === 'elf' && elfGone) {
+    // 엘프 마을이 있던 자리: 그루터기만
+    for (const [x, y] of [[cx - 7, cy - 4], [cx - 5, cy + 3], [cx + 5, cy - 4], [cx + 7, cy + 3], [cx + 1, cy - 6]]) tryPlace('stump', x, y, 0);
+  } else if (cell.kind === 'hub' && cell.id !== 'home' && layer === 'surface') {
     const houses = { frost: ['house_stone', 'house_plain'], elf: ['house_wood', 'house_wood'], dwarf: ['house_stone', 'forge'], empty: ['house_plain', 'house_wood', 'house_red'], harbor: ['house_red', 'house_plain'], castle: ['house_tall'] }[cell.id] ?? ['house_plain'];
     const slots = [[cx - 9, cy - 6], [cx + 5, cy - 6], [cx - 9, cy + 3], [cx + 5, cy + 3]];
     houses.forEach((t, i) => tryPlace(t, ...slots[i], 0));
@@ -204,6 +209,12 @@ export function buildArea(layer, at, { season = 'autumn', lowTide = false } = {}
     tryPlace(list[Math.floor(r() * list.length)], x + Math.floor(r() * 2), y + Math.floor(r() * 2), 1);
   }
 
+  // 베어 낸 나무는 영영 없다
+  if (felled.length) {
+    const gone = new Set(felled);
+    for (let i = objects.length - 1; i >= 0; i -= 1) if (gone.has(objects[i].at.join(','))) objects.splice(i, 1);
+  }
+
   // ── 충돌
   const solids = objects.filter((o) => OBJECTS[o.type]?.foot).map((o) => {
     const [fx, fy, fw, fh] = OBJECTS[o.type].foot;
@@ -249,8 +260,8 @@ export function buildArea(layer, at, { season = 'autumn', lowTide = false } = {}
   const side = cell.kind === 'side' ? SIDES[cell.id] : null;
   return {
     key, layer, at, biome, theme, kind: cell.kind, id: cell.id, sea,
-    name: hub?.name ?? side?.name ?? BIOMES[biome].name,
-    note: hub?.note ?? side?.note ?? null,
+    name: cell.id === 'elf' && elfGone ? BIOMES[biome].name : hub?.name ?? side?.name ?? BIOMES[biome].name,
+    note: cell.id === 'elf' && elfGone ? '여기에 무언가 있었던 것 같다. 그루터기만 가득하다.' : hub?.note ?? side?.note ?? null,
     TILE, W, H, FOG, terrain, objects, animated: [], solids, exits, features,
     isSolidPx, isSolidTile, exitAt, entry,
     spots: { center: { x: cx + 1, y: cy + 1 } }, zones: {}, bonfire: null,

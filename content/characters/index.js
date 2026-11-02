@@ -22,8 +22,9 @@ import oldman from './oldman.js';
 import spirit from './spirit.js';
 import wanderer from './wanderer.js';
 import merchant from './merchant.js';
+import elf from './elf.js';
 
-export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant };
+export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant, elf };
 
 // 로드 시 지워질 수 있는 사람(동점일 때 이 순서)
 export const ERASE_ORDER = ['hort', 'tom', 'rine', 'per'];

@@ -10,6 +10,7 @@
 import { PARTY, MONSTERS } from '../../content/battles/units.js';
 import { applyBody } from './body.js';
 import { battleStats } from '../life/life.js';
+import { applySkills } from '../farm/farm.js';
 
 export const GAUGE = 100;
 export const BURST = { max: 100, deal: 9, take: 6 }; // 궁극기 게이지: 맞힌 타마다 +9, 맞은 타마다 +6
@@ -56,10 +57,11 @@ function makeUnit(id, side, def, index) {
 }
 
 // life: 생활 상태(src/life/life.js)가 있으면 주인공 능력치는 거기서 (체형 + 마음가짐 + 피로). 없으면 body로
-export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1, body = 'normal', life = null }) {
+// skills: 주인공이 얻은 히든 스킬 (행동 파밍)
+export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1, body = 'normal', life = null, skills = [] }) {
   const rng = mulberry32(seed);
   const units = [
-    ...party.map((id, i) => makeUnit(id, 'party', id === 'me' ? (life ? battleStats(PARTY[id], life) : applyBody(PARTY[id], body)) : PARTY[id], i)),
+    ...party.map((id, i) => makeUnit(id, 'party', id === 'me' ? applySkills(life ? battleStats(PARTY[id], life) : applyBody(PARTY[id], body), skills) : PARTY[id], i)),
     ...enemies.map((id, i) => makeUnit(id, 'enemy', MONSTERS[id], i)),
   ];
   // 시작 게이지: 속도에 비례해 조금씩 앞서 출발

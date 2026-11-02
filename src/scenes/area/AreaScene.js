@@ -19,6 +19,8 @@ import { Sound } from '../../core/audio/Sound.js';
 import { BIOME_MUSIC, BIOME_AMBIENT, HUB_MUSIC } from '../../../content/audio/audio.js';
 import { MONSTERS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
+import { doFarm, actionFor, freshFarm, elfVillageGone, meetsElf } from '../../farm/farm.js';
+import { FARM_TEXT, ITEM_NAMES, HIDDEN_SKILLS, ELF_LINES } from '../../../content/farm/farm.js';
 import { maskNames, goneIds } from '../../core/script/speech.js';
 import { characters } from '../../../content/characters/index.js';
 import { Lighting } from '../../field/Lighting.js';
@@ -51,12 +53,14 @@ export default class AreaScene extends Phaser.Scene {
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
     this.ui = this.scene.get('UI');
     WorldMemory.setWhere({ layer: this.layerId, at: this.at });
-    const area = (this.area = buildArea(this.layerId, this.at, { season: season(new Date()), lowTide: lowTide(new Date()) }));
+    const farm0 = WorldMemory.run.farm ?? freshFarm();
+    const area = (this.area = buildArea(this.layerId, this.at, { season: season(new Date()), lowTide: lowTide(new Date()), felled: farm0.felled[cellKey(this.layerId, this.at)] ?? [], elfGone: elfVillageGone(farm0) }));
     this.key = area.key;
 
     this.map = new MapRenderer(this, area, { open: area.exits.map((e) => e.dir) });
     this.add.image(0, 0, this.map.renderGround('area.ground')).setOrigin(0).setDepth(-1000);
-    this.map.placeObjects();
+    // 벨 수 있는 나무·깰 수 있는 바위 (행동 파밍)
+    this.farmables = this.map.placeObjects().filter((o) => actionFor(o.type)).map((o) => ({ ...o, action: actionFor(o.type), x: o.at[0] * 16 + o.w / 2, y: o.at[1] * 16 + o.h }));
 
     const [tx, ty] = area.entry(this.entryDir);
     this.player = new Player(this, tx, ty, FACE[this.entryDir] ?? 'down');
@@ -70,7 +74,8 @@ export default class AreaScene extends Phaser.Scene {
     });
 
     // 떠돌이: 오늘 이 칸에 누가 있나 (같은 날 같은 칸이면 같은 사람)
-    const who = travelerAt(this.key, { kind: area.kind, biome: area.biome }, new Date());
+    // 엘프 마을에선, 숲에서 한 그루도 안 벤 사람만 엘프를 만난다
+    const who = area.id === 'elf' ? (meetsElf(farm0) ? 'elf' : null) : travelerAt(this.key, { kind: area.kind, biome: area.biome }, new Date());
     if (who) {
       const c = area.spots.center;
       this.traveler = new Npc(this, who, { at: [c.x + 2, c.y + 1], mode: 'wander', radius: 2, face: 'down' });
@@ -158,10 +163,44 @@ export default class AreaScene extends Phaser.Scene {
     }
     const t = this.traveler;
     if (t && Math.hypot(t.x - this.player.x, t.y - this.player.y) < bestD) best = { kind: 'traveler', x: t.x, y: t.y };
+    if (!best) for (const o of this.farmables) {
+      const d = Math.hypot(o.x - this.player.x, o.y - this.player.y);
+      if (d < bestD) { best = { kind: 'farm', obj: o, x: o.x, y: o.y }; bestD = d; }
+    }
     this.ui.hud.showPrompt(best ? this.worldToScreen(best.x, best.y - 22) : null);
     if (!best || this.cooldown > 0 || !this.player.justPressed('act')) return;
     if (best.kind === 'traveler') this.talkToTraveler();
+    else if (best.kind === 'farm') this.farm(best.obj);
     else this.examine(best);
+  }
+
+  // 행동 파밍: 나무를 베거나 바위를 깬다. 벤 나무는 영영 사라진다
+  farm(o) {
+    this.cooldown = 0.6;
+    const farm = WorldMemory.run.farm ?? freshFarm();
+    const forest = this.area.biome === 'deepForest';
+    const { farm: n, unlocked } = doFarm(farm, o.action, Math.random, o.action === 'chop' ? { key: this.key, at: o.at.join(','), forest } : null);
+    WorldMemory.setFarm(n);
+    Sound.sfx(this, o.action === 'chop' ? 'hit' : 'heavy', { rate: 0.8 + Math.random() * 0.3 });
+    this.cameras.main.shake(90, 0.003);
+    const item = { chop: 'wood', mine: 'stone' }[o.action];
+    this.ui.bubbles.narrate(this.player, `${FARM_TEXT[o.action]} (${ITEM_NAMES[item]} ${n.items[item]})`, 1600);
+    if (o.action === 'chop') {
+      // 나무가 쓰러진다: 그림을 치우고 충돌도 없앤다
+      this.tweens.add({ targets: o.img, alpha: 0, angle: 8, duration: 350, onComplete: () => o.img.destroy() });
+      const i = this.area.solids.findIndex((s2) => s2.x >= o.at[0] * 16 && s2.x < o.at[0] * 16 + o.w && s2.y >= o.at[1] * 16 && s2.y < o.at[1] * 16 + o.h);
+      if (i >= 0) this.area.solids.splice(i, 1);
+      this.farmables = this.farmables.filter((f) => f !== o);
+      if (forest && n.forestChops === 1) this.time.delayedCall(1700, () => this.ui.bubbles.narrate(this.player, '숲이 조금 조용해졌다.', 2200));
+    }
+    if (unlocked) {
+      const sk = HIDDEN_SKILLS[unlocked];
+      this.time.delayedCall(800, () => {
+        Sound.sfx(this, 'secret');
+        this.cameras.main.flash(300, 255, 240, 200);
+        this.ui.bubbles.narrate(this.player, `히든 스킬 [${sk.grade}] ${sk.name} — ${sk.desc}`, 4000);
+      });
+    }
   }
 
   // 떠돌이와 말: 말풍선으로 한 줄씩 (멈추지 않는다)
@@ -169,7 +208,7 @@ export default class AreaScene extends Phaser.Scene {
     const t = this.traveler;
     t.faceToward(this.player.x, this.player.y);
     const erased = WorldMemory.world.erased;
-    const lines = travelerLines(t.id, { erasedAny: erased.length > 0 });
+    const lines = t.id === 'elf' ? ELF_LINES : travelerLines(t.id, { erasedAny: erased.length > 0 });
     let line = lines[this.lineIndex % lines.length];
     this.lineIndex += 1;
     const flags = WorldMemory.run.flags;

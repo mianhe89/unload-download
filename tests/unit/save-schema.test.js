@@ -42,6 +42,7 @@ describe('세이브 스키마', () => {
     expect(s.version).toBe(VERSION);
     expect(s.run).toMatchObject({ chapter: 'chapter1', phase: 'aftermath', flags: { a: true }, where: null });
     expect(s.run.life.weight).toBeGreaterThan(0); // v4: 생활 상태도 채워진다
+    expect(s.run.farm.skills).toEqual([]); // v5: 행동 파밍
     expect(migrate({ ...v2, run: null }).run).toBeNull();
   });
 

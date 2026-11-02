@@ -23,6 +23,8 @@ import { OBJECTS } from '../../../content/art/pack.js';
 import { LIFE_SPOTS, ACTIONS } from '../../../content/life/life.js';
 import { act, canDo, minutesLeft, freshLife } from '../../life/life.js';
 import { trackWalk } from '../../life/track.js';
+import { countAction, freshFarm } from '../../farm/farm.js';
+import { HIDDEN_SKILLS } from '../../../content/farm/farm.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 
@@ -247,7 +249,14 @@ export default class FieldScene extends Phaser.Scene {
       this.ui.bubbles.narrate(this.player, `(${a.name}은 조금 이따가 — ${minutesLeft(life, spot.action)}분)`, 1800);
       return;
     }
-    const n = act(life, spot.action);
+    let n = act(life, spot.action);
+    // 잠: 횟수가 쌓이면 '낮잠 고수', 있으면 피로가 더 풀린다
+    if (spot.action === 'sleep') {
+      const { farm, unlocked } = countAction(WorldMemory.run.farm ?? freshFarm(), 'sleep');
+      WorldMemory.setFarm(farm);
+      if (farm.skills.includes('napper')) n = { ...n, fatigue: Math.max(0, n.fatigue - 30) };
+      if (unlocked) this.time.delayedCall(2700, () => this.ui.bubbles.narrate(this.player, `히든 스킬 [${HIDDEN_SKILLS[unlocked].grade}] ${HIDDEN_SKILLS[unlocked].name} — ${HIDDEN_SKILLS[unlocked].desc}`, 4000));
+    }
     WorldMemory.setLife(n);
     Sound.sfx(this, spot.action === 'drill' || spot.action === 'water' ? 'hit' : 'heal', { volume: 0.25 });
     this.ui.bubbles.narrate(this.player, `${a.text}  (${n.weight.toFixed(1)}kg)`, 2600);

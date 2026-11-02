@@ -36,7 +36,7 @@ export default class BattleScene extends Phaser.Scene {
     this.s = W / 960;
     if (this.scene.isActive('UI')) this.scene.setVisible(false, 'UI');
     const layer = this.data0.from?.layer ?? 'surface';
-    this.battle = createBattle({ enemies: this.data0.enemies, seed: this.data0.seed ?? 1, life: WorldMemory.run?.life ?? null });
+    this.battle = createBattle({ enemies: this.data0.enemies, seed: this.data0.seed ?? 1, life: WorldMemory.run?.life ?? null, skills: WorldMemory.run?.farm?.skills ?? [] });
 
     // 배경
     const [top, bottom] = SKY[layer] ?? SKY.surface;
