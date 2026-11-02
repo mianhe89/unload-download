@@ -9,6 +9,7 @@
 //   b.result                     → 'win' | 'lose' | null
 import { PARTY, MONSTERS } from '../../content/battles/units.js';
 import { applyBody } from './body.js';
+import { battleStats } from '../life/life.js';
 
 export const GAUGE = 100;
 const BEATS = { fire: 'wind', wind: 'earth', earth: 'fire' }; // 불 > 바람 > 땅 > 불, 빛 ↔ 어둠
@@ -45,21 +46,22 @@ function makeUnit(id, side, def, index) {
   return {
     uid: side === 'party' ? id : `${id}#${index}`, id, side, name: def.name, element: def.element,
     maxHp: def.maxHp, hp: def.maxHp, atk: def.atk, def: def.def, spd: def.spd, evade: def.evade,
-    heavy: def.heavy ?? 1, pierce: def.pierce ?? 0, resist: def.resist ?? 0, body: def.body ?? null,
+    heavy: def.heavy ?? 1, pierce: def.pierce ?? 0, resist: def.resist ?? 0, body: def.body ?? null, mind: def.mind ?? null, startGauge: def.startGauge ?? 0,
     boss: Boolean(def.boss), pattern: def.pattern ?? null, step: 0,
     skills: def.skills, cooldowns: {}, gauge: 0, guard: false, taunt: false, telegraph: null,
     sprite: def.sprite ?? null,
   };
 }
 
-export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1, body = 'normal' }) {
+// life: 생활 상태(src/life/life.js)가 있으면 주인공 능력치는 거기서 (체형 + 마음가짐 + 피로). 없으면 body로
+export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1, body = 'normal', life = null }) {
   const rng = mulberry32(seed);
   const units = [
-    ...party.map((id, i) => makeUnit(id, 'party', id === 'me' ? applyBody(PARTY[id], body) : PARTY[id], i)),
+    ...party.map((id, i) => makeUnit(id, 'party', id === 'me' ? (life ? battleStats(PARTY[id], life) : applyBody(PARTY[id], body)) : PARTY[id], i)),
     ...enemies.map((id, i) => makeUnit(id, 'enemy', MONSTERS[id], i)),
   ];
   // 시작 게이지: 속도에 비례해 조금씩 앞서 출발
-  for (const u of units) u.gauge = Math.min(GAUGE - 1, u.spd * 0.2);
+  for (const u of units) u.gauge = Math.min(GAUGE - 1, u.spd * 0.2 + (u.startGauge ?? 0));
 
   const alive = (side) => units.filter((u) => u.side === side && u.hp > 0);
   const byId = (uid) => units.find((u) => u.uid === uid);

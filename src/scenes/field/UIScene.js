@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { DialogBox } from '../../ui/DialogBox.js';
 import { SpeechBubbles } from '../../ui/SpeechBubbles.js';
 import { Hud } from '../../ui/Hud.js';
+import { StatusPanel } from '../../ui/StatusPanel.js';
 
 export default class UIScene extends Phaser.Scene {
   constructor() { super('UI'); }
@@ -11,6 +12,9 @@ export default class UIScene extends Phaser.Scene {
     this.dialog = new DialogBox(this);
     this.bubbles = new SpeechBubbles(this);
     this.hud = new Hud(this);
+    this.status = new StatusPanel(this);
+    this.input.keyboard.on('keydown-C', () => this.status.toggle());
+    this.input.keyboard.on('keydown-TAB', (e) => { e.preventDefault?.(); this.status.toggle(); });
     this.toScreen = (x, y) => ({ x, y });
 
     // 대화창이 떠 있으면 다음 문장, 아니면 걷는 대사(말풍선)를 넘긴다

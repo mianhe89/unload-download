@@ -10,7 +10,7 @@ export class Hud {
 
     this.place = scene.add.text(18 * s, 14 * s, '', style(13, '#e8e4f0')).setDepth(40).setShadow(1, 1, '#000', 0);
     this.objective = scene.add.text(18 * s, 34 * s, '', style(11, '#bdb6cf')).setDepth(40).setShadow(1, 1, '#000', 0);
-    this.controls = scene.add.text(width - 16 * s, 14 * s, 'WASD 이동 · E 살펴보기', style(11, '#bdb6cf'))
+    this.controls = scene.add.text(width - 16 * s, 14 * s, 'WASD 이동 · E 살펴보기 · C 상태', style(11, '#bdb6cf'))
       .setOrigin(1, 0).setDepth(40).setShadow(1, 1, '#000', 0);
     this.prompt = scene.add.text(0, 0, 'E', {
       ...style(11, '#101018'), backgroundColor: '#f4f0e8', padding: { x: 4 * s, y: 1 * s },

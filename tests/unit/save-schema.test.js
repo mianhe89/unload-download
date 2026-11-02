@@ -41,6 +41,7 @@ describe('세이브 스키마', () => {
     const s = migrate(v2);
     expect(s.version).toBe(VERSION);
     expect(s.run).toMatchObject({ chapter: 'chapter1', phase: 'aftermath', flags: { a: true }, where: null });
+    expect(s.run.life.weight).toBeGreaterThan(0); // v4: 생활 상태도 채워진다
     expect(migrate({ ...v2, run: null }).run).toBeNull();
   });
 

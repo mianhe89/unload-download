@@ -20,6 +20,9 @@ import { Cutscene } from '../../field/Cutscene.js';
 import { Ambient } from '../../field/Ambient.js';
 import { absence, objectiveText } from '../../field/absence.js';
 import { OBJECTS } from '../../../content/art/pack.js';
+import { LIFE_SPOTS, ACTIONS } from '../../../content/life/life.js';
+import { act, canDo, minutesLeft, freshLife } from '../../life/life.js';
+import { trackWalk } from '../../life/track.js';
 
 const px = (t) => t * TILE + TILE / 2;
 
@@ -62,6 +65,9 @@ export default class FieldScene extends Phaser.Scene {
       if (WorldMemory.isErased(id)) this.placeRemnant(id, cfg.at);
       else this.npcs[id] = new Npc(this, id, cfg);
     }
+    // 생활 자리: 빵집 진열대·집·우물·허수아비에서 E (밤엔 잠만)
+    this.lifeSpots = LIFE_SPOTS.filter((l) => !(l.needs && WorldMemory.isErased(l.needs)) && (this.phase.time !== 'night' || l.action === 'sleep'))
+      .map((l) => ({ ...l, x: l.at[0] * TILE + TILE / 2, y: l.at[1] * TILE + TILE / 2 }));
     for (const prop of this.phase.props ?? []) {
       if (prop.when && !passes(prop.when, this.ctx())) continue;
       this.addProp(prop.prop, prop.at, prop.text);
@@ -124,6 +130,7 @@ export default class FieldScene extends Phaser.Scene {
       npc.update(dt, { player: this.player, paused: busy && !this.cutscene.walking, blocked: (x, y) => this.map.isSolidPx(x, y) });
     }
     this.player.sync();
+    trackWalk(this, dt);
     for (const npc of Object.values(this.npcs)) npc.sync();
     this.lighting.follow(this.player.x, this.player.y);
     this.lighting.update(dt);
@@ -177,6 +184,7 @@ export default class FieldScene extends Phaser.Scene {
     if (!target || this.cooldown > 0 || !this.player.justPressed('act')) return;
     this.player.idleTime = 0;
     if (target.npc) this.talkTo(target.npc);
+    else if (target.life) this.doLife(target.life);
     else this.examine(target);
   }
 
@@ -185,6 +193,10 @@ export default class FieldScene extends Phaser.Scene {
     for (const npc of Object.values(this.npcs)) {
       const d = this.player.distTo(npc.x, npc.y);
       if (d < bestD) { best = { npc, x: npc.x, y: npc.y }; bestD = d; }
+    }
+    for (const l of this.lifeSpots ?? []) {
+      const d = this.player.distTo(l.x, l.y);
+      if (d < bestD) { best = { life: l, x: l.x, y: l.y }; bestD = d; }
     }
     for (const p of this.props) {
       if (!p.text) continue;
@@ -220,6 +232,20 @@ export default class FieldScene extends Phaser.Scene {
     }
     this.ui.closeDialog();
     this.setFrozen(false);
+  }
+
+  // 생활 행동: 그 자리의 행동을 한다 (선택창 없음). 같은 행동은 쿨다운
+  doLife(spot) {
+    const life = WorldMemory.run.life ?? freshLife();
+    const a = ACTIONS[spot.action];
+    this.cooldown = 0.5;
+    if (!canDo(life, spot.action)) {
+      this.ui.bubbles.narrate(this.player, `(${a.name}은 조금 이따가 — ${minutesLeft(life, spot.action)}분)`, 1800);
+      return;
+    }
+    const n = act(life, spot.action);
+    WorldMemory.setLife(n);
+    this.ui.bubbles.narrate(this.player, `${a.text}  (${n.weight.toFixed(1)}kg)`, 2600);
   }
 
   // 가까이 가면 가끔 혼잣말

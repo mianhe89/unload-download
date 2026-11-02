@@ -30,6 +30,11 @@ export const WorldMemory = {
     SaveRepository.update((d) => { d.run.where = where; });
   },
 
+  // 생활 상태 저장 (먹고·움직이고·쉰 결과)
+  setLife(life) {
+    SaveRepository.update((d) => { d.run.life = life; });
+  },
+
   setFlag(name, value = true) {
     SaveRepository.update((d) => { d.run.flags[name] = value; });
   },

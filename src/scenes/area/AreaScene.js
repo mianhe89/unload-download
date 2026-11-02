@@ -14,6 +14,7 @@ import { Player } from '../../field/Player.js';
 import { Npc } from '../../field/Npc.js';
 import { travelerAt, spiritHint, travelerLines } from '../../world/travelers.js';
 import { encounterAt } from '../../battle/encounters.js';
+import { trackWalk } from '../../life/track.js';
 import { MONSTERS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
 import { maskNames, goneIds } from '../../core/script/speech.js';
@@ -121,6 +122,7 @@ export default class AreaScene extends Phaser.Scene {
     this.cooldown = Math.max(0, this.cooldown - dt);
     this.player.update(dt, (x, y) => this.area.isSolidPx(x, y));
     this.player.sync();
+    trackWalk(this, dt);
     if (this.traveler) {
       this.traveler.update(dt, { player: this.player, paused: this.ui.talking, blocked: (x, y) => this.area.isSolidPx(x, y) });
       this.traveler.sync();
