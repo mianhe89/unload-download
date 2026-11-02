@@ -9,6 +9,10 @@
 //   effect  { push: n } 대상 게이지 +n, { slow: n } 대상 게이지 -n, { heal: 배수 }, { guard: true } 다음 차례까지 피해 절반
 //   cooldown 쓴 뒤 n차례 쉬어야 한다
 //   tell    (적) 예고 문구. 있으면 한 차례 먼저 예고하고 다음 차례에 쓴다
+//   status  'burn' 맞으면 화상(자기 차례 끝마다 최대 체력의 6%, 2차례). 저항(체형·마음가짐)만큼 버틸 확률
+//
+// 궁극기(ultimate): 때리거나 맞으면 게이지가 차고(0→100), 가득 차면 4번으로 쓴다. 쓰면 컷인 연출
+//   effect.cancelTell: 적이 예고해 둔 기술을 지운다
 
 export const ELEMENTS = { fire: '불', wind: '바람', earth: '땅', light: '빛', dark: '어둠' };
 
@@ -20,14 +24,16 @@ export const PARTY = {
       { id: 'flurry', name: '연타', power: 0.45, hits: 3, target: 'one', cooldown: 1 },
       { id: 'remember', name: '기억하기', power: 0, hits: 0, target: 'self', effect: { guard: true, push: 20 }, cooldown: 2, desc: '다음 차례까지 피해 절반, 게이지 +20' },
     ],
+    ultimate: { id: 'ult', name: '이름을 부른다', power: 2.4, hits: 1, target: 'one', effect: { cancelTell: true }, line: '…잊지 않았어.', desc: '강한 일격, 적의 예고를 지운다' },
   },
   selena: {
     name: '셀레나', element: 'fire', maxHp: 150, atk: 20, def: 18, spd: 85, evade: 0.03,
     skills: [
       { id: 'slash', name: '베기', power: 1.0, hits: 1, target: 'one', element: 'fire' },
       { id: 'shield', name: '방패 세우기', power: 0, hits: 0, target: 'self', effect: { guard: true, taunt: true }, cooldown: 2, desc: '다음 차례까지 피해 절반, 적의 공격을 끈다' },
-      { id: 'sweep', name: '휩쓸기', power: 0.7, hits: 1, target: 'all', element: 'fire', cooldown: 2 },
+      { id: 'sweep', name: '휩쓸기', power: 0.7, hits: 1, target: 'all', element: 'fire', cooldown: 2, status: 'burn' },
     ],
+    ultimate: { id: 'ult', name: '기사단의 성벽', power: 0.9, hits: 1, target: 'all', element: 'fire', effect: { guardAll: true }, line: '내 뒤로.', desc: '적 전체 공격, 아군 전원 방어' },
   },
   lu: {
     name: '루', element: 'light', maxHp: 95, atk: 24, def: 9, spd: 110, evade: 0.08,
@@ -36,6 +42,7 @@ export const PARTY = {
       { id: 'still', name: '멈춤', power: 0.4, hits: 1, target: 'one', element: 'light', effect: { slow: 40 }, cooldown: 2, desc: '대상 게이지 -40' },
       { id: 'mend', name: '이어 붙이기', power: 0, hits: 0, target: 'ally', effect: { heal: 1.4, push: 15 }, cooldown: 2, desc: '아군 회복, 게이지 +15' },
     ],
+    ultimate: { id: 'ult', name: '멈춘 시간', power: 0.6, hits: 1, target: 'all', element: 'light', effect: { slow: 50 }, line: '잠깐만, 거기 있어.', desc: '적 전체 공격, 게이지 -50' },
   },
 };
 
@@ -48,7 +55,7 @@ export const MONSTERS = {
     name: '불짐승', sprite: 'Beast', element: 'fire', maxHp: 80, atk: 16, def: 8, spd: 95, evade: 0.05,
     skills: [
       { id: 'claw', name: '할퀴기', power: 0.5, hits: 2, target: 'one', element: 'fire' },
-      { id: 'roar', name: '포효', power: 0.6, hits: 1, target: 'all', element: 'fire', cooldown: 3 },
+      { id: 'roar', name: '포효', power: 0.6, hits: 1, target: 'all', element: 'fire', cooldown: 3, status: 'burn' },
     ],
   },
   owl: {

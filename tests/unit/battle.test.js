@@ -20,6 +20,12 @@ export function autoplay({ enemies, seed, body = 'normal', smart = false, maxTur
     const foes = b.units.filter((x) => x.side === 'enemy' && x.hp > 0);
     const target = foes.reduce((a, c) => (c.hp < a.hp ? c : a)).uid;
     const party = b.units.filter((x) => x.side === 'party' && x.hp > 0);
+    // 궁극기: 생각 없이는 차면 바로, 예고를 읽는 쪽은 '나'의 궁극기를 예고를 지우는 데 아낀다
+    if (b.canBurst(u) && (!smart || u.id !== 'me' || tell)) {
+      b.use(u.uid, 'ult', tell && smart && u.id === 'me' ? tell.from : target);
+      if (smart && u.id === 'me') tell = null;
+      continue;
+    }
     if (smart && tell) {
       const threatened = tell.skill === 'sweep' || tell.target === u.uid;
       if (threatened && u.id === 'me' && can.includes('remember')) { b.use(u.uid, 'remember'); continue; }
@@ -253,5 +259,79 @@ describe('마주침', async () => {
     for (let i = 0; i < 300; i += 1) if (encounterAt('surface:7,9', { kind: 'route', biome: 'temperate' }, new Date(2026, 0, 1 + i))) n += 1;
     expect(n / 300).toBeGreaterThan(0.2);
     expect(n / 300).toBeLessThan(0.5);
+  });
+});
+
+describe('궁극기와 상태이상', async () => {
+  const { BURST, BURN } = await import('../../src/battle/engine.js');
+  const turnOf = (b, id) => { let u; do { u = b.next(); if (u.id !== id) { if (u.side === 'enemy') b.enemyTurn(u.uid); else b.endTurn(u); } } while (u.id !== id && !b.result); return u; };
+
+  it('때리면 궁극기 게이지가 차고, 다 차야 쓸 수 있다', () => {
+    const b = createBattle({ enemies: ['mole'], seed: 1 });
+    const me = turnOf(b, 'me');
+    expect(b.canBurst(me)).toBe(false);
+    expect(() => b.use('me', 'ult', 'mole#0')).toThrow();
+    b.use('me', 'strike', 'mole#0');
+    expect(me.burst).toBe(BURST.deal);
+    me.burst = BURST.max;
+    turnOf(b, 'me');
+    const ev = b.use('me', 'ult', 'mole#0');
+    expect(ev[0]).toMatchObject({ type: 'skill', ultimate: true });
+    expect(me.burst).toBe(0);
+  });
+
+  it('나의 궁극기는 적의 예고를 지운다', () => {
+    const b = createBattle({ enemies: ['sweeper'], seed: 2 });
+    const boss = b.units.find((x) => x.boss);
+    for (let i = 0; i < 40 && !boss.telegraph; i += 1) { const u = b.next(); if (u.uid === boss.uid) b.enemyTurn(u.uid); else b.endTurn(u); }
+    expect(boss.telegraph).not.toBe(null);
+    const me = turnOf(b, 'me');
+    if (!boss.telegraph) return; // 보스가 그사이 써 버렸으면 이 시드에선 확인 불가
+    me.burst = BURST.max;
+    const ev = b.use('me', 'ult', boss.uid);
+    expect(ev.some((e) => e.type === 'cancel')).toBe(true);
+    expect(boss.telegraph).toBe(null);
+  });
+
+  it('셀레나의 궁극기는 아군 전원을 방어 자세로', () => {
+    const b = createBattle({ enemies: ['mole'], seed: 1 });
+    const sel = turnOf(b, 'selena');
+    sel.burst = BURST.max;
+    b.use('selena', 'ult');
+    expect(b.units.filter((x) => x.side === 'party' && x.hp > 0).every((x) => x.guard)).toBe(true);
+  });
+
+  it('화상: 맞으면 자기 차례 끝마다 최대 체력의 일부, 정해진 횟수만', () => {
+    const b = createBattle({ enemies: ['mole'], seed: 1 });
+    const mole = b.units.find((x) => x.id === 'mole');
+    turnOf(b, 'selena');
+    b.use('selena', 'sweep');
+    expect(mole.status.burn).toBe(BURN.turns);
+    const hp = mole.hp;
+    turnOf(b, 'mole'); // 두더지 차례에 끝나면 화상
+    const ev = b.enemyTurn(mole.uid);
+    const burn = ev.find((e) => e.type === 'burn');
+    expect(burn.dmg).toBe(Math.round(mole.maxHp * BURN.ratio));
+    expect(mole.status.burn).toBe(BURN.turns - 1);
+    expect(mole.hp).toBeLessThan(hp);
+  });
+
+  it('저항이 높으면 화상을 버틸 때가 많다 (통통·여유)', () => {
+    let burned = { low: 0, high: 0 };
+    for (let s = 1; s <= 200; s += 1) {
+      for (const [k, resist] of [['low', 0], ['high', 0.5]]) {
+        const b = createBattle({ enemies: ['beast'], seed: s });
+        const me = b.units.find((x) => x.id === 'me');
+        me.resist = resist; me.evade = 0;
+        const beast = b.units.find((x) => x.id === 'beast');
+        beast.cooldowns = {};
+        const roar = beast.skills.find((x) => x.id === 'roar');
+        b.perform(beast, roar);
+        if (me.status.burn) burned[k] += 1;
+      }
+    }
+    expect(burned.low).toBe(200);
+    expect(burned.high).toBeLessThan(140);
+    expect(burned.high).toBeGreaterThan(60);
   });
 });

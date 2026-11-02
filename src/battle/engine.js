@@ -12,6 +12,8 @@ import { applyBody } from './body.js';
 import { battleStats } from '../life/life.js';
 
 export const GAUGE = 100;
+export const BURST = { max: 100, deal: 9, take: 6 }; // 궁극기 게이지: 맞힌 타마다 +9, 맞은 타마다 +6
+export const BURN = { turns: 2, ratio: 0.06 };
 const BEATS = { fire: 'wind', wind: 'earth', earth: 'fire' }; // 불 > 바람 > 땅 > 불, 빛 ↔ 어둠
 
 export function elementMul(attack, defend) {
@@ -48,7 +50,7 @@ function makeUnit(id, side, def, index) {
     maxHp: def.maxHp, hp: def.maxHp, atk: def.atk, def: def.def, spd: def.spd, evade: def.evade,
     heavy: def.heavy ?? 1, pierce: def.pierce ?? 0, resist: def.resist ?? 0, body: def.body ?? null, mind: def.mind ?? null, startGauge: def.startGauge ?? 0,
     boss: Boolean(def.boss), pattern: def.pattern ?? null, step: 0,
-    skills: def.skills, cooldowns: {}, gauge: 0, guard: false, taunt: false, telegraph: null,
+    skills: def.skills, ultimate: def.ultimate ?? null, burst: 0, status: {}, cooldowns: {}, gauge: 0, guard: false, taunt: false, telegraph: null,
     sprite: def.sprite ?? null,
   };
 }
@@ -106,10 +108,16 @@ export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1
     },
 
     usable(u) { return u.skills.filter((s) => !(u.cooldowns[s.id] > 0)); },
+    canBurst(u) { return Boolean(u.ultimate) && u.burst >= BURST.max; },
 
     // 아군 차례
     use(uid, sid, targetUid) {
       const u = byId(uid);
+      if (sid === 'ult') {
+        if (!this.canBurst(u)) throw new Error(`궁극기 게이지가 차지 않음: ${uid}`);
+        u.burst = 0;
+        return this.perform(u, u.ultimate, targetUid);
+      }
       const s = skillOf(u, sid);
       if (!u || !s || u.cooldowns[sid] > 0) throw new Error(`쓸 수 없는 스킬: ${uid}.${sid}`);
       return this.perform(u, s, targetUid);
@@ -130,8 +138,8 @@ export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1
       const t = s.target === 'one' ? pickTarget() : null;
       if (s.tell) {
         u.telegraph = { skill: s.id, target: t?.uid ?? null };
-        this.endTurn(u);
         const ev = [{ type: 'telegraph', from: u.uid, skill: s.id, name: s.name, tell: s.tell, target: t?.uid ?? null }];
+        ev.push(...this.endTurn(u));
         this.log.push(...ev);
         return ev;
       }
@@ -139,7 +147,7 @@ export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1
     },
 
     perform(u, s, targetUid) {
-      const ev = [{ type: 'skill', from: u.uid, skill: s.id, name: s.name }];
+      const ev = [{ type: 'skill', from: u.uid, skill: s.id, name: s.name, ultimate: s.id === 'ult', line: s.line }];
       const foes = alive(u.side === 'party' ? 'enemy' : 'party');
       const friends = alive(u.side);
       let targets;
@@ -155,6 +163,16 @@ export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1
           const dmg = evaded ? 0 : hitDamage(u, t, s);
           t.hp = Math.max(0, t.hp - dmg);
           ev.push({ type: 'hit', from: u.uid, to: t.uid, dmg, evaded, mul: elementMul(s.element, t.element) });
+          if (!evaded && t.side !== u.side) {
+            // 궁극기 게이지: 아군만 (때린 쪽 +, 맞은 쪽 +)
+            if (u.ultimate && s.id !== 'ult') u.burst = Math.min(BURST.max, u.burst + BURST.deal);
+            if (t.ultimate) t.burst = Math.min(BURST.max, t.burst + BURST.take);
+            // 화상: 저항만큼 버틸 확률
+            if (s.status === 'burn' && t.hp > 0) {
+              if (rng() < (t.resist ?? 0)) ev.push({ type: 'resist', to: t.uid, status: 'burn' });
+              else { t.status.burn = BURN.turns; ev.push({ type: 'status', to: t.uid, status: 'burn' }); }
+            }
+          }
           if (t.hp === 0) ev.push({ type: 'ko', uid: t.uid });
         }
         const e = s.effect ?? {};
@@ -162,6 +180,7 @@ export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1
           if (e.heal) { const n = Math.round(u.atk * e.heal); t.hp = Math.min(t.maxHp, t.hp + n); ev.push({ type: 'heal', to: t.uid, amount: n }); }
           if (e.guard) { t.guard = true; ev.push({ type: 'guard', to: t.uid }); }
           if (e.taunt) { t.taunt = true; ev.push({ type: 'taunt', to: t.uid }); }
+          if (e.cancelTell && t.telegraph) { t.telegraph = null; ev.push({ type: 'cancel', to: t.uid }); }
           if (e.push) { t.gauge = Math.min(GAUGE - 1, t.gauge + e.push); ev.push({ type: 'gauge', to: t.uid, delta: e.push }); }
           if (e.slow) {
             const d = Math.round(e.slow * (1 - (t.resist ?? 0)));
@@ -169,16 +188,27 @@ export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1
           }
         }
       }
+      if (s.effect?.guardAll) for (const f of alive(u.side)) { f.guard = true; ev.push({ type: 'guard', to: f.uid }); }
       if (s.cooldown) u.cooldowns[s.id] = s.cooldown + 1; // 이번 차례 끝에 1 줄어든다
-      this.endTurn(u);
+      ev.push(...this.endTurn(u));
       this.log.push(...ev);
       return ev;
     },
 
+    // 차례 끝: 게이지·쿨다운, 화상 피해. 생긴 이벤트를 돌려준다
     endTurn(u) {
+      const ev = [];
       u.gauge = 0;
       for (const k of Object.keys(u.cooldowns)) u.cooldowns[k] = Math.max(0, u.cooldowns[k] - 1);
+      if (u.status.burn > 0 && u.hp > 0) {
+        const dmg = Math.max(1, Math.round(u.maxHp * BURN.ratio));
+        u.hp = Math.max(0, u.hp - dmg);
+        u.status.burn -= 1;
+        ev.push({ type: 'burn', to: u.uid, dmg });
+        if (u.hp === 0) ev.push({ type: 'ko', uid: u.uid });
+      }
       this.turn += 1;
+      return ev;
     },
   };
 

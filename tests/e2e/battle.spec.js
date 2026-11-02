@@ -50,3 +50,26 @@ test('지면 되돌리기: 로드 횟수가 오르고 한 명이 지워지고, �
   expect(after.foe).toBe('sweeper');
   expect(errors).toEqual([]);
 });
+
+test('궁극기: 게이지가 차면 4번 두 번 → 컷인 후 발동, 싸움이 끝나면 피로가 쌓인다', async ({ page }) => {
+  const errors = await openGame(page);
+  await wipe(page);
+  await start(page, ['mole']);
+  await page.waitForFunction(() => window.__game.scene.getScene('Battle').panel?.visible);
+  const fatigue0 = await page.evaluate(() => window.__ud.run.life.fatigue);
+  await page.evaluate(() => { const s = window.__game.scene.getScene('Battle'); s.current.burst = 100; s.openPanel(s.current); });
+  await page.keyboard.press('4');
+  await page.waitForTimeout(150);
+  await page.keyboard.press('4');
+  await page.waitForFunction(() => window.__game.scene.getScene('Battle').battle.log.some((e) => e.type === 'skill' && e.ultimate));
+  // 끝까지 싸운다
+  for (let i = 0; i < 200; i += 1) {
+    const s = await battle(page);
+    if (!s.on || s.result) break;
+    if (s.panel) { await page.keyboard.down('Enter'); await page.waitForTimeout(80); await page.keyboard.up('Enter'); }
+    await page.waitForTimeout(150);
+  }
+  await page.waitForFunction(() => window.__game.scene.isActive('Area'), null, { timeout: 15_000 });
+  expect(await page.evaluate(() => window.__ud.run.life.fatigue)).toBeGreaterThan(fatigue0);
+  expect(errors).toEqual([]);
+});

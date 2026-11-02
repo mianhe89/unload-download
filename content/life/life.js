@@ -11,6 +11,7 @@ export const ACTIONS = {
   homeMeal:   { name: '집밥', kcal: 600, fatigue: -10, mind: { diligent: 0.5 }, cooldown: 30, text: '집에서 밥을 차려 먹었다. 국이 따뜻했다.', meal: 'balanced' },
   sleep:      { name: '잠', fatigue: -60, mind: { relaxed: 1 }, cooldown: 60, text: '한숨 잤다. 꿈은 기억나지 않는다.' },
   water:      { name: '물 길어 나르기', burn: 500, muscle: 0.02, fatigue: 15, mind: { diligent: 1 }, cooldown: 15, text: '우물에서 물을 길어 날랐다. 팔이 뻐근하다.' },
+  battle:     { name: '싸움', burn: 300, fatigue: 8, mind: { firm: 0.2 }, cooldown: 0, text: '' }, // 전투 한 번의 대가 (자리 없음)
   drill:      { name: '목검 휘두르기', burn: 700, muscle: 0.035, fatigue: 25, mind: { diligent: 1, firm: 0.5 }, cooldown: 20, text: '허수아비를 상대로 목검을 백 번 휘둘렀다.' },
 };
 
