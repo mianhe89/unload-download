@@ -13,6 +13,9 @@ import { MapRenderer } from '../../field/MapRenderer.js';
 import { Player } from '../../field/Player.js';
 import { Npc } from '../../field/Npc.js';
 import { travelerAt, spiritHint, travelerLines } from '../../world/travelers.js';
+import { encounterAt } from '../../battle/encounters.js';
+import { MONSTERS } from '../../../content/battles/units.js';
+import { MONSTER_ART } from '../../../content/art/pack.js';
 import { maskNames, goneIds } from '../../core/script/speech.js';
 import { characters } from '../../../content/characters/index.js';
 import { Lighting } from '../../field/Lighting.js';
@@ -37,6 +40,8 @@ export default class AreaScene extends Phaser.Scene {
     // 씬을 다시 쓸 때 이전 칸의 것이 남지 않게
     this.traveler = null;
     this.boat = null;
+    this.monster = null;
+    this.grace = 1.5; // 들어오자마자 부딪히지 않게
   }
 
   create() {
@@ -71,6 +76,21 @@ export default class AreaScene extends Phaser.Scene {
         this.traveler.sprite.setAlpha(0.6);
         this.tweens.add({ targets: this.traveler.sprite, alpha: { from: 0.35, to: 0.75 }, duration: 1600, yoyo: true, repeat: -1 });
       }
+    }
+
+    // 몬스터: 오늘 이 칸의 무리 (이긴 무리는 없다). 부딪히면 전투
+    const flags0 = WorldMemory.run.flags;
+    // (테스트용) dev.peace 플래그가 켜져 있으면 몬스터가 나오지 않는다
+    this.encounter = flags0['dev.peace'] ? null : encounterAt(this.key, { kind: area.kind, biome: area.biome }, new Date(), (k) => Boolean(flags0[`beat.${k}`]));
+    if (this.encounter) {
+      const lead = MONSTERS[this.encounter.enemies[0]];
+      const art = MONSTER_ART[lead.sprite];
+      const c = area.spots.center;
+      const mx = (c.x - 4) * 16, my = (c.y - 3) * 16;
+      this.monster = this.add.sprite(mx, my, `mon.${lead.sprite}`, art.kind === 'walker' ? 0 : 0).setOrigin(0.5, 0.9).setDepth(my);
+      if (this.anims.exists(`mon.${lead.sprite}`)) this.monster.play(`mon.${lead.sprite}`);
+      if (lead.boss) this.monster.setScale(1.4).setAlpha(0.85);
+      this.tweens.add({ targets: this.monster, x: mx + 20, duration: 1800 + Math.random() * 800, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     }
 
     // 지하와 은하는 늘 어둡다
@@ -108,7 +128,9 @@ export default class AreaScene extends Phaser.Scene {
     if (this.boat) this.boat.setPosition(Math.round(this.player.x), Math.round(this.player.y + 2)).setDepth(this.player.y - 1);
     this.lighting.follow(this.player.x, this.player.y);
     this.lighting.update(dt);
+    this.grace = Math.max(0, this.grace - dt);
     if (this.leaving || this.ui.talking || this.player.frozen) { this.ui.hud.showPrompt(null); return; }
+    if (this.monster && this.grace <= 0 && Math.hypot(this.monster.x - this.player.x, this.monster.y - this.player.y) < 14) { this.fight(); return; }
     const e = this.area.exitAt(this.player.x, this.player.y);
     if (e) { this.go(e); return; }
     // 계단을 밟으면 다른 층으로
@@ -187,6 +209,18 @@ export default class AreaScene extends Phaser.Scene {
       this.rings = 0;
       this.ui.bubbles.narrate(this.player, r.night ? '열셋. …아무 일도 일어나지 않았다. 아직 뭔가 잊고 있다.' : '열셋. 한낮의 종소리는 금방 흩어졌다.', 2600);
     }
+  }
+
+  // 몬스터와 부딪혔다 → 사이드뷰 전투
+  fight() {
+    this.leaving = true;
+    this.ui.hud.showPrompt(null);
+    this.cameras.main.flash(250, 255, 255, 255);
+    this.cameras.main.shake(200, 0.01);
+    this.time.delayedCall(300, () => this.scene.start('Battle', {
+      enemies: this.encounter.enemies, seed: this.encounter.seed, boss: this.encounter.boss, note: this.encounter.note,
+      from: { layer: this.layerId, at: this.at, key: this.key, back: this.back },
+    }));
   }
 
   // 층 사이 문

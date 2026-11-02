@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPng, writePng, crop, recolor, setPx, topAt, alphaAt } from './lib/pixels.mjs';
 import { characters } from '../content/characters/index.js';
-import { SHEETS, ANIMATED, PARTICLES, SHADOW, FOG, CHAR } from '../content/art/pack.js';
+import { SHEETS, ANIMATED, PARTICLES, SHADOW, FOG, CHAR, MONSTER_ART } from '../content/art/pack.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'assets-src/ninja-adventure');
@@ -83,9 +83,9 @@ function buildBellTower() {
 export function buildAssets({ quiet = false } = {}) {
   const log = (...a) => { if (!quiet) console.log(...a); };
   if (existsSync(OUT)) rmSync(OUT, { recursive: true });
-  for (const d of ['char', 'face', 'sheets', 'anim', 'fx']) mkdirSync(join(OUT, d), { recursive: true });
+  for (const d of ['char', 'face', 'sheets', 'anim', 'fx', 'mon']) mkdirSync(join(OUT, d), { recursive: true });
 
-  const manifest = { chars: {}, faces: {}, sheets: {}, anim: {}, fx: {}, report: {} };
+  const manifest = { chars: {}, faces: {}, sheets: {}, anim: {}, fx: {}, mon: {}, report: {} };
 
   for (const [id, c] of Object.entries(characters)) {
     const s = c.sprite;
@@ -115,6 +115,10 @@ export function buildAssets({ quiet = false } = {}) {
   writePng(join(OUT, 'sheets', 'belltower.png'), buildBellTower());
   manifest.sheets['gen:belltower'] = 'sheets/belltower.png';
 
+  for (const [key, m] of Object.entries(MONSTER_ART)) {
+    copyFileSync(join(SRC, m.src), join(OUT, 'mon', `${key}.png`));
+    manifest.mon[key] = `mon/${key}.png`;
+  }
   for (const [key, a] of Object.entries(ANIMATED)) {
     copyFileSync(join(SRC, a.src), join(OUT, 'anim', `${key}.png`));
     manifest.anim[key] = `anim/${key}.png`;

@@ -57,7 +57,7 @@ test('프롤로그엔 마을 밖이 막혀 있다', async ({ page }) => {
 test('1장: 북쪽 길로 나가 서리 마을까지 갔다가 돌아온다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
-  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); u.setFlag('entered.chapter1.aftermath'); g.scene.stop('Title'); g.scene.start('Field', { chapter: 'chapter1', phase: 'aftermath' }); });
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); u.setFlag('dev.peace'); u.setFlag('entered.chapter1.aftermath'); g.scene.stop('Title'); g.scene.start('Field', { chapter: 'chapter1', phase: 'aftermath' }); });
   await page.waitForFunction(() => window.__game.scene.isActive('Field'));
 
   // 마을 북쪽 출구
@@ -90,7 +90,7 @@ test('1장: 북쪽 길로 나가 서리 마을까지 갔다가 돌아온다', as
 test('드워프 마을의 계단으로 지하에 내려갔다가 올라온다, 이정표를 읽는다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
-  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [11, 5], entry: 's', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); u.setFlag('dev.peace'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [11, 5], entry: 's', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
   await page.waitForFunction(() => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').key === 'surface:11,5');
 
   // 계단 바로 아래에서 위로 걷는다 → 지하 갱도 입구
@@ -121,7 +121,7 @@ test('드워프 마을의 계단으로 지하에 내려갔다가 올라온다, �
 test('항구에서 배를 타고 바다로 나갔다가 돌아온다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
-  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [8, 15], entry: 'boat', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); u.setFlag('dev.peace'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [8, 15], entry: 'boat', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
   await page.waitForFunction(() => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').key === 'surface:8,15');
 
   // 선착장 끝에서 E → 바다
@@ -142,7 +142,7 @@ test('항구에서 배를 타고 바다로 나갔다가 돌아온다', async ({ 
 test('길 맵에서 멈췄으면 이어하기는 그 칸에서 (로드 대가는 그대로)', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
-  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [7, 8], entry: 'center', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); u.setFlag('dev.peace'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [7, 8], entry: 'center', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
   await page.waitForFunction(() => window.__game.scene.isActive('Area'));
   expect(await page.evaluate(() => window.__ud.run.where)).toEqual({ layer: 'surface', at: [7, 8] });
 

@@ -2,7 +2,7 @@
 // 1) loadPackAssets: 에셋 빌드 결과(public/assets/gen, manifest.json)를 Phaser 로더에 올린다 (Boot의 preload)
 // 2) buildTextures: 시트에 물체 프레임을 등록하고, 코드로 그리는 작은 소품·빛을 만든다 (Boot의 create)
 import { characters } from '../../../content/characters/index.js';
-import { OBJECTS, ANIMATED, PARTICLES, CHAR, FACE } from '../../../content/art/pack.js';
+import { OBJECTS, ANIMATED, PARTICLES, CHAR, FACE, MONSTER_ART } from '../../../content/art/pack.js';
 import { propPixels, PROP_NAMES, TILE } from '../../../content/art/props.js';
 
 const BASE = 'assets/gen/';
@@ -15,6 +15,10 @@ export function loadPackAssets(scene, manifest) {
   for (const [key, path] of Object.entries(manifest.anim)) {
     const [fw, fh] = ANIMATED[key].frame;
     L.spritesheet(`anim.${key}`, BASE + path, { frameWidth: fw, frameHeight: fh });
+  }
+  for (const [key, path] of Object.entries(manifest.mon ?? {})) {
+    const [fw, fh] = MONSTER_ART[key].frame;
+    L.spritesheet(`mon.${key}`, BASE + path, { frameWidth: fw, frameHeight: fh });
   }
   for (const [key, path] of Object.entries(manifest.fx)) {
     const p = PARTICLES[key];
@@ -76,6 +80,12 @@ export function buildAnimations(scene) {
     for (const [dir, col] of Object.entries(CHAR.dirs)) {
       A.create({ key: `${key}.${dir}`, frames: walk.map((row) => ({ key, frame: row * CHAR.cols + col })), frameRate: walk.length > 2 ? 8 : 5, repeat: -1 });
     }
+  }
+  // 몬스터 대기: 일반은 왼쪽 보는 열(2)의 걷기 프레임, 보스는 가로 프레임
+  for (const [key, m] of Object.entries(MONSTER_ART)) {
+    if (!scene.textures.exists(`mon.${key}`) || A.exists(`mon.${key}`)) continue;
+    const frames = m.kind === 'walker' ? [0, 1, 2, 3].map((r) => ({ key: `mon.${key}`, frame: r * 4 + 2 })) : A.generateFrameNumbers(`mon.${key}`, { start: 0, end: m.frames - 1 });
+    A.create({ key: `mon.${key}`, frames, frameRate: m.kind === 'walker' ? 6 : 8, repeat: -1 });
   }
   for (const [key, a] of Object.entries(ANIMATED)) {
     if (A.exists(`anim.${key}`)) continue;

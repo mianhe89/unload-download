@@ -139,3 +139,15 @@ export const FOG = 'FX/Environment/Fog.png';
 // 캐릭터 스프라이트시트: 열 = 아래·위·왼쪽·오른쪽, 줄 = 걷기 4프레임(0~3), 공격, 점프, 기타
 export const CHAR = { frame: 16, cols: 4, rows: 7, dirs: { down: 0, up: 1, left: 2, right: 3 }, walkRows: [0, 1, 2, 3] };
 export const FACE = 38;
+
+// 전투용 몬스터 그림 (팩 원본 그대로). frame: 한 칸 크기, frames: 대기 애니메이션 칸 수
+// 일반 몬스터는 캐릭터처럼 열 = 방향(아래·위·왼·오), 줄 = 걷기 프레임 → 전투에선 왼쪽 보는 열을 쓴다
+// 보스는 가로로 늘어선 대기 애니메이션
+export const MONSTER_ART = {
+  Slime: { src: 'Actor/Monsters/Slime/Slime.png', frame: [16, 16], kind: 'walker' },
+  Beast: { src: 'Actor/Monsters/Beast/Beast.png', frame: [16, 16], kind: 'walker' },
+  Owl: { src: 'Actor/Monsters/Owl/Owl.png', frame: [16, 16], kind: 'walker' },
+  Mole: { src: 'Actor/Monsters/Mole/Mole.png', frame: [16, 16], kind: 'walker' },
+  Skull: { src: 'Actor/Monsters/Skull/SpriteSheet.png', frame: [16, 16], kind: 'walker' },
+  GiantSpirit: { src: 'Actor/Boss/GiantSpirit/Idle.png', frame: [50, 50], kind: 'idle', frames: 5 },
+};
