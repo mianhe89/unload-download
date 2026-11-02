@@ -25,6 +25,11 @@ export const WorldMemory = {
     SaveRepository.update((d) => { Object.assign(d.run, { chapter, phase }); });
   },
 
+  // 마을 밖 길 맵에 있는 칸 (null = 마을 안). 이어하기는 여기서 시작한다
+  setWhere(where) {
+    SaveRepository.update((d) => { d.run.where = where; });
+  },
+
   setFlag(name, value = true) {
     SaveRepository.update((d) => { d.run.flags[name] = value; });
   },

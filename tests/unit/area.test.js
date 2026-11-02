@@ -202,3 +202,52 @@ describe('바닷길', async () => {
     expect(states).toEqual(new Set([true, false]));
   });
 });
+
+describe('떠돌이', async () => {
+  const { travelerAt, spiritHint, travelerLines } = await import('../../src/world/travelers.js');
+  const { TRAVELERS } = await import('../../content/world/travelers.js');
+  const { characters } = await import('../../content/characters/index.js');
+
+  it('떠돌이는 모두 캐릭터로 등록돼 있다', () => {
+    for (const id of Object.keys(TRAVELERS)) expect(characters[id]?.traveler, id).toBe(true);
+  });
+
+  it('같은 날 같은 칸이면 같은 사람, 마을과 바다엔 없다', () => {
+    const d = new Date(2026, 10, 3, 12);
+    expect(travelerAt('surface:7,9', { kind: 'route', biome: 'temperate' }, d)).toBe(travelerAt('surface:7,9', { kind: 'route', biome: 'temperate' }, new Date(2026, 10, 3, 22)));
+    expect(travelerAt('surface:7,6', { kind: 'hub', biome: 'snow' }, d)).toBe(null);
+    expect(travelerAt('surface:9,17', { kind: 'route', biome: 'sea' }, d)).toBe(null);
+  });
+
+  it('기후에 맞는 사람만: 나그네는 추운 길, 상인은 따뜻한 길에', () => {
+    const seen = { snow: new Set(), temperate: new Set() };
+    for (let i = 0; i < 400; i += 1) {
+      const d = new Date(2026, 0, 1 + i);
+      seen.snow.add(travelerAt('surface:7,4', { kind: 'route', biome: 'snow' }, d));
+      seen.temperate.add(travelerAt('surface:7,9', { kind: 'route', biome: 'temperate' }, d));
+    }
+    expect(seen.snow.has('merchant')).toBe(false);
+    expect(seen.snow.has('wanderer')).toBe(true);
+    expect(seen.temperate.has('wanderer')).toBe(false);
+    expect(seen.temperate.has('merchant')).toBe(true);
+    expect(seen.temperate.has('spirit')).toBe(true);
+    expect(seen.temperate.has(null)).toBe(true); // 아무도 없는 날도 있다
+  });
+
+  it('정신체의 힌트: 가장 가까운, 아직 안 간 곁가지 방향', () => {
+    // 망루(10,11)는 9,11 옆. 수확제 마을 동쪽 길(8,11)에서 가장 가깝다
+    const h = spiritHint('surface', [8, 11], () => false);
+    expect(h.to).toBe('surface:10,11');
+    expect(h.text).toContain('동쪽');
+    expect(h.n).toBe(2);
+    // 가 본 곳은 건너뛴다
+    expect(spiritHint('surface', [8, 11], (k) => k === 'surface:10,11').to).not.toBe('surface:10,11');
+    // 전부 가 봤으면 '없다'
+    expect(spiritHint('surface', [8, 11], () => true).to).toBe(null);
+  });
+
+  it('지워진 사람이 없으면 그 이름을 말하는 줄은 빠진다', () => {
+    expect(travelerLines('spirit', { erasedAny: false }).some((l) => l.includes('{lastErased}'))).toBe(false);
+    expect(travelerLines('spirit', { erasedAny: true }).some((l) => l.includes('{lastErased}'))).toBe(true);
+  });
+});

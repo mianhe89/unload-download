@@ -11,6 +11,10 @@ import { signText, fillText, ringBell, lowTide } from '../../world/features.js';
 import { buildArea, OPPOSITE } from '../../world/buildArea.js';
 import { MapRenderer } from '../../field/MapRenderer.js';
 import { Player } from '../../field/Player.js';
+import { Npc } from '../../field/Npc.js';
+import { travelerAt, spiritHint, travelerLines } from '../../world/travelers.js';
+import { maskNames, goneIds } from '../../core/script/speech.js';
+import { characters } from '../../../content/characters/index.js';
 import { Lighting } from '../../field/Lighting.js';
 import { Ambient } from '../../field/Ambient.js';
 
@@ -30,11 +34,15 @@ export default class AreaScene extends Phaser.Scene {
     this.leaving = false;
     this.cooldown = 0;
     this.rings = 0;
+    // 씬을 다시 쓸 때 이전 칸의 것이 남지 않게
+    this.traveler = null;
+    this.boat = null;
   }
 
   create() {
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
     this.ui = this.scene.get('UI');
+    WorldMemory.setWhere({ layer: this.layerId, at: this.at });
     const area = (this.area = buildArea(this.layerId, this.at, { season: season(new Date()), lowTide: lowTide(new Date()) }));
     this.key = area.key;
 
@@ -52,6 +60,18 @@ export default class AreaScene extends Phaser.Scene {
       const [, , w, h] = OBJECTS[f.type].rect;
       return { ...f, x: f.at[0] * 16 + w / 2, y: f.at[1] * 16 + h };
     });
+
+    // 떠돌이: 오늘 이 칸에 누가 있나 (같은 날 같은 칸이면 같은 사람)
+    const who = travelerAt(this.key, { kind: area.kind, biome: area.biome }, new Date());
+    if (who) {
+      const c = area.spots.center;
+      this.traveler = new Npc(this, who, { at: [c.x + 2, c.y + 1], mode: 'wander', radius: 2, face: 'down' });
+      this.lineIndex = 0;
+      if (who === 'spirit') {
+        this.traveler.sprite.setAlpha(0.6);
+        this.tweens.add({ targets: this.traveler.sprite, alpha: { from: 0.35, to: 0.75 }, duration: 1600, yoyo: true, repeat: -1 });
+      }
+    }
 
     // 지하와 은하는 늘 어둡다
     const time = this.layerId === 'surface' ? (this.back?.time ?? 'day') : 'night';
@@ -81,6 +101,10 @@ export default class AreaScene extends Phaser.Scene {
     this.cooldown = Math.max(0, this.cooldown - dt);
     this.player.update(dt, (x, y) => this.area.isSolidPx(x, y));
     this.player.sync();
+    if (this.traveler) {
+      this.traveler.update(dt, { player: this.player, paused: this.ui.talking, blocked: (x, y) => this.area.isSolidPx(x, y) });
+      this.traveler.sync();
+    }
     if (this.boat) this.boat.setPosition(Math.round(this.player.x), Math.round(this.player.y + 2)).setDepth(this.player.y - 1);
     this.lighting.follow(this.player.x, this.player.y);
     this.lighting.update(dt);
@@ -102,9 +126,30 @@ export default class AreaScene extends Phaser.Scene {
       const d = Math.hypot(f.x - this.player.x, f.y - this.player.y);
       if (d < bestD) { best = f; bestD = d; }
     }
+    const t = this.traveler;
+    if (t && Math.hypot(t.x - this.player.x, t.y - this.player.y) < bestD) best = { kind: 'traveler', x: t.x, y: t.y };
     this.ui.hud.showPrompt(best ? this.worldToScreen(best.x, best.y - 22) : null);
     if (!best || this.cooldown > 0 || !this.player.justPressed('act')) return;
-    this.examine(best);
+    if (best.kind === 'traveler') this.talkToTraveler();
+    else this.examine(best);
+  }
+
+  // 떠돌이와 말: 말풍선으로 한 줄씩 (멈추지 않는다)
+  talkToTraveler() {
+    const t = this.traveler;
+    t.faceToward(this.player.x, this.player.y);
+    const erased = WorldMemory.world.erased;
+    const lines = travelerLines(t.id, { erasedAny: erased.length > 0 });
+    let line = lines[this.lineIndex % lines.length];
+    this.lineIndex += 1;
+    const flags = WorldMemory.run.flags;
+    if (line.includes('{hint}')) line = line.replace('{hint}', spiritHint(this.layerId, this.at, (k) => Boolean(flags[`visited.${k}`])).text);
+    line = line.replace('{lastErased}', characters[erased.at(-1)?.id]?.name ?? '');
+    // 정신체는 이 세계 바깥 사람이라 지워진 이름도 온전히 말한다
+    if (t.id !== 'spirit') line = maskNames(line, t.id, goneIds(characters, { erased: erased.map((e) => e.id), phase: this.back?.phase }).map((id) => characters[id].name));
+    WorldMemory.setFlag(`met.${t.id}`);
+    this.ui.bubbles.show(t, line, characters[t.id].color, 3200);
+    this.cooldown = 0.4;
   }
 
   async say(text) {

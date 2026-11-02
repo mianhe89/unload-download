@@ -36,6 +36,14 @@ describe('세이브 스키마', () => {
     expect(migrate({ loads: 1, erased: [], run: null }).run).toBeNull();
   });
 
+  it('v2 세이브: 진행은 그대로, 마을 밖 위치(where)는 비어 있다(마을 안)', () => {
+    const v2 = { version: 2, world: { loads: 2, erased: [] }, run: { chapter: 'chapter1', phase: 'aftermath', flags: { a: true }, affinity: {}, startedAt: 1 }, meta: {} };
+    const s = migrate(v2);
+    expect(s.version).toBe(VERSION);
+    expect(s.run).toMatchObject({ chapter: 'chapter1', phase: 'aftermath', flags: { a: true }, where: null });
+    expect(migrate({ ...v2, run: null }).run).toBeNull();
+  });
+
   it('현재 버전 세이브는 그대로 둔다', () => {
     const s = freshSave();
     s.world.loads = 7;

@@ -10,6 +10,7 @@
 //   },
 //   run: null | {          // 현재 진행. RESET & START로 처음부터
 //     chapter, phase,      //   어느 장의 어느 페이즈인가 (이어하기는 페이즈 시작점부터)
+//     where: null | { layer, at },  // 마을 밖 길 맵에 있으면 그 칸 (이어하기는 그 칸에서)
 //     flags: {},           //   이벤트 진행 표시
 //     affinity: {},        //   인물별 호감도 (지워지는 순서를 정한다)
 //     startedAt,
@@ -17,7 +18,7 @@
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 2;
+export const VERSION = 3;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -29,6 +30,7 @@ export const freshSave = () => ({
 export const freshRun = () => ({
   chapter: 'prologue',
   phase: 'festival',
+  where: null,
   flags: {},
   affinity: {},
   startedAt: Date.now(),
@@ -42,6 +44,8 @@ const MIGRATIONS = {
     run: s.run ? { ...freshRun(), affinity: s.run.affinity ?? {} } : null,
     meta: { createdAt: Date.now(), updatedAt: Date.now(), playerId: null },
   }),
+  // v2 → v3: 마을 밖 위치(where) 추가. 기존 진행은 마을 안에 있던 것으로
+  2: (s) => ({ ...s, version: 3, run: s.run ? { ...s.run, where: null } : null }),
 };
 
 export function migrate(raw) {

@@ -21,15 +21,25 @@ async function leaveArea(page, dir) {
     return { n: [x, 3], s: [x, a.H - 4], w: [3, y], e: [a.W - 4, y] }[d];
   }, dir);
   const before = await page.evaluate(() => window.__game.scene.getScene('Area').key);
+  await page.waitForTimeout(250); // 새 씬이 자리 잡을 때까지
   await put(page, 'Area', p[0], p[1]);
   await holdUntil(page, { n: 'ArrowUp', s: 'ArrowDown', w: 'ArrowLeft', e: 'ArrowRight' }[dir],
     (k) => !window.__game.scene.isActive('Area') || window.__game.scene.getScene('Area').key !== k, before);
 }
 
 // 조건이 맞을 때까지 키를 누르고 있는다 (헤드리스 브라우저는 프레임이 느려 걷는 데 오래 걸린다)
-async function holdUntil(page, key, fn, arg, timeout = 15_000) {
-  await page.keyboard.down(key);
-  try { await page.waitForFunction(fn, arg, { timeout }); } finally { await page.keyboard.up(key); }
+// 씬이 다시 시작되는 순간 눌린 키는 새 씬이 못 볼 수 있어, 진척이 없으면 떼었다 다시 누른다
+async function holdUntil(page, key, fn, arg, timeout = 20_000) {
+  const until = Date.now() + timeout;
+  while (Date.now() < until) {
+    await page.keyboard.down(key);
+    try {
+      await page.waitForFunction(fn, arg, { timeout: 2500 });
+      await page.keyboard.up(key);
+      return;
+    } catch { await page.keyboard.up(key); }
+  }
+  throw new Error(`시간 초과: ${key}를 눌러도 조건이 맞지 않음`);
 }
 
 test('프롤로그엔 마을 밖이 막혀 있다', async ({ page }) => {
@@ -126,5 +136,21 @@ test('항구에서 배를 타고 바다로 나갔다가 돌아온다', async ({ 
   await leaveArea(page, 'n');
   await page.waitForFunction(() => window.__game.scene.getScene('Area').key === 'surface:8,15');
   expect(await page.evaluate(() => window.__game.scene.getScene('Area').area.sea)).toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test('길 맵에서 멈췄으면 이어하기는 그 칸에서 (로드 대가는 그대로)', async ({ page }) => {
+  const errors = await openGame(page);
+  await wipe(page);
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [7, 8], entry: 'center', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
+  await page.waitForFunction(() => window.__game.scene.isActive('Area'));
+  expect(await page.evaluate(() => window.__ud.run.where)).toEqual({ layer: 'surface', at: [7, 8] });
+
+  await page.reload();
+  await page.waitForFunction(() => window.__game?.scene.isActive('Title'));
+  const before = await page.evaluate(() => window.__ud.world.loads);
+  await page.evaluate(() => window.__game.scene.getScene('Title').continue());
+  await page.waitForFunction(() => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').key === 'surface:7,8', null, { timeout: 10_000 });
+  expect(await page.evaluate(() => window.__ud.world.loads)).toBe(before + 1);
   expect(errors).toEqual([]);
 });

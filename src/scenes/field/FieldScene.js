@@ -38,6 +38,7 @@ export default class FieldScene extends Phaser.Scene {
     this.flagTimes = {};
     this.cooldown = 0;
     WorldMemory.checkpoint(chapter, this.phaseId);
+    if (WorldMemory.run.where) WorldMemory.setWhere(null); // 마을 안으로 돌아왔다
   }
 
   create() {

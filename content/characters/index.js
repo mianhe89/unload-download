@@ -18,8 +18,12 @@ import hunter from './hunter.js';
 import monk from './monk.js';
 import woman from './woman.js';
 import oldman from './oldman.js';
+// 길 맵의 떠돌이
+import spirit from './spirit.js';
+import wanderer from './wanderer.js';
+import merchant from './merchant.js';
 
-export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, chief, granny, kid, farmer, hunter, monk, woman, oldman };
+export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant };
 
 // 로드 시 지워질 수 있는 사람(동점일 때 이 순서)
 export const ERASE_ORDER = ['hort', 'tom', 'rine', 'per'];

@@ -13,6 +13,7 @@ import { MapRenderer } from '../../field/MapRenderer.js';
 import { Lighting } from '../../field/Lighting.js';
 import { Ambient } from '../../field/Ambient.js';
 import { titleSetup } from './titleSetup.js';
+import { chapters } from '../../../content/chapters/index.js';
 
 const px = (t) => t * TILE + TILE / 2;
 
@@ -120,7 +121,7 @@ export default class TitleScene extends Phaser.Scene {
 
   continue() {
     const { run } = WorldMemory.load(); // 이 순간 누군가 지워진다
-    this.go(run.chapter, run.phase);
+    this.go(run.chapter, run.phase, run.where);
   }
 
   reset(t) {
@@ -134,10 +135,14 @@ export default class TitleScene extends Phaser.Scene {
     this.go(run.chapter, run.phase);
   }
 
-  go(chapter, phase) {
+  // where: 마을 밖 길 맵에서 멈췄으면 그 칸에서 이어간다
+  go(chapter, phase, where = null) {
     this.input.enabled = false;
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.uiCam.fadeOut(600, 0, 0, 0);
-    this.time.delayedCall(650, () => this.scene.start('Field', { chapter, phase }));
+    this.time.delayedCall(650, () => {
+      if (where) this.scene.start('Area', { layer: where.layer, at: where.at, entry: 'center', back: { chapter, phase, time: chapters[chapter].phases[phase].time } });
+      else this.scene.start('Field', { chapter, phase });
+    });
   }
 }

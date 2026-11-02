@@ -6,6 +6,15 @@ import { freshWorld } from '../helpers/world.js';
 describe('지워짐 규칙 (WorldMemory)', () => {
   beforeEach(freshWorld);
 
+  it('마을 밖 위치는 저장되고, 로드해도 남고, 새로 시작하면 지워진다', () => {
+    WorldMemory.startNew();
+    expect(WorldMemory.run.where).toBeNull();
+    WorldMemory.setWhere({ layer: 'surface', at: [7, 9] });
+    expect(WorldMemory.load().run.where).toEqual({ layer: 'surface', at: [7, 9] });
+    WorldMemory.startNew();
+    expect(WorldMemory.run.where).toBeNull();
+  });
+
   it('진행이 없으면 CONTINUE할 수 없다', () => {
     expect(WorldMemory.hasRun).toBe(false);
   });
