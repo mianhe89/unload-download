@@ -10,14 +10,20 @@
     "tauri": "tauri",
     "validate": "node tools/validate-content.mjs",
     "preview:art": "node tools/preview-art.mjs art-preview.png",
-    "preview:title": "node tools/preview-title.mjs title-preview.png"
+    "preview:title": "node tools/preview-title.mjs title-preview.png",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run validate && npm test && npm run build"
   },
   "dependencies": {
     "galmuri": "^2.40.3",
     "phaser": "^4.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tauri-apps/cli": "^2.12.4",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   }
 }

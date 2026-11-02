@@ -34,8 +34,11 @@ npm run dev       # http://localhost:5173
 
 EXE 빌드(Windows)는 [Rust](https://rustup.rs)와 Microsoft C++ Build Tools가 추가로 필요하다: `npm run tauri build`
 
-## 콘텐츠를 고친 뒤
+## 테스트
 
 ```bash
-node tools/validate-content.mjs
+npm run check      # 콘텐츠 검증 + 단위 테스트 + 빌드 (커밋 전에)
+npm run test:e2e   # 실제 게임을 헤드리스 브라우저로 완주 (처음 한 번: npx playwright install chromium)
 ```
+
+GitHub에 푸시하면 같은 검사가 자동으로 돈다(Actions 탭). 자세한 건 [docs/구현.md](docs/구현.md#테스트).

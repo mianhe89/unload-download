@@ -1,0 +1,58 @@
+# 푸시·PR마다 자동 검사
+#   check: 콘텐츠 검증 + 단위 테스트 + 빌드 (빠름, 1분 안팎)
+#   e2e:   빌드한 게임을 헤드리스 Chromium으로 프롤로그 완주 (몇 분)
+# 실패하면 GitHub 리포의 Actions 탭에서 원인과 스크린샷을 볼 수 있다.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 콘텐츠 검증
+        run: npm run validate
+      - name: 단위 테스트
+        run: npm test
+      - name: 빌드
+        run: npm run build
+
+  e2e:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Chromium 설치
+        run: npx playwright install --with-deps chromium
+      - name: E2E (프롤로그 완주)
+        run: npm run test:e2e
+      - name: 실패 시 리포트·스크린샷 보관
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

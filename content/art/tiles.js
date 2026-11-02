@@ -70,7 +70,7 @@ const draw = {
     const fl = ['#ffd860', '#ff9a3a', '#e8582e'];
     for (let y = 2; y < 11; y += 1) for (let x = 3; x < 13; x += 1) { const w = (11 - y) * 0.5; if (Math.abs(x - 7.5) < w && r() > 0.25) c.px(x, y, fl[Math.min(2, Math.floor((11 - y) / 3.2))]); }
   },
-  stall(c) { c.rect(0, 6, 16, 10, '#8a5a3a'); c.rect(0, 6, 16, 2, '#6a4228'); c.rect(1, 3, 14, 3, '#e8e0d0'); c.rect(1, 3, 14, 1, '#c84a3a'); for (let x = 2; x < 14; x += 4) { c.rect(x, 4, 2, 2, '#e8b060'); } },
+  stall(c, r) { draw.grass(c, r); c.rect(0, 6, 16, 10, '#8a5a3a'); c.rect(0, 6, 16, 2, '#6a4228'); c.rect(1, 3, 14, 3, '#e8e0d0'); c.rect(1, 3, 14, 1, '#c84a3a'); for (let x = 2; x < 14; x += 4) { c.rect(x, 4, 2, 2, '#e8b060'); } },
   anvil(c, r) { draw.path(c, r); c.rect(3, 6, 10, 3, '#4a4a52'); c.rect(1, 6, 3, 2, '#4a4a52'); c.rect(6, 9, 4, 4, '#3a3a42'); c.rect(4, 13, 8, 2, '#3a3a42'); c.rect(3, 6, 10, 1, '#6a6a74'); },
   well(c, r) { draw.grass(c, r); c.rect(2, 4, 12, 10, '#7a7680'); c.rect(4, 6, 8, 6, '#2a3a5a'); c.rect(5, 7, 3, 1, '#4a6a9a'); c.rect(2, 4, 12, 1, '#9a96a0'); c.rect(1, 1, 2, 8, '#5a3e2a'); c.rect(13, 1, 2, 8, '#5a3e2a'); c.rect(1, 0, 14, 2, '#7a3a2e'); },
   fog(c) { c.rect(0, 0, 16, 16, '#c8ccd6'); },
