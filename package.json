@@ -9,8 +9,6 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "validate": "node tools/validate-content.mjs",
-    "preview:art": "node tools/preview-art.mjs art-preview.png",
-    "preview:title": "node tools/preview-title.mjs title-preview.png",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

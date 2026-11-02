@@ -61,7 +61,9 @@ export async function advanceUntil(page, fn, arg, timeout = 30_000, what = '조�
   const until = Date.now() + timeout;
   while (Date.now() < until) {
     if (await page.evaluate(fn, arg)) return;
-    if ((await state(page)).talking) await page.keyboard.press('Space');
+    // 대화창이든 걸으며 듣는 말풍선이든 넘긴다
+    const s = await state(page);
+    if (s.talking || s.busy) await page.keyboard.press('Space');
     await page.waitForTimeout(80);
   }
   throw new Error(`시간 초과: ${what}`);

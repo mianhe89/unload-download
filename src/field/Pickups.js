@@ -1,6 +1,6 @@
 // 바닥에 떨어진 물건(빵, 화관, 불씨 등). 플레이어가 밟으면 줍는다.
 // 묶음(group) 단위로 '다 주웠는가'를 이벤트가 확인한다. 시간이 지나면 사라지는 것도 있다.
-import { TILE } from '../../content/art/tiles.js';
+import { TILE } from '../../content/art/props.js';
 
 export class Pickups {
   constructor(scene) {

@@ -2,11 +2,12 @@
 // 컷신은 짧게. 이야기의 대부분은 플레이어가 걸어 다니며 '우연히' 마주친다.
 // 지워질 수 있는 사람(호르트·톰·리네·페르)이 나오는 대사에는 지워졌을 때의 처리를 둔다.
 // 복선은 로드한 사람에게만 보인다(minLoads).
-import { N, T, B, keep } from '../dsl.js';
+import { N, T, B, keep, WALK } from '../dsl.js';
 
 export const script = {
   // ─────────────────────────────── 수확제의 밤
   'festival.intro': [
+    WALK,
     N('그해 수확제는, 내가 기억하는 어느 해보다 따뜻했다.'),
     T('mia', '야! 또 구석에 서 있지! 오늘 같은 날 혼자 있으면 벌금이야.'),
     T('me', '벌금은 누가 정했는데.'),
@@ -15,6 +16,7 @@ export const script = {
   ],
 
   'festival.hort_spill': [
+    WALK,
     T('hort', '어이, 거기 둘! 꿀빵 마지막 판이다, 식기 전에—'),
     { fx: 'shake' },
     N('호르트 아저씨의 발이 좌판 다리에 걸렸다. 바구니가 엎어졌다.'),
@@ -25,6 +27,7 @@ export const script = {
   ],
 
   'festival.hort_thanks': [
+    WALK,
     T('hort', '오, 다 주워왔냐! 흙은 털면 돼. 빵은 원래 좀 굴러야 맛있는 거야.'),
     T('hort', '돈은 됐어. 너희 아버지가 우리 지붕 고쳐준 거, 아직 다 못 갚았거든.'),
     T('me', '그거 벌써 십 년 전 일이잖아요.'),
@@ -35,12 +38,14 @@ export const script = {
   ],
 
   'festival.spark': [
+    WALK,
     B('tom', '어이쿠, 불똥!'),
     N('모닥불에서 튄 불씨 하나가 마른 풀 위로 굴러갔다.'),
     { act: 'spawnPickups', group: 'spark', prop: 'spark', items: [[26, 20]], expire: { seconds: 12, run: 'festival.spark_tom' } },
   ],
 
   'festival.spark_you': [
+    WALK,
     N('불씨를 밟아 껐다. 발바닥이 조금 뜨거웠다.'),
     T('tom', '오, 빠른데! 작년엔 이걸 못 잡아서 촌장 수염이 탔지.'),
     T('mia', '톰 아저씨, 그거 아저씨가 태운 거잖아요.'),
@@ -52,10 +57,12 @@ export const script = {
   ],
 
   'festival.spark_tom': [
+    WALK,
     B('tom', '내가 밟았다! 지루함 사수!'),
   ],
 
   'festival.rine_wind': [
+    WALK,
     B('rine', '아, 바람!'),
     N('바람이 리네의 화관 하나를 채어 광장 쪽으로 굴렸다.'),
     { act: 'spawnPickups', group: 'crown', prop: 'crown', items: [[25, 15]] },
@@ -63,6 +70,7 @@ export const script = {
   ],
 
   'festival.rine_crown': [
+    WALK,
     T('rine', '어, 그거 주워온 거야? 고마워.'),
     T('rine', '…아니다. 그냥 너 가져. 너 작년에 산 화관, 말려서 창가에 걸어뒀지? 다 봤어.'),
     T('me', '버리기 아까워서.'),
@@ -72,6 +80,7 @@ export const script = {
   ],
 
   'festival.per_song': [
+    WALK,
     T('per', '끝까지 들어준 사람은 오랜만이군.'),
     T('per', '이 노래엔 뒷소절이 있다네. 아무도 안 들어서 안 부를 뿐이지.'),
     T('per', '마왕을 벤 용사가 집에 돌아오니, 마을이 하나도 남지 않았더라.'),
@@ -82,6 +91,7 @@ export const script = {
   ],
 
   'festival.mia_quiet': [
+    WALK,
     N('미아는 모닥불을 보며 아무 말도 하지 않았다. 그게 이상하게 편했다.'),
     T('mia', '있잖아. 우리 내년에도 이러고 있을까?'),
     T('me', '내년에도 벌금 매길 거잖아.'),
@@ -122,13 +132,32 @@ export const script = {
     { phase: 'morning' },
   ],
 
+  // 엿듣는 대화 (배경 주민끼리)
+  'festival.chat_farm': [
+    WALK,
+    T('farmer', '올해 밀은 유난히 잘 여물었어.'),
+    T('woman', '그러게. 꼭 누가 미리 정해놓은 것처럼.'),
+    T('farmer', '하하, 정해놓긴 누가.'),
+    T('woman', '…작년에도 똑같은 말 하지 않았어?', { minLoads: 1 }),
+  ],
+  'festival.chat_kid': [
+    WALK,
+    T('kid', '할머니, 종 몇 번 쳐요?'),
+    T('granny', '열두 번. 매년 열두 번이지.'),
+    T('kid', '난 열세 번까지 셀 거야!'),
+    T('granny', '욘석. 그런 소리 하면 종지기가 잡아간다.'),
+    T('kid', '종지기가 누군데요? 빗자루 든 사람?', { minLoads: 1 }),
+  ],
+
   // ─────────────────────────────── 다음 날 아침
   'morning.intro': [
+    WALK,
     N('다음 날 아침. 손바닥에는 거친 쇠반지가 그대로 있었다.'),
     N('에다는 늦으면 녹여버린다고 했다.'),
   ],
 
   'morning.smithy': [
+    WALK,
     N('대장간 문은 잠겨 있지 않았다. 안은 텅 비어 있었다.'),
     N('화로는 차가웠다. 몇 년은 불을 지피지 않은 것처럼.'),
     T('me', '에다?'),
@@ -178,8 +207,25 @@ export const script = {
     { phase: 'night' },
   ],
 
+  'morning.chat_smithy': [
+    WALK,
+    T('oldman', '촌장, 대장간 말이오. 거기 원래 비어 있었소?'),
+    T('chief', '대장장이 영감 가고 나서 쭉 비었지.'),
+    T('oldman', '그런데 왜 아침마다 쇠 두드리는 소리를 기다리게 되는지.'),
+    T('chief', '늙으면 다 그래. 없는 소리를 기다리는 거.'),
+  ],
+  'morning.chat_bells': [
+    WALK,
+    T('kid', '아저씨! 어젯밤 종 열세 번 쳤다? 나 셌어!'),
+    T('farmer', '열두 번이었어. 꿈꿨구나.'),
+    T('kid', '아닌데… 에다 누나도 같이 셌는데.'),
+    T('farmer', '누구?'),
+    T('kid', '…누구였지?'),
+  ],
+
   // ─────────────────────────────── 그날 밤
   'night.intro': [
+    WALK,
     N('그날 밤. 마을은 잠들어 있었다.'),
     N('종탑 문 틈으로, 희미한 빛이 새어 나오고 있었다.'),
   ],
@@ -209,12 +255,14 @@ export const script = {
   // ─────────────────────────────── E로 말 걸기 (아침)
   // 처음 한 번만 컷신, 이후엔 말풍선. 지워진 사람은 배치되지 않으므로 조건이 필요 없다.
   'talk.morning.hort': [
+    WALK,
     T('hort', '에다? 처음 듣는 이름인데. 새로 이사 온 애냐?'),
     T('me', '아저씨가 매일 아침 탄 빵 챙겨주던 애요.'),
     T('hort', '탄 빵을 누가 먹어. 다 버리지. …근데 나 왜 그걸 매일 따로 모아뒀지?'),
     { aff: { hort: 1 } },
   ],
   'talk.morning.tom': [
+    WALK,
     T('tom', '대장간 딸? 대장간에 딸 없어. 내가 이 마을 호구조사 몇 번 했는데.'),
     T('me', '작년 수확제에 촌장님 수염 불, 쇠 집게로 끈 사람이요.'),
     T('tom', '그건 내가 맨손으로 껐지. …껐나?'),
@@ -222,23 +270,26 @@ export const script = {
     { aff: { tom: 1 } },
   ],
   'talk.morning.rine': [
+    WALK,
     T('rine', '에다…? 미안, 모르겠어.'),
     T('rine', '근데 이상하다. 어제 화관 하나가 남았거든. 주문받은 건데, 누가 주문했는지 기억이 안 나.'),
     { aff: { rine: 1 } },
   ],
   'talk.morning.per': [
+    WALK,
     T('per', '에다라. 모르는 이름이야. 그런데 말이지.'),
     T('per', '방금 그 이름을 들었을 때, 노래 한 소절이 비는 느낌이 들었어. 원래 있던 가사가 빠진 것처럼.'),
     { aff: { per: 1 } },
   ],
   'talk.morning.selena': [
+    WALK,
     T('selena', '용건이 있으면 말해.', { unlessFlag: 'mia.talked' }),
   ],
 
   // 축제 중 말 걸기 (이벤트 전에 먼저 말을 걸었을 때)
-  'talk.festival.hort': [T('hort', '꿀빵 마지막 판이다! 식기 전에 먹어.', keep('hort'))],
-  'talk.festival.tom': [T('tom', '불 너무 키우지 마라. 작년처럼 되면 이번엔 진짜 내가 잘린다.')],
-  'talk.festival.rine': [T('rine', '꽃 사세요! 수확제 화관, 오늘만 반값!')],
-  'talk.festival.per': [T('per', '노래는 곁에 오래 있어야 들리는 법이지.')],
-  'talk.festival.mia': [T('mia', '왜? 할 말 있어? …없으면 그냥 옆에 있어.')],
+  'talk.festival.hort': [WALK, T('hort', '꿀빵 마지막 판이다! 식기 전에 먹어.', keep('hort'))],
+  'talk.festival.tom': [WALK, T('tom', '불 너무 키우지 마라. 작년처럼 되면 이번엔 진짜 내가 잘린다.')],
+  'talk.festival.rine': [WALK, T('rine', '꽃 사세요! 수확제 화관, 오늘만 반값!')],
+  'talk.festival.per': [WALK, T('per', '노래는 곁에 오래 있어야 들리는 법이지.')],
+  'talk.festival.mia': [WALK, T('mia', '왜? 할 말 있어? …없으면 그냥 옆에 있어.')],
 };

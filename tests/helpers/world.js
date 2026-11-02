@@ -22,6 +22,7 @@ export function scriptCtx({ erased = [], loads = erased.length, flags = {} } = {
     flag: (n) => flags[n],
     setFlag: (n) => { flags[n] = true; },
     addAffinity: (id, n) => { aff[id] = (aff[id] ?? 0) + n; },
+    lastErasedName: () => ({ hort: '호르트', tom: '톰', rine: '리네', per: '페르' })[erased.at(-1)] ?? '',
   };
 }
 

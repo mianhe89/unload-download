@@ -1,7 +1,7 @@
 // NPC 행동: idle(제자리), wander(주변 배회), follow(플레이어 따라다니기).
 // 플레이어가 가까이 오면 그쪽을 본다. 컷신에서는 walkTo로 움직인다.
 import { Actor } from './Actor.js';
-import { TILE } from '../../content/art/tiles.js';
+import { TILE } from '../../content/art/props.js';
 
 export class Npc extends Actor {
   constructor(scene, id, cfg) {

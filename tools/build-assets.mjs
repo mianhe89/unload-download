@@ -50,7 +50,8 @@ const EDITS = {
 
 function forEachFrame(img, fn) {
   const dirs = Object.keys(CHAR.dirs);
-  for (let row = 0; row < CHAR.rows; row += 1) {
+  const rows = Math.floor(img.height / CHAR.frame);
+  for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < CHAR.cols; col += 1) fn(col * CHAR.frame, row * CHAR.frame, dirs[col], row);
   }
 }

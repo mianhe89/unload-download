@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'tests/e2e',
-  timeout: 180_000,
+  timeout: 300_000, // 프롤로그 완주는 걸으며 듣는 대사 때문에 2분 넘게 걸린다
   expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,

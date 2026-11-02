@@ -9,6 +9,7 @@ import * as village from '../../../content/maps/village.js';
 import { TILE } from '../../../content/maps/village.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { passes } from '../../core/script/ScriptRunner.js';
+import { maskNames, goneIds, lineSeconds, canHear } from '../../core/script/speech.js';
 import { MapRenderer } from '../../field/MapRenderer.js';
 import { Player } from '../../field/Player.js';
 import { Npc } from '../../field/Npc.js';
@@ -17,6 +18,7 @@ import { Lighting } from '../../field/Lighting.js';
 import { EventDirector } from '../../field/EventDirector.js';
 import { Cutscene } from '../../field/Cutscene.js';
 import { Ambient } from '../../field/Ambient.js';
+import { absence, objectiveText } from '../../field/absence.js';
 import { OBJECTS } from '../../../content/art/pack.js';
 
 const px = (t) => t * TILE + TILE / 2;
@@ -80,7 +82,7 @@ export default class FieldScene extends Phaser.Scene {
     this.time.delayedCall(0, () => {
       this.ui.toScreen = (x, y) => this.worldToScreen(x, y);
       this.ui.hud.setPlace(this.phase.place);
-      this.ui.hud.setObjective(this.phase.objective);
+      this.refreshObjective();
       this.ui.bubbles.clear();
       if (this.phase.onEnter && !WorldMemory.run.flags[`entered.${this.chapterId}.${this.phaseId}`]) {
         WorldMemory.setFlag(`entered.${this.chapterId}.${this.phaseId}`);
@@ -99,6 +101,7 @@ export default class FieldScene extends Phaser.Scene {
       flag: (n) => WorldMemory.run.flags[n],
       setFlag: (n) => { WorldMemory.setFlag(n); this.flagTimes[n] = this.elapsed; },
       addAffinity: (id, n) => WorldMemory.addAffinity(id, n),
+      lastErasedName: () => characters[WorldMemory.world.erased.at(-1)?.id]?.name ?? '',
     };
   }
 
@@ -111,15 +114,17 @@ export default class FieldScene extends Phaser.Scene {
     const blocked = (x, y) => this.map.isSolidPx(x, y) || this.hitsNpc(x, y);
     this.player.update(dt, blocked);
     for (const npc of Object.values(this.npcs)) {
-      npc.update(dt, { player: this.player, paused: busy, blocked: (x, y) => this.map.isSolidPx(x, y) });
+      // 걸으며 듣는 대사 중에는 마을도 계속 움직인다 (미아도 따라온다)
+      npc.update(dt, { player: this.player, paused: busy && !this.cutscene.walking, blocked: (x, y) => this.map.isSolidPx(x, y) });
     }
     this.player.sync();
     for (const npc of Object.values(this.npcs)) npc.sync();
     this.lighting.follow(this.player.x, this.player.y);
     this.lighting.update(dt);
 
+    // 걸으며 듣는 대사 중에도 물건은 주울 수 있다
+    if (!busy || this.cutscene.walking) for (const g of this.pickups.collect(this.player)) this.onPicked(g);
     if (!busy) {
-      for (const g of this.pickups.collect(this.player)) this.onPicked(g);
       const { runs, bubbles } = this.director.update(dt, this.world(), busy);
       bubbles.forEach((b) => this.bubble(b.who, b.text));
       for (const r of runs) { WorldMemory.setFlag(`done.${r.id}`); this.cutscene.play(r.run); }
@@ -177,7 +182,7 @@ export default class FieldScene extends Phaser.Scene {
     for (const p of this.props) {
       if (!p.text) continue;
       const d = this.player.distTo(p.sprite.x, p.sprite.y);
-      if (d < bestD) { best = { prop: p, x: p.sprite.x, y: p.sprite.y, text: p.text }; bestD = d; }
+      if (d < bestD) { best = { prop: p, x: p.sprite.x, y: p.sprite.y, text: p.text, remnantOf: p.remnantOf }; bestD = d; }
     }
     return best;
   }
@@ -198,6 +203,14 @@ export default class FieldScene extends Phaser.Scene {
   async examine(target) {
     this.setFrozen(true);
     await this.ui.say('', '#cfc9dd', target.text);
+    if (target.remnantOf && !WorldMemory.run.flags[`found.${target.remnantOf}`]) {
+      // 빈자리를 찾았다: 이름은 나만 기억한다
+      WorldMemory.setFlag(`found.${target.remnantOf}`);
+      await this.ui.say('', '#cfc9dd', `여기는 ${characters[target.remnantOf].name}의 자리였다.`);
+      const a = this.absence();
+      if (a.all) WorldMemory.setFlag('found.all');
+      this.refreshObjective();
+    }
     this.ui.closeDialog();
     this.setFrozen(false);
   }
@@ -228,7 +241,41 @@ export default class FieldScene extends Phaser.Scene {
 
   bubble(who, text) {
     const a = this.actorOf(who);
-    if (a) this.ui.bubbles.show(a, text, characters[who]?.color);
+    if (a) this.ui.bubbles.show(a, this.speech(who, text), characters[who]?.color);
+  }
+
+  // 마을 사람 입에서 지워진 이름은 깨진다. 내레이션과 주인공은 온전히 말한다
+  speech(who, text) {
+    const ids = goneIds(characters, { erased: WorldMemory.world.erased.map((e) => e.id), phase: this.phaseId });
+    return maskNames(text, who, ids.map((id) => characters[id].name));
+  }
+
+  // 걸으며 듣는 대사 한 줄. 시간이 지나거나 진행 키를 누르면 넘어간다.
+  // 화자에게서 멀면 '…'만 흐릿하게 보이고 그 장면은 놓친 것으로 남는다
+  walkLine(who, text, label) {
+    const ui = this.ui;
+    let secs = lineSeconds(text);
+    if (!who) {
+      ui.bubbles.narrate(this.player, text, secs * 1000 + 400);
+    } else {
+      const a = this.actorOf(who);
+      const heard = !a || who === 'me' || canHear(a.x - this.player.x, a.y - this.player.y, TILE);
+      if (!heard) {
+        WorldMemory.setFlag(`missed.${label}`);
+        secs = 1.2;
+      }
+      if (a) ui.bubbles.show(a, heard ? text : '…', characters[who]?.color, secs * 1000 + 300, { faint: !heard });
+      else ui.bubbles.narrate(this.player, `${characters[who]?.name ?? ''}: ${text}`, secs * 1000);
+    }
+    return new Promise((resolve) => {
+      const start = this.time.now;
+      let done = false;
+      const finish = () => { if (done) return; done = true; ui.events.off('skip', onSkip); timer.remove(); resolve(); };
+      // 말을 건 그 키 입력이 첫 줄을 바로 넘기지 않도록 잠깐 무시한다
+      const onSkip = () => { if (this.time.now - start > 180) finish(); };
+      const timer = this.time.delayedCall(secs * 1000, finish);
+      ui.events.on('skip', onSkip);
+    });
   }
 
   fx(kind) {
@@ -286,8 +333,15 @@ export default class FieldScene extends Phaser.Scene {
 
   placeRemnant(id, at) {
     const r = characters[id].remnant;
-    if (r) this.addProp(r.prop, at, r.text);
+    if (r) { this.addProp(r.prop, at, r.text); this.props.at(-1).remnantOf = id; }
   }
+
+  absence() {
+    const ids = this.props.filter((p) => p.remnantOf).map((p) => p.remnantOf);
+    return absence(WorldMemory.world.erased.map((e) => e.id), ids, WorldMemory.run.flags);
+  }
+
+  refreshObjective() { this.ui.hud.setObjective(objectiveText(this.phase.objective, this.absence())); }
 
   // prop: 코드로 그린 소품(prop.<이름>) 또는 팩 물체(OBJECTS의 이름)
   addProp(prop, at, text) {

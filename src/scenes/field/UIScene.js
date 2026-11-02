@@ -13,14 +13,15 @@ export default class UIScene extends Phaser.Scene {
     this.hud = new Hud(this);
     this.toScreen = (x, y) => ({ x, y });
 
-    const advance = () => this.dialog.advance();
+    // 대화창이 떠 있으면 다음 문장, 아니면 걷는 대사(말풍선)를 넘긴다
+    const advance = () => { if (!this.dialog.advance()) this.events.emit('skip'); };
     this.input.on('pointerdown', advance);
     ['E', 'SPACE', 'ENTER'].forEach((k) => this.input.keyboard.on(`keydown-${k}`, advance));
   }
 
   update() { this.bubbles.update(this.toScreen); }
 
-  say(name, color, text) { return this.dialog.say(name, color, text); }
+  say(name, color, text, face) { return this.dialog.say(name, color, text, face); }
   closeDialog() { this.dialog.close(); }
   get talking() { return this.dialog.open; }
 }

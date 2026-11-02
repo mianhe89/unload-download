@@ -11,6 +11,9 @@
 //   { act: 'name', ...args }   필드에 맡기는 동작(인물 이동, 소환 등)
 //   { goto: 'label' }
 //   { end: 'title', next: { chapter, phase } }  타이틀로, 다음 이어하기 지점 지정
+//   { mode: 'walk' }           (라벨 첫 노드) 걸으며 듣는 대사 — 멈추지 않고, 말풍선이 저절로 넘어가며, 멀면 놓친다
+//
+// 글자 치환: {bells} {loads} {lastErased}(가장 최근에 지워진 사람의 이름)
 //
 // 조건 (모든 노드에 붙일 수 있음)
 //   ifErased / unlessErased: id | [ids]
@@ -42,6 +45,9 @@ export class ScriptRunner {
 
   has(label) { return Boolean(this.script[label]); }
 
+  // 'walk' | 'block'
+  mode(label) { return this.script[label]?.[0]?.mode ?? 'block'; }
+
   start(label) {
     if (!this.script[label]) throw new Error(`대본 라벨 없음: ${label}`);
     this.label = label;
@@ -55,6 +61,7 @@ export class ScriptRunner {
       if (this.index >= nodes.length) return { done: true };
       const node = nodes[this.index];
       this.index += 1;
+      if (node.mode) continue;
       if (!passes(node, this.ctx)) continue;
       if (node.goto) { this.start(node.goto); continue; }
       // aff와 flag는 한 노드에 같이 올 수 있다. 둘 다 처리한 뒤 보여줄 게 없으면 다음으로
@@ -69,6 +76,7 @@ export class ScriptRunner {
   format(text) {
     return text
       .replaceAll('{bells}', String(13 + this.ctx.loads()))
-      .replaceAll('{loads}', String(this.ctx.loads()));
+      .replaceAll('{loads}', String(this.ctx.loads()))
+      .replaceAll('{lastErased}', this.ctx.lastErasedName?.() ?? '');
   }
 }

@@ -3,7 +3,7 @@
 // 2) buildTextures: 시트에 물체 프레임을 등록하고, 코드로 그리는 작은 소품·빛을 만든다 (Boot의 create)
 import { characters } from '../../../content/characters/index.js';
 import { OBJECTS, ANIMATED, PARTICLES, CHAR, FACE } from '../../../content/art/pack.js';
-import { propPixels, PROP_NAMES, TILE } from '../../../content/art/tiles.js';
+import { propPixels, PROP_NAMES, TILE } from '../../../content/art/props.js';
 
 const BASE = 'assets/gen/';
 
@@ -70,8 +70,11 @@ export function buildAnimations(scene) {
   for (const id of Object.keys(characters)) {
     const key = `char.${id}`;
     if (!scene.textures.exists(key) || A.exists(`${key}.down`)) continue;
+    // 몇몇 바탕 캐릭터(Child, OldWoman)는 줄이 2개뿐이라 있는 줄만 쓴다
+    const rows = Math.floor((scene.textures.get(key).frameTotal - 1) / CHAR.cols);
+    const walk = CHAR.walkRows.filter((r) => r < rows);
     for (const [dir, col] of Object.entries(CHAR.dirs)) {
-      A.create({ key: `${key}.${dir}`, frames: CHAR.walkRows.map((row) => ({ key, frame: row * CHAR.cols + col })), frameRate: 8, repeat: -1 });
+      A.create({ key: `${key}.${dir}`, frames: walk.map((row) => ({ key, frame: row * CHAR.cols + col })), frameRate: walk.length > 2 ? 8 : 5, repeat: -1 });
     }
   }
   for (const [key, a] of Object.entries(ANIMATED)) {

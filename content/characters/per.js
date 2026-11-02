@@ -12,11 +12,6 @@ export default {
     recolor: { e0394c: '8a6a48', '8f3e56': '5a4630', d14b34: 'a04848' },
     edits: [{ type: 'feather' }],
   },
-  // (예전 코드 생성 픽셀. 타이틀 미리보기 도구용으로만 남김)
-  art: {
-    layers: ["featherHat", "beard"],
-    pal: { h: '#e8e4dc', H: '#b8b0a4', c: '#8a3a3a', C: '#682828', a: '#d8b860', p: '#4a3a3a', b: '#2a2020', k: '#5a4a3a', K: '#3f3428', r: '#e05a4a' },
-  },
   silhouette: '깃털 꽂은 챙모자와 흰 수염. 바랜 붉은 외투.',
   // 페이즈별로 근처에 가면 머리 위에 뜨는 혼잣말
   bubbles: {"festival": ["♪ 북쪽 끝, 검은 성에…", "좋은 노래는 닳지 않지."], "morning": ["노래 한 소절이 비는군."]},

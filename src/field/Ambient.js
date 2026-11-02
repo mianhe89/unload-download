@@ -5,7 +5,8 @@ import { TILE } from '../../content/maps/village.js';
 
 export class Ambient {
   // bonfire: 'lit'(타오름) | 'embers'(사그라든 연기) | 'out'(꺼진 재)
-  constructor(scene, { time, bonfire = 'out', map, erasedCount = 0 }) {
+  // falling: 떨어지는 것 'leaf' | 'leafPink' | 'rain' | 'snow' | null (기본: 낮엔 잎)
+  constructor(scene, { time, bonfire = 'out', map, erasedCount = 0, falling }) {
     this.scene = scene;
     const W = map.W * TILE, H = map.H * TILE;
     const night = time === 'night';
@@ -55,12 +56,26 @@ export class Ambient {
         scale: { start: 0.5, end: 0.2 }, alpha: { values: [0, 0.9, 0.2, 0.9, 0] }, tint: 0xd8ff8a,
         frequency: 220 + erasedCount * 200, blendMode: Phaser.BlendModes.ADD,
       }).setDepth(9004);
-    } else {
-      // 떨어지는 잎
-      scene.add.particles(0, 0, 'fx.leaf', {
-        frame: [0, 1, 2, 3, 4, 5], emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(edge, edge, W - edge * 2, 10) },
+    }
+
+    const fall = falling === undefined ? (night ? null : 'leaf') : falling;
+    const top = new Phaser.Geom.Rectangle(edge, edge - 20, W - edge * 2, 10);
+    if (fall === 'leaf' || fall === 'leafPink') {
+      scene.add.particles(0, 0, `fx.${fall}`, {
+        frame: [0, 1, 2, 3, 4, 5], emitZone: { type: 'random', source: top },
         lifespan: 9000, speedY: { min: 10, max: 18 }, speedX: { min: -8, max: 14 }, rotate: { min: 0, max: 360 },
-        alpha: { start: 0.9, end: 0 }, frequency: 900,
+        alpha: { start: 0.9, end: 0 }, frequency: 700,
+      }).setDepth(9004);
+    } else if (fall === 'rain') {
+      scene.add.particles(0, 0, 'fx.rain', {
+        frame: [0, 1, 2], emitZone: { type: 'random', source: zone }, lifespan: 500, speedY: { min: 140, max: 180 }, speedX: -20,
+        alpha: { start: 0.7, end: 0 }, frequency: 12, quantity: 2,
+      }).setDepth(9004);
+      scene.add.rectangle(W / 2, H / 2, W, H, 0x3a4a6a, 0.12).setDepth(9002);
+    } else if (fall === 'snow') {
+      scene.add.particles(0, 0, 'fx.snow', {
+        frame: [0, 1, 2, 3, 4, 5, 6], emitZone: { type: 'random', source: zone }, lifespan: 6000, speedY: { min: 8, max: 18 }, speedX: { min: -6, max: 6 },
+        alpha: { start: 0.9, end: 0 }, frequency: 40,
       }).setDepth(9004);
     }
   }

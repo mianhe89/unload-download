@@ -22,7 +22,10 @@ describe('에셋 빌드', () => {
     expect(Object.keys(manifest.chars).sort()).toEqual(Object.keys(characters).sort());
     for (const id of Object.keys(characters)) {
       const s = readPng(join(GEN, manifest.chars[id]));
-      expect([s.width, s.height]).toEqual([CHAR.frame * CHAR.cols, CHAR.frame * CHAR.rows]);
+      // 열은 늘 4방향. 줄은 대부분 7줄, 몇몇 바탕(Child, OldWoman)은 2줄 — 걷기 애니메이션은 있는 줄만 쓴다
+      expect(s.width).toBe(CHAR.frame * CHAR.cols);
+      expect(s.height % CHAR.frame).toBe(0);
+      expect(s.height / CHAR.frame).toBeGreaterThanOrEqual(2);
     }
   });
 

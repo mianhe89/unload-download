@@ -1,79 +1,74 @@
 import { describe, it, expect } from 'vitest';
-import { characters } from '../../content/characters/index.js';
-import { composeSheet, composeFrame, FRAME } from '../../content/art/compose.js';
-import { tilePixels, propPixels, TILE_NAMES, PROP_NAMES, TILE } from '../../content/art/tiles.js';
-import { drawTitle, TITLE_W, TITLE_H } from '../../src/scenes/title/TitleIllustration.js';
+import { propPixels, PROP_NAMES, TILE } from '../../content/art/props.js';
+import { titleSetup } from '../../src/scenes/title/titleSetup.js';
 
 const opaque = (px) => { let n = 0; for (let i = 3; i < px.length; i += 4) if (px[i]) n += 1; return n; };
-const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 
-describe('캐릭터 픽셀', () => {
-  it.each(Object.keys(characters))('%s: 9프레임 시트가 그려진다', (id) => {
-    const s = composeSheet(characters[id].art);
-    expect(s.width).toBe(FRAME * 9);
-    expect(s.height).toBe(FRAME);
-    expect(opaque(s.data)).toBeGreaterThan(9 * 60);
+describe('대본용 소품', () => {
+  it.each(PROP_NAMES)('%s: 그려져 있고 16×16', (k) => {
+    const px = propPixels(k);
+    expect(px.length).toBe(TILE * TILE * 4);
+    expect(opaque(px)).toBeGreaterThan(0);
   });
 
-  it('모든 캐릭터의 정면 모습이 서로 다르다 (실루엣 원칙)', () => {
-    const fronts = Object.entries(characters).map(([id, c]) => [id, composeFrame(c.art, 'down', 0)]);
-    for (let i = 0; i < fronts.length; i += 1) {
-      for (let j = i + 1; j < fronts.length; j += 1) {
-        expect(same(fronts[i][1], fronts[j][1]), `${fronts[i][0]} = ${fronts[j][0]}`).toBe(false);
-      }
+  it('팩처럼 어두운 외곽선을 두른다', () => {
+    const px = propPixels('bread');
+    let dark = 0;
+    for (let i = 0; i < px.length; i += 4) if (px[i + 3] && px[i] === 20 && px[i + 1] === 27 && px[i + 2] === 27) dark += 1;
+    expect(dark).toBeGreaterThan(10);
+  });
+});
+
+describe('타이틀 장면 설정', () => {
+  const night = new Date(2026, 9, 28, 22);
+  const fresh = { started: false, erased: [], loads: 0 };
+
+  it('같은 날·같은 상태면 같은 장면', () => {
+    expect(titleSetup(fresh, night)).toEqual(titleSetup(fresh, new Date(2026, 9, 28, 23)));
+  });
+
+  it('실제 시각이 빛을 정한다', () => {
+    expect(titleSetup(fresh, night).tod).toBe('night');
+    expect(titleSetup(fresh, new Date(2026, 9, 28, 13)).tod).toBe('day');
+  });
+
+  it('날짜에 따라 날씨나 카메라 자리가 달라진다 (한 달 안에 여러 가지가 나온다)', () => {
+    const seen = new Set();
+    for (let d = 1; d <= 30; d += 1) {
+      const s = titleSetup(fresh, new Date(2026, 3, d, 12));
+      seen.add(`${s.weather}/${s.view.x}`);
     }
+    expect(seen.size).toBeGreaterThan(2);
   });
 
-  it('걷기 프레임은 서 있는 프레임과 다르다', () => {
-    const art = characters.me.art;
-    expect(same(composeFrame(art, 'down', 0), composeFrame(art, 'down', 1))).toBe(false);
-  });
-});
-
-describe('타일·소품', () => {
-  it.each(TILE_NAMES)('타일 %s는 꽉 찬 16×16', (k) => {
-    expect(opaque(tilePixels(k, 3))).toBe(TILE * TILE);
+  it('겨울엔 비 대신 눈', () => {
+    for (let d = 1; d <= 31; d += 1) expect(titleSetup(fresh, new Date(2027, 0, d, 12)).weather).not.toBe('rain');
   });
 
-  it.each(PROP_NAMES)('소품 %s는 뭔가 그려져 있다', (k) => {
-    expect(opaque(propPixels(k))).toBeGreaterThan(0);
+  it('지워진 사람은 서 있지 않고 흔적만 남는다', () => {
+    const s = titleSetup({ started: true, chapter: 'prologue', phase: 'morning', erased: ['hort'], loads: 1 }, night);
+    expect(s.people.map((p) => p.id)).not.toContain('hort');
+    expect(s.remnants.map((r) => r.id)).toContain('hort');
   });
 
-  it('같은 시드면 같은 타일', () => {
-    expect(same(tilePixels('grass', 7), tilePixels('grass', 7))).toBe(true);
-  });
-});
-
-describe('타이틀 일러스트', () => {
-  const base = { date: new Date(2026, 9, 28, 22), started: true, chapter: 'prologue', phase: 'festival' };
-
-  it('같은 날·같은 상태면 똑같이 그려진다', () => {
-    expect(same(drawTitle(base).raster.d, drawTitle(base).raster.d)).toBe(true);
+  it('처음엔 모닥불이 타오르고 미아가 곁에 있다', () => {
+    const s = titleSetup(fresh, night);
+    expect(s.bonfire).toBe('lit');
+    expect(s.figures.map((f) => f.id)).toEqual(['me', 'mia']);
+    expect(s.keeper).toBe(false);
   });
 
-  it('크기가 맞다', () => {
-    const { raster } = drawTitle(base);
-    expect(raster.w).toBe(TITLE_W);
-    expect(raster.h).toBe(TITLE_H);
+  it('1장부터는 혼자, 모닥불은 꺼지고, 종탑 앞에 정리자가 있다', () => {
+    const s = titleSetup({ started: true, chapter: 'chapter1', phase: 'aftermath', erased: ['hort'], loads: 1 }, night);
+    expect(s.figures.map((f) => f.id)).toEqual(['me']);
+    expect(s.bonfire).toBe('out');
+    expect(s.keeper).toBe(true);
   });
 
-  it('다른 날이면 다르게 그려진다', () => {
-    const other = drawTitle({ ...base, date: new Date(2026, 9, 29, 22) });
-    expect(same(drawTitle(base).raster.d, other.raster.d)).toBe(false);
-  });
-
-  it('시각이 하늘을 정한다', () => {
-    expect(drawTitle({ ...base, date: new Date(2026, 9, 28, 13) }).tod).toBe('day');
-    expect(drawTitle(base).tod).toBe('night');
-  });
-
-  it('누군가 지워지면 그림이 바뀐다', () => {
-    const erased = drawTitle({ ...base, erased: ['hort'] });
-    expect(same(drawTitle(base).raster.d, erased.raster.d)).toBe(false);
-  });
-
-  it('1장부터는 종탑 위에 그림자가 생긴다 (진행에 따라 바뀜)', () => {
-    const ch1 = drawTitle({ ...base, chapter: 'chapter1', phase: 'aftermath' });
-    expect(same(drawTitle(base).raster.d, ch1.raster.d)).toBe(false);
+  it('로드할수록 화면이 더 자주 튄다 (상한 있음)', () => {
+    const g = (loads) => titleSetup({ ...fresh, loads }, night).glitch;
+    expect(g(0)).toBe(0);
+    expect(g(3)).toBeGreaterThan(g(1));
+    expect(g(100)).toBeLessThanOrEqual(0.3);
   });
 });

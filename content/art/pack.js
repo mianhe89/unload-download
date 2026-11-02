@@ -87,6 +87,9 @@ export const PARTICLES = {
   fire: { src: 'FX/Particle/Fire.png', frame: [12, 12] },
   leaf: { src: 'FX/Particle/Leaf.png', frame: [12, 7] },
   spark: { src: 'FX/Particle/Spark.png', frame: [10, 8] },
+  leafPink: { src: 'FX/Particle/LeafPink.png', frame: [12, 7] },
+  rain: { src: 'FX/Particle/Rain.png', frame: [8, 8] },
+  snow: { src: 'FX/Particle/Snow.png', frame: [8, 8] },
 };
 
 export const SHADOW = 'Actor/Characters/Shadow.png';

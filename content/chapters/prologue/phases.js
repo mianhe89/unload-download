@@ -14,6 +14,9 @@
 //   { pickedAll: 묶음, near?, r? }         흩어진 물건을 다 주웠으면 (+그 사람 곁에 가면)
 //   { count: [플래그...], n }              플래그 중 n개 이상 켜지면
 
+// 배경 주민 배치를 짧게 쓰는 도우미: { id: [x, y, mode, radius] }
+const villagers = (m) => Object.fromEntries(Object.entries(m).map(([id, [x, y, mode, radius]]) => [id, { at: [x, y], mode, radius, face: 'down' }]));
+
 const FEST_DONE = ['ev.hort', 'ev.tom', 'ev.rine', 'ev.per', 'ev.mia'];
 
 export const phases = {
@@ -29,6 +32,11 @@ export const phases = {
       tom: { at: [27, 19], mode: 'wander', radius: 2 },
       rine: { at: [28, 13], mode: 'wander', radius: 1 },
       per: { at: [21, 19], mode: 'idle', face: 'right' },
+      // 배경 주민: 모닥불 주위로 모인 축제 인파
+      ...villagers({
+        chief: [20, 15, 'idle'], granny: [28, 21, 'idle'], kid: [26, 18, 'wander', 3], farmer: [12, 20, 'idle'],
+        hunter: [39, 18, 'wander', 1], monk: [21, 11, 'idle'], woman: [14, 19, 'wander', 2], oldman: [29, 16, 'idle'],
+      }),
     },
     lights: [{ spot: 'fire', radius: 90, flicker: true }],
     onEnter: 'festival.intro',
@@ -54,6 +62,10 @@ export const phases = {
         },
       },
 
+      // 엿듣는 대화: 배경 주민끼리 나누는 말. 곁에 있어야 들린다 (멀어지면 놓친다)
+      { id: 'chat.farm', trigger: { near: 'farmer', r: 3 }, run: 'festival.chat_farm' },
+      { id: 'chat.kid', trigger: { near: 'granny', r: 2 }, run: 'festival.chat_kid' },
+
       { id: 'mia.quiet', trigger: { idle: 8, near: 'mia', r: 2, minTime: 25 }, run: 'festival.mia_quiet' },
 
       { id: 'eda.count', when: { unlessFlag: 'eda.met' }, trigger: { count: FEST_DONE, n: 2 }, run: 'festival.eda' },
@@ -76,6 +88,11 @@ export const phases = {
       rine: { at: [28, 13], mode: 'idle', face: 'down' },
       per: { at: [20, 21], mode: 'idle', face: 'down' },
       selena: { at: [36, 28], mode: 'idle', face: 'up' },
+      // 배경 주민: 축제 다음 날의 일상
+      ...villagers({
+        chief: [24, 14, 'wander', 2], granny: [28, 21, 'idle'], kid: [13, 23, 'wander', 2], farmer: [11, 21, 'idle'],
+        hunter: [40, 18, 'idle'], monk: [21, 11, 'idle'], woman: [20, 23, 'idle'], oldman: [30, 18, 'idle'],
+      }),
       // 셀레나와 이야기한 뒤에 나타난다 (컷신에서 등장, 이어하기 시엔 여기서 배치)
       lu: { at: [10, 28], mode: 'idle', face: 'right', when: { ifFlag: 'selena.done' } },
     },
@@ -86,6 +103,8 @@ export const phases = {
     ],
     onEnter: 'morning.intro',
     events: [
+      { id: 'chat.smithy', trigger: { near: 'oldman', r: 3 }, run: 'morning.chat_smithy' },
+      { id: 'chat.bells', trigger: { near: 'kid', r: 2 }, run: 'morning.chat_bells' },
       { id: 'smithy', trigger: { zone: 'smithy' }, run: 'morning.smithy' },
       { id: 'mia', when: { ifFlag: 'smithy.seen' }, trigger: { near: 'mia', r: 3 }, run: 'morning.mia' },
       { id: 'selena', when: { ifFlag: 'mia.talked' }, trigger: { zone: 'post' }, run: 'morning.selena' },

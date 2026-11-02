@@ -4,3 +4,4 @@ export const T = (who, say, o = {}) => ({ who, say, ...o });   // 대사
 export const B = (who, text, o = {}) => ({ bubble: { who, text }, ...o }); // 말풍선
 export const keep = (id) => ({ unlessErased: id });           // 그 사람이 남아 있을 때만
 export const gone = (id) => ({ ifErased: id });               // 그 사람이 지워졌을 때만
+export const WALK = { mode: 'walk' };                        // 라벨 첫 줄에 두면 걸으며 듣는 대사

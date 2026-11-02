@@ -3,8 +3,8 @@
 import { chapters } from '../../content/chapters/index.js';
 import { characters } from '../../content/characters/index.js';
 import * as village from '../../content/maps/village.js';
-import { LAYERS } from '../../content/art/layers.js';
-import { PROP_NAMES } from '../../content/art/tiles.js';
+import { existsSync } from 'node:fs';
+import { PROP_NAMES } from '../../content/art/props.js';
 import { OBJECTS, SHEETS, ANIMATED } from '../../content/art/pack.js';
 import { ScriptRunner } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
@@ -19,7 +19,8 @@ export function validateContent() {
 
   // 캐릭터
   for (const c of Object.values(characters)) {
-    for (const l of c.art.layers) if (!LAYERS[l]) err(`캐릭터 ${c.id}: 레이어 없음 ${l}`);
+    if (!c.sprite?.base) err(`캐릭터 ${c.id}: sprite.base 없음`);
+    else if (!existsSync(new URL(`../../assets-src/ninja-adventure/Actor/Characters/${c.sprite.base}/SpriteSheet.png`, import.meta.url))) err(`캐릭터 ${c.id}: 바탕 스프라이트 파일 없음 ${c.sprite.base}`);
     if (c.remnant && !PROP_NAMES.includes(c.remnant.prop) && !OBJECTS[c.remnant.prop]) err(`캐릭터 ${c.id}: 흔적 소품 없음 ${c.remnant.prop}`);
   }
 

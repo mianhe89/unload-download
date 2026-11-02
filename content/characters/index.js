@@ -9,8 +9,17 @@ import tom from './tom.js';
 import rine from './rine.js';
 import per from './per.js';
 import keeper from './keeper.js';
+// 배경 주민
+import chief from './chief.js';
+import granny from './granny.js';
+import kid from './kid.js';
+import farmer from './farmer.js';
+import hunter from './hunter.js';
+import monk from './monk.js';
+import woman from './woman.js';
+import oldman from './oldman.js';
 
-export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper };
+export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, chief, granny, kid, farmer, hunter, monk, woman, oldman };
 
 // 로드 시 지워질 수 있는 사람(동점일 때 이 순서)
 export const ERASE_ORDER = ['hort', 'tom', 'rine', 'per'];
