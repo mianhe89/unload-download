@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { readPng, writePng, crop, recolor, setPx, topAt, alphaAt } from './lib/pixels.mjs';
 import { characters } from '../content/characters/index.js';
 import { SHEETS, ANIMATED, PARTICLES, SHADOW, FOG, CHAR, MONSTER_ART } from '../content/art/pack.js';
+import { bodyVariant, BODY_SKINS } from './lib/body-edit.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'assets-src/ninja-adventure');
@@ -106,6 +107,11 @@ export function buildAssets({ quiet = false } = {}) {
     writePng(join(OUT, 'face', `${id}.png`), face);
     manifest.chars[id] = `char/${id}.png`;
     manifest.faces[id] = `face/${id}.png`;
+    // 주인공은 체형별 도트도 만든다 (me@thin, me@muscle, me@chubby)
+    if (id === 'me') for (const b of BODY_SKINS) {
+      writePng(join(OUT, 'char', `me@${b}.png`), bodyVariant(sheet, b));
+      manifest.chars[`me@${b}`] = `char/me@${b}.png`;
+    }
   }
 
   for (const [key, rel] of Object.entries(SHEETS)) {

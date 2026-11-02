@@ -4,10 +4,12 @@ import { TILE } from '../../content/maps/village.js';
 import { CHAR } from '../../content/art/pack.js';
 
 export class Actor {
-  constructor(scene, id, tx, ty, face = 'down') {
+  // skin: 다른 도트를 쓸 때 (주인공의 체형별 도트 me@chubby 등)
+  constructor(scene, id, tx, ty, face = 'down', skin = null) {
     this.scene = scene;
     this.id = id;
-    this.key = `char.${id}`;
+    this.key = `char.${skin ?? id}`;
+    if (!scene.textures.exists(this.key)) this.key = `char.${id}`;
     const x = tx * TILE + TILE / 2, y = ty * TILE + TILE / 2;
     this.shadow = scene.add.image(x, y + 1, 'fx.shadow').setDepth(-400).setAlpha(0.55);
     this.sprite = scene.add.sprite(x, y, this.key, 0);

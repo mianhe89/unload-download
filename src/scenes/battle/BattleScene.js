@@ -13,7 +13,7 @@ import { MONSTER_ART } from '../../../content/art/pack.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { characters } from '../../../content/characters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
-import { act, freshLife } from '../../life/life.js';
+import { act, freshLife, skinOf } from '../../life/life.js';
 
 const SKY = { surface: [0x8fb7d8, 0xd9e6c8], under: [0x1c1620, 0x3a2c2a], sky: [0x0a0820, 0x2a1e5a] };
 const GROUND = { surface: 0x6c8a3c, under: 0x4a3a30, sky: 0x3a2a6a };
@@ -92,14 +92,22 @@ export default class BattleScene extends Phaser.Scene {
     const s = this.s;
     let spr;
     if (u.side === 'party') {
-      spr = this.add.sprite(x, y, `char.${u.id}`, 3).setScale(4 * s).setOrigin(0.5, 1);
-      if (this.anims.exists(`char.${u.id}.right`)) spr.play(`char.${u.id}.right`);
+      const skin = u.id === 'me' ? skinOf(WorldMemory.run?.life) : u.id; // 주인공은 체형별 도트
+      const key = this.textures.exists(`char.${skin}`) ? `char.${skin}` : `char.${u.id}`;
+      spr = this.add.sprite(x, y, key, 3).setScale(4 * s).setOrigin(0.5, 1);
+      if (this.anims.exists(`${key}.right`)) spr.play(`${key}.right`);
       spr.anims?.pause();
     } else {
       const art = MONSTER_ART[u.sprite];
       spr = this.add.sprite(x, y, `mon.${u.sprite}`, art.kind === 'walker' ? 2 : 0).setScale((art.kind === 'walker' ? 4 : 3) * s).setOrigin(0.5, 1);
       if (this.anims.exists(`mon.${u.sprite}`)) spr.play(`mon.${u.sprite}`);
       if (u.boss) spr.setAlpha(0.9);
+      // 터치: 적을 누르면 대상으로, 한 번 더 누르면 실행
+      spr.setInteractive().on('pointerdown', () => {
+        const i = this.targets().findIndex((t) => t.uid === u.uid);
+        if (i < 0 || this.busy || !this.panel.visible) return;
+        if (this.cursor.target === i) this.confirm(); else { this.cursor.target = i; this.highlight(); }
+      });
     }
     this.add.ellipse(x, y, 46 * s * (u.boss ? 2 : 1), 10 * s, 0x000000, 0.25).setDepth(-1);
     const top = y - spr.displayHeight;

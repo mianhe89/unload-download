@@ -19,7 +19,9 @@ const diffCount = (a, b) => { let n = 0; for (let i = 0; i < a.data.length; i +=
 
 describe('에셋 빌드', () => {
   it('모든 캐릭터의 스프라이트시트와 얼굴이 나온다', () => {
-    expect(Object.keys(manifest.chars).sort()).toEqual(Object.keys(characters).sort());
+    expect(Object.keys(manifest.chars).filter((k) => !k.includes('@')).sort()).toEqual(Object.keys(characters).sort());
+    // 주인공 체형별 도트
+    expect(Object.keys(manifest.chars).filter((k) => k.startsWith('me@')).sort()).toEqual(['me@chubby', 'me@muscle', 'me@thin']);
     for (const id of Object.keys(characters)) {
       const s = readPng(join(GEN, manifest.chars[id]));
       // 열은 늘 4방향. 줄은 대부분 7줄, 몇몇 바탕(Child, OldWoman)은 2줄 — 걷기 애니메이션은 있는 줄만 쓴다

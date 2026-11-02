@@ -99,3 +99,27 @@ describe('마을의 생활 자리', () => {
     for (const w of ['체중', '체형', '회피', '마음가짐']) expect(lines).toContain(w);
   });
 });
+
+describe('체형이 도트에 보인다', async () => {
+  const { skinOf } = await import('../../src/life/life.js');
+  const { bodyVariant, BODY_SKINS } = await import('../../tools/lib/body-edit.mjs');
+  const { readPng } = await import('../../tools/lib/pixels.mjs');
+  const { join } = await import('node:path');
+
+  it('보통 체형은 원래 도트, 나머지는 체형별 도트', () => {
+    expect(skinOf(freshLife())).toBe('me');
+    expect(skinOf({ ...freshLife(), weight: 90 })).toBe('me@chubby');
+    expect(skinOf({ ...freshLife(), weight: 50 })).toBe('me@thin');
+    expect(skinOf({ ...freshLife(), weight: 70, muscle: 0.8 })).toBe('me@muscle');
+    expect(skinOf(null)).toBe('me');
+  });
+
+  it('통통하면 앞모습 몸통이 넓어지고, 마르면 좁아진다', () => {
+    const me = readPng(join(import.meta.dirname, '../../public/assets/gen/char/me.png'));
+    const width = (img, row) => { let L = -1, R = -1; for (let x = 0; x < 16; x += 1) if (img.data[(row * img.width + x) * 4 + 3]) { if (L < 0) L = x; R = x; } return R - L; };
+    const fat = bodyVariant(me, 'chubby'), thin = bodyVariant(me, 'thin');
+    expect(width(fat, 12)).toBeGreaterThan(width(me, 12));
+    expect(width(thin, 12)).toBeLessThan(width(me, 12));
+    expect(BODY_SKINS).toEqual(['thin', 'muscle', 'chubby']);
+  });
+});

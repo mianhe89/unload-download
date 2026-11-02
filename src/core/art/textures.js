@@ -71,7 +71,9 @@ export function buildTextures(scene) {
 export function buildAnimations(scene) {
   const A = scene.anims;
   // 캐릭터 걷기: 시트는 열 = 방향, 줄 = 프레임 → 프레임 번호 = 줄 * 4 + 열
-  for (const id of Object.keys(characters)) {
+  // 주인공 체형별 도트(me@thin 등)도 같은 방식으로
+  const ids = [...Object.keys(characters), ...Object.keys(scene.registry.get('manifest')?.chars ?? {}).filter((k) => k.includes('@'))];
+  for (const id of ids) {
     const key = `char.${id}`;
     if (!scene.textures.exists(key) || A.exists(`${key}.down`)) continue;
     // 몇몇 바탕 캐릭터(Child, OldWoman)는 줄이 2개뿐이라 있는 줄만 쓴다

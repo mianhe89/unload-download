@@ -76,6 +76,9 @@ export function battleStats(base, life) {
   };
 }
 
+// 주인공 도트: 체형별 변형 (npm run assets가 me@thin 등을 만든다)
+export const skinOf = (life) => { const b = bodyOf(life ?? freshLife()); return b === 'normal' ? 'me' : `me@${b}`; };
+
 // 스테이터스 창에 보여줄 줄들
 export function statusLines(base, life) {
   const st = battleStats(base, life);

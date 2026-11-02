@@ -15,6 +15,7 @@ import { Ambient } from '../../field/Ambient.js';
 import { titleSetup } from './titleSetup.js';
 import { chapters } from '../../../content/chapters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
+import { skinOf } from '../../life/life.js';
 
 const px = (t) => t * TILE + TILE / 2;
 
@@ -72,7 +73,8 @@ export default class TitleScene extends Phaser.Scene {
 
   addFigure(id, [tx, ty], dir) {
     this.add.image(px(tx), px(ty) + 1, 'fx.shadow').setDepth(-400).setAlpha(0.55);
-    return this.add.image(px(tx), px(ty), `char.${id}`, CHAR.dirs[dir]).setOrigin(0.5, 0.94).setDepth(px(ty));
+    const key = id === 'me' && this.textures.exists(`char.${skinOf(WorldMemory.run?.life)}`) ? `char.${skinOf(WorldMemory.run?.life)}` : `char.${id}`;
+    return this.add.image(px(tx), px(ty), key, CHAR.dirs[dir]).setOrigin(0.5, 0.94).setDepth(px(ty));
   }
 
   // 메뉴와 날짜는 확대되지 않는 별도 카메라로 그린다
