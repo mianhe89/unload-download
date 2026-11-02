@@ -28,6 +28,8 @@ export class Cutscene {
     const ui = this.field.ui;
     this.runner.start(label);
     for (;;) {
+      // 장면이 다시 시작돼 새 컷신이 생겼으면 이 컷신은 조용히 멈춘다 (지난 페이즈의 대사가 새 페이즈에 새지 않게)
+      if (this.field.cutscene !== this) return;
       const node = this.runner.next();
       if (node.done) break;
       if (node.say) {
@@ -55,6 +57,7 @@ export class Cutscene {
         return;
       }
     }
+    if (this.field.cutscene !== this) return;
     ui.closeDialog();
     this.busy = false;
     this.walking = false;

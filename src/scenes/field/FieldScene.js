@@ -23,6 +23,8 @@ import { OBJECTS } from '../../../content/art/pack.js';
 import { LIFE_SPOTS, ACTIONS } from '../../../content/life/life.js';
 import { act, canDo, minutesLeft, freshLife } from '../../life/life.js';
 import { trackWalk } from '../../life/track.js';
+import { Sound } from '../../core/audio/Sound.js';
+import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 
 const px = (t) => t * TILE + TILE / 2;
 
@@ -102,6 +104,8 @@ export default class FieldScene extends Phaser.Scene {
       }
     });
     this.ambientTimer = 0;
+    Sound.music(this, PHASE_MUSIC[this.phaseId] ?? null);
+    Sound.ambient(this, null);
   }
 
   // 대본 조건 검사에 쓰는 문맥
@@ -245,6 +249,7 @@ export default class FieldScene extends Phaser.Scene {
     }
     const n = act(life, spot.action);
     WorldMemory.setLife(n);
+    Sound.sfx(this, spot.action === 'drill' || spot.action === 'water' ? 'hit' : 'heal', { volume: 0.25 });
     this.ui.bubbles.narrate(this.player, `${a.text}  (${n.weight.toFixed(1)}kg)`, 2600);
   }
 
@@ -261,6 +266,7 @@ export default class FieldScene extends Phaser.Scene {
 
   onPicked(group) {
     this.cameras.main.flash(80, 255, 240, 200);
+    Sound.sfx(this, 'pickup');
     if (this.pickups.allPicked(group)) this.bubble('me', group === 'bread' ? '(다 주웠다)' : '(주웠다)');
   }
 
@@ -315,10 +321,11 @@ export default class FieldScene extends Phaser.Scene {
     const cam = this.cameras.main;
     const wait = (ms) => new Promise((r) => this.time.delayedCall(ms, r));
     if (kind === 'shake') { cam.shake(300, 0.006); return wait(320); }
-    if (kind === 'bell') { cam.shake(260, 0.003); return wait(700); }
+    if (kind === 'bell') { cam.shake(260, 0.003); Sound.sfx(this, 'bell'); return wait(700); }
     if (kind === 'flash') { cam.flash(400, 255, 255, 255); return wait(400); }
     if (kind === 'fade') { cam.fadeOut(900, 0, 0, 0); return wait(950); }
     if (kind === 'glitch') {
+      Sound.sfx(this, 'spirit', { detune: -600 });
       cam.shake(160, 0.02);
       this.tweens.add({ targets: cam, alpha: 0.3, duration: 50, yoyo: true, repeat: 4 });
       return wait(500);

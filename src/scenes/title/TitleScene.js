@@ -14,6 +14,7 @@ import { Lighting } from '../../field/Lighting.js';
 import { Ambient } from '../../field/Ambient.js';
 import { titleSetup } from './titleSetup.js';
 import { chapters } from '../../../content/chapters/index.js';
+import { Sound } from '../../core/audio/Sound.js';
 
 const px = (t) => t * TILE + TILE / 2;
 
@@ -65,6 +66,8 @@ export default class TitleScene extends Phaser.Scene {
     cam.fadeIn(900, 0, 0, 0);
 
     this.buildMenu();
+    Sound.music(this, 'title');
+    Sound.ambient(this, null);
   }
 
   addFigure(id, [tx, ty], dir) {

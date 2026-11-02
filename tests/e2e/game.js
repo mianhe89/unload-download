@@ -37,6 +37,9 @@ export const state = (page) => page.evaluate(() => {
 
 // 타이틀 메뉴 클릭: label = 'START' | 'RESET & START' | 'CONTINUE'
 export async function clickMenu(page, label) {
+  // 타이틀이 막 시작됐으면 입력이 아직 안 받힐 수 있다
+  await page.waitForFunction(() => { const t = window.__game.scene.getScene('Title'); return window.__game.scene.isActive('Title') && t.sys.settings.status === 5 && t.input.enabled; });
+  await page.waitForTimeout(200);
   const p = await page.evaluate((l) => {
     const t = window.__game.scene.getScene('Title').children.list.find((c) => c.text === l);
     if (!t) return null;
@@ -50,10 +53,13 @@ export async function clickMenu(page, label) {
 }
 
 export async function waitField(page, phase, timeout = 60_000) {
+  // 씬이 다시 시작되는 중이면 phaseId만 먼저 바뀐다 — 실제로 돌고 있고(RUNNING=5) 플레이어가 생긴 뒤까지 기다린다
   await advanceUntil(page, (ph) => {
     const g = window.__game;
-    return g.scene.isActive('Field') && (!ph || g.scene.getScene('Field').phaseId === ph);
+    const f = g.scene.getScene('Field');
+    return g.scene.isActive('Field') && f.sys.settings.status === 5 && f.player?.sprite?.active && (!ph || f.phaseId === ph);
   }, phase, timeout, `필드 페이즈 ${phase ?? ''}`);
+  await page.waitForTimeout(250); // 들어오자마자 시작되는 컷신(onEnter)이 걸릴 틈
 }
 
 // 조건이 참이 될 때까지, 대화가 떠 있으면 넘기면서 기다린다

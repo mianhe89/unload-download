@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { DialogBox } from '../../ui/DialogBox.js';
 import { SpeechBubbles } from '../../ui/SpeechBubbles.js';
 import { Hud } from '../../ui/Hud.js';
+import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
 
 export default class UIScene extends Phaser.Scene {
@@ -18,7 +19,7 @@ export default class UIScene extends Phaser.Scene {
     this.toScreen = (x, y) => ({ x, y });
 
     // 대화창이 떠 있으면 다음 문장, 아니면 걷는 대사(말풍선)를 넘긴다
-    const advance = () => { if (!this.dialog.advance()) this.events.emit('skip'); };
+    const advance = () => { if (this.dialog.advance()) Sound.sfx(this, 'ui', { volume: 0.12 }); else this.events.emit('skip'); };
     this.input.on('pointerdown', advance);
     ['E', 'SPACE', 'ENTER'].forEach((k) => this.input.keyboard.on(`keydown-${k}`, advance));
   }

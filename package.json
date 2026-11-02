@@ -14,7 +14,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "npm run validate && npm test && npm run build",
-    "assets": "node tools/build-assets.mjs",
+    "assets": "node tools/build-assets.mjs && node tools/build-audio.mjs",
     "predev": "npm run assets",
     "prebuild": "npm run assets"
   },

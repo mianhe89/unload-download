@@ -10,3 +10,4 @@ src-tauri/gen/
 test-results/
 playwright-report/
 public/assets/gen/
+public/assets/audio/

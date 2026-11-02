@@ -46,4 +46,5 @@ GitHub에 푸시하면 같은 검사가 자동으로 돈다(Actions 탭). 자세
 ## 크레딧
 
 - 픽셀 아트: [Ninja Adventure Asset Pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) by pixel-boy — CC0. 이 게임에 맞게 재채색·변형해 사용
+- 음악·효과음: 같은 팩(Ninja Adventure)의 오디오 — CC0. 웹용으로 변환(ogg·m4a)해 사용
 - 글꼴: [Galmuri](https://github.com/quiple/galmuri) by Lee Minseo — SIL OFL 1.1

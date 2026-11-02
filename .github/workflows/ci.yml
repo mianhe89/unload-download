@@ -17,7 +17,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,6 +25,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: 소리 변환 캐시 (원본이 같으면 다시 변환하지 않는다)
+        uses: actions/cache@v4
+        with:
+          path: public/assets/audio
+          key: audio-${{ hashFiles('assets-src/ninja-adventure/Audio/**', 'content/audio/**', 'tools/build-audio.mjs') }}
       - name: 콘텐츠 검증
         run: npm run validate
       - name: 단위 테스트
@@ -43,6 +48,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: 소리 변환 캐시 (원본이 같으면 다시 변환하지 않는다)
+        uses: actions/cache@v4
+        with:
+          path: public/assets/audio
+          key: audio-${{ hashFiles('assets-src/ninja-adventure/Audio/**', 'content/audio/**', 'tools/build-audio.mjs') }}
       - name: Chromium 설치
         run: npx playwright install --with-deps chromium
       - name: E2E (프롤로그 완주)

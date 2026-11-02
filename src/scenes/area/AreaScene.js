@@ -15,6 +15,8 @@ import { Npc } from '../../field/Npc.js';
 import { travelerAt, spiritHint, travelerLines } from '../../world/travelers.js';
 import { encounterAt } from '../../battle/encounters.js';
 import { trackWalk } from '../../life/track.js';
+import { Sound } from '../../core/audio/Sound.js';
+import { BIOME_MUSIC, BIOME_AMBIENT, HUB_MUSIC } from '../../../content/audio/audio.js';
 import { MONSTERS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
 import { maskNames, goneIds } from '../../core/script/speech.js';
@@ -104,6 +106,10 @@ export default class AreaScene extends Phaser.Scene {
     cam.setZoom(ZOOM).setBounds(0, 0, this.map.width, this.map.height).startFollow(this.player.sprite, true, 0.15, 0.15).setRoundPixels(true);
     cam.fadeIn(350, 0, 0, 0);
 
+    // 소리: 거점 음악 > 기후 음악, 추운 곳은 바람·바다는 파도
+    Sound.music(this, HUB_MUSIC[area.id] ?? BIOME_MUSIC[area.biome] ?? 'road');
+    Sound.ambient(this, BIOME_AMBIENT[area.biome] ?? null);
+
     // 처음 와 본 곳이면 그곳의 설명이 허공에 떠오른다
     const first = !WorldMemory.run.flags[`visited.${this.key}`];
     WorldMemory.setFlag(`visited.${this.key}`);
@@ -172,6 +178,7 @@ export default class AreaScene extends Phaser.Scene {
     // 정신체는 이 세계 바깥 사람이라 지워진 이름도 온전히 말한다
     if (t.id !== 'spirit') line = maskNames(line, t.id, goneIds(characters, { erased: erased.map((e) => e.id), phase: this.back?.phase }).map((id) => characters[id].name));
     WorldMemory.setFlag(`met.${t.id}`);
+    Sound.sfx(this, t.id === 'spirit' ? 'spirit' : 'voice', { volume: t.id === 'spirit' ? 0.3 : 0.15 });
     this.ui.bubbles.show(t, line, characters[t.id].color, 3200);
     this.cooldown = 0.4;
   }
@@ -199,11 +206,13 @@ export default class AreaScene extends Phaser.Scene {
     this.rings = r.rings;
     this.cooldown = 0.35;
     this.cameras.main.shake(140, 0.003);
+    Sound.sfx(this, 'bell', { detune: -900 + r.rings * 40 });
     this.ui.bubbles.show(this.player, `댕— (${r.rings})`, '#ffffff', 900);
     if (r.opens) {
       this.leaving = true;
       this.ui.bubbles.narrate(this.player, '열셋. 종소리가 하늘에 부딪혀 돌아오지 않았다. 발밑이 보랏빛으로 젖는다.', 3200);
       this.cameras.main.flash(900, 190, 160, 255);
+      Sound.sfx(this, 'secret');
       this.time.delayedCall(2400, () => { this.leaving = false; this.through(f.to); });
       return;
     }
@@ -219,6 +228,7 @@ export default class AreaScene extends Phaser.Scene {
     this.ui.hud.showPrompt(null);
     this.cameras.main.flash(250, 255, 255, 255);
     this.cameras.main.shake(200, 0.01);
+    Sound.sfx(this, 'heavy');
     this.time.delayedCall(300, () => this.scene.start('Battle', {
       enemies: this.encounter.enemies, seed: this.encounter.seed, boss: this.encounter.boss, note: this.encounter.note,
       from: { layer: this.layerId, at: this.at, key: this.key, back: this.back },
@@ -229,6 +239,7 @@ export default class AreaScene extends Phaser.Scene {
   through(to, entry = 'portal') {
     if (this.leaving) return;
     this.leaving = true;
+    Sound.sfx(this, 'step');
     this.cameras.main.fadeOut(450, 0, 0, 0);
     this.time.delayedCall(480, () => this.scene.restart({ layer: to.layer, at: to.at, entry, back: this.back }));
   }

@@ -3,6 +3,7 @@ import 'galmuri/dist/galmuri.css';
 import { VIEW, FONT } from './config/game.js';
 import { platform } from './platform/index.js';
 import { SaveRepository } from './core/save/SaveRepository.js';
+import { Sound } from './core/audio/Sound.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/title/TitleScene.js';
 import FieldScene from './scenes/field/FieldScene.js';
@@ -20,6 +21,9 @@ async function start() {
     return r.json();
   });
 
+  // 소리 목록 (없어도 게임은 연다 — 소리만 안 난다)
+  const audio = await fetch('assets/audio/manifest.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
   // 개발·테스트용 핸들 (브라우저 콘솔에서 __game)
   window.__game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -31,9 +35,11 @@ async function start() {
     roundPixels: true,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [BootScene, TitleScene, FieldScene, AreaScene, BattleScene, UIScene],
-    callbacks: { preBoot: (game) => game.registry.set('manifest', manifest) },
+    callbacks: { preBoot: (game) => { game.registry.set('manifest', manifest); game.registry.set('audio', audio); } },
   });
   document.title = platform.isDesktop ? 'DOWNLOAD' : 'UNLOAD';
+  // M: 소리 끄기/켜기 (어느 장면에서든)
+  window.addEventListener('keydown', (e) => { if (e.key === 'm' || e.key === 'M') Sound.toggleMute(); });
 }
 
 start();

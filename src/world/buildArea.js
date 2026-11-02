@@ -248,7 +248,7 @@ export function buildArea(layer, at, { season = 'autumn', lowTide = false } = {}
   const hub = cell.kind === 'hub' ? HUBS[cell.id] : null;
   const side = cell.kind === 'side' ? SIDES[cell.id] : null;
   return {
-    key, layer, at, biome, theme, kind: cell.kind, sea,
+    key, layer, at, biome, theme, kind: cell.kind, id: cell.id, sea,
     name: hub?.name ?? side?.name ?? BIOMES[biome].name,
     note: hub?.note ?? side?.note ?? null,
     TILE, W, H, FOG, terrain, objects, animated: [], solids, exits, features,

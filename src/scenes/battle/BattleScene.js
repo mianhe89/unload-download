@@ -12,6 +12,7 @@ import { ELEMENTS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { characters } from '../../../content/characters/index.js';
+import { Sound } from '../../core/audio/Sound.js';
 
 const SKY = { surface: [0x8fb7d8, 0xd9e6c8], under: [0x1c1620, 0x3a2c2a], sky: [0x0a0820, 0x2a1e5a] };
 const GROUND = { surface: 0x6c8a3c, under: 0x4a3a30, sky: 0x3a2a6a };
@@ -78,6 +79,8 @@ export default class BattleScene extends Phaser.Scene {
     ['ENTER', 'SPACE', 'E'].forEach((k) => kb.on(`keydown-${k}`, () => this.confirm()));
 
     this.cameras.main.fadeIn(400, 0, 0, 0);
+    Sound.music(this, this.data0.boss ? 'boss' : 'battle', { fade: 300 });
+    Sound.ambient(this, null);
     // 되돌린 직후면 누가 지워졌는지 한 줄 (이름은 나만 기억한다)
     const opening = this.data0.victim ? `…되돌렸다. ${characters[this.data0.victim]?.name ?? '누군가'}의 얼굴이 잘 떠오르지 않는다.` : this.data0.note;
     if (opening) this.say(opening, this.data0.victim ? COLOR.red : COLOR.text);
@@ -169,6 +172,7 @@ export default class BattleScene extends Phaser.Scene {
 
   pickSkill(i) {
     if (this.busy || !this.panel.visible) return;
+    Sound.sfx(this, 'ui', { volume: 0.2 });
     const u = this.current;
     if (!this.battle.usable(u).some((s) => s.id === u.skills[i].id)) return;
     if (this.cursor.skill === i) { this.confirm(); return; } // 같은 숫자 두 번 = 바로 실행
@@ -209,9 +213,10 @@ export default class BattleScene extends Phaser.Scene {
   show(e) {
     const name = (uid) => this.battle.units.find((u) => u.uid === uid)?.name;
     if (e.type === 'skill') this.say(`${name(e.from)} — ${e.name}`);
-    if (e.type === 'telegraph') { this.say(`${name(e.from)}: ${e.name} 준비`, COLOR.red); this.cameras.main.shake(200, 0.004); }
+    if (e.type === 'telegraph') { this.say(`${name(e.from)}: ${e.name} 준비`, COLOR.red); this.cameras.main.shake(200, 0.004); Sound.sfx(this, 'tell'); }
     if (e.type === 'hit') {
       const v = this.sprites[e.to];
+      Sound.sfx(this, e.evaded ? 'step' : e.dmg > 30 ? 'heavy' : 'hit', { rate: 0.9 + Math.random() * 0.2 });
       const txt = e.evaded ? '회피' : `${e.dmg}${e.mul > 1 ? '!' : ''}`;
       const col = e.evaded ? COLOR.blue : e.mul > 1 ? COLOR.gold : e.mul < 1 ? COLOR.dim : COLOR.text;
       const t = this.add.text(v.x + (Math.random() - 0.5) * 20 * this.s, v.top, txt, { fontFamily: FONT, fontSize: `${(e.evaded ? 13 : 16) * this.s}px`, color: col }).setOrigin(0.5).setShadow(2, 2, '#000', 0);
@@ -220,6 +225,8 @@ export default class BattleScene extends Phaser.Scene {
       this.refresh();
     }
     if (e.type === 'ko') this.refresh();
+    if (e.type === 'heal') Sound.sfx(this, 'heal');
+    if (e.type === 'guard' || e.type === 'gauge') Sound.sfx(this, 'skill', { volume: 0.25 });
     if (e.type === 'heal' || e.type === 'guard' || e.type === 'gauge') this.refresh();
   }
 
@@ -228,6 +235,8 @@ export default class BattleScene extends Phaser.Scene {
     this.targetMark.setVisible(false);
     const { width: W, height: H } = this.scale;
     const from = this.data0.from;
+    Sound.music(this, null, { fade: 300 });
+    Sound.sfx(this, result === 'win' ? 'win' : 'lose');
     if (result === 'win') {
       if (from?.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss)}`);
       this.say(this.data0.boss ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : '이겼다.', COLOR.gold);
@@ -251,6 +260,7 @@ export default class BattleScene extends Phaser.Scene {
     if (this.leaving) return;
     this.leaving = true;
     const { victim } = WorldMemory.load();
+    Sound.sfx(this, 'spirit', { detune: -1200 });
     this.cameras.main.flash(500, 255, 255, 255);
     this.time.delayedCall(550, () => this.scene.restart({ ...this.data0, seed: (this.data0.seed ?? 1) + WorldMemory.world.loads, victim }));
   }
