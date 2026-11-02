@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "worldmap": "node tools/render-worldmap.mjs autumn docs/world-map.png && node tools/render-worldmap.mjs winter docs/world-map-winter.png",
     "validate": "node tools/validate-content.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
