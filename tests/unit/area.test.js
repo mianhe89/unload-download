@@ -159,3 +159,46 @@ describe('길 맵의 살펴볼 거리와 층 사이 문', async () => {
     expect(fillText('숫자: {loads}.', { loads: 4 })).toBe('숫자: 4.');
   });
 });
+
+describe('바닷길', async () => {
+  const { lowTide } = await import('../../src/world/features.js');
+  const seaCells = [...cells().values()].filter((c) => c.layer === 'surface' && biomeAt(...c.at) === 'sea');
+
+  it('항구엔 배가 있고, 걸어서는 바다로 못 나간다', () => {
+    const a = buildArea('surface', [8, 15]);
+    const boat = a.features.find((f) => f.kind === 'boat');
+    expect(boat.to).toEqual({ layer: 'surface', at: [8, 16] });
+    expect(a.exits.some((e) => e.at[1] === 16)).toBe(false);
+    const r = reach(a, a.entry('boat'));
+    expect(r.size).toBeGreaterThan(50);
+  });
+
+  it.each(seaCells.map((c) => [c.at.join(','), c]))('%s: 바다 칸은 배 출구끼리 이어진다', (_, c) => {
+    const a = buildArea('surface', c.at);
+    expect(a.sea).toBe(true);
+    expect(a.theme).toBe('sea');
+    expect(a.exits.length).toBeGreaterThan(0);
+    const r = reach(a, a.entry(a.exits[0].dir));
+    for (const e of a.exits) expect(r.has(a.entry(e.dir).join(',')), e.dir).toBe(true);
+  });
+
+  it('첫 바다 칸에서 북쪽 출구는 항구로 돌아간다', () => {
+    const a = buildArea('surface', [8, 16]);
+    expect(a.exits.find((e) => e.dir === 'n')?.to).toBe('surface:8,15');
+  });
+
+  it('바다 유적: 썰물엔 지붕(섬)이 드러나고, 밀물엔 물뿐', () => {
+    const low = buildArea('surface', [10, 18], { lowTide: true });
+    const high = buildArea('surface', [10, 18], { lowTide: false });
+    expect(low.terrain.join('')).toContain('d');
+    expect(high.terrain.join('')).not.toContain('d');
+    expect(low.features.some((f) => f.kind === 'side')).toBe(true);
+    expect(high.features.some((f) => f.kind === 'side')).toBe(false);
+  });
+
+  it('조수: 하루 안에 썰물과 밀물이 다 온다 (실제 시각)', () => {
+    const states = new Set();
+    for (let h = 0; h < 24; h += 0.5) states.add(lowTide(new Date(Date.UTC(2026, 10, 3, 0, h * 60))));
+    expect(states).toEqual(new Set([true, false]));
+  });
+});

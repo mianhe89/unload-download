@@ -5,7 +5,7 @@
 // 결과는 content/maps/village.js와 같은 모양(terrain, objects, isSolidPx …)이라 같은 렌더러·필드 부품을 쓴다.
 import { OBJECTS } from '../../content/art/pack.js';
 import { HUBS, SIDES, BIOMES, PORTALS, biomeAt, cells, links, cellKey } from '../../content/world/world.js';
-import { FLAVOR, SIDE_OBJECT } from '../../content/world/features.js';
+import { FLAVOR, SIDE_OBJECT, SEA_RUINS } from '../../content/world/features.js';
 import { signAt } from './features.js';
 
 export const TILE = 16;
@@ -16,7 +16,7 @@ const EDGE = FOG + 1;
 const GAP = 3; // 출구 너비(칸)
 
 // 바닥 → 테마 (content/art/pack.js THEMES)
-const THEME_OF = { grass: 'grass', darkGrass: 'village', dryGrass: 'grass', snow: 'snow', snowGrass: 'snow', sand: 'sand', beach: 'sand', dirt: 'earth', lava: 'lava', cave: 'cave', water: 'sand', void: 'void' };
+const THEME_OF = { grass: 'grass', darkGrass: 'village', dryGrass: 'grass', snow: 'snow', snowGrass: 'snow', sand: 'sand', beach: 'sand', dirt: 'earth', lava: 'lava', cave: 'cave', water: 'sea', void: 'void' };
 
 // 기후별 나무·바위 (큰 것, 작은 것)
 const FLORA = {
@@ -35,6 +35,7 @@ const FLORA = {
   lava: { big: ['rocks_brown'], small: [] },
   ancientHall: { big: ['rocks_grey'], small: ['runestone', 'runestone2'] },
   galaxy: { big: [], small: [] },
+  sea: { big: [], small: ['sea_rock'] },
 };
 const DIRS = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] };
 export const OPPOSITE = { n: 's', s: 'n', e: 'w', w: 'e' };
@@ -44,8 +45,8 @@ function rng(seed) {
   return () => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return (s >>> 8) / 16777216; };
 }
 
-// 칸의 출구: 같은 층 이웃 (배로만 가는 바닷길과 층 사이 문은 아직 걸어서 못 간다)
-export function exitsOf(layer, [x, y]) {
+// 칸의 출구: 같은 층 이웃. 바닷길은 배를 탔을 때만(boat), 층 사이 문은 출구가 아니라 계단
+export function exitsOf(layer, [x, y], { boat = false } = {}) {
   const adj = links().get(cellKey(layer, [x, y])) ?? new Set();
   const all = cells();
   const out = [];
@@ -53,13 +54,15 @@ export function exitsOf(layer, [x, y]) {
     const to = cellKey(layer, [x + dx, y + dy]);
     if (!adj.has(to)) continue;
     const here = all.get(cellKey(layer, [x, y])), there = all.get(to);
-    if (here?.by === 'boat' || there?.by === 'boat') continue;
+    const byBoat = here?.by === 'boat' || there?.by === 'boat';
+    if (byBoat !== boat && !(boat && there?.kind === 'hub')) continue;
     out.push({ dir, to, at: [x + dx, y + dy] });
   }
   return out;
 }
 
-export function buildArea(layer, at, { season = 'autumn' } = {}) {
+// opts.lowTide: 썰물인가 (바다 유적의 섬이 드러난다)
+export function buildArea(layer, at, { season = 'autumn', lowTide = false } = {}) {
   const key = cellKey(layer, at);
   const cell = cells().get(key);
   if (!cell) throw new Error(`지도에 없는 칸: ${key}`);
@@ -68,7 +71,8 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
   const r = rng(at[0] * 7349 + at[1] * 3571 + layer.length * 101);
 
   // ── 출구: 각 변의 가운데쯤, 칸마다 조금씩 어긋나게
-  const exits = exitsOf(layer, at).map((e) => {
+  const sea = biome === 'sea';
+  const exits = exitsOf(layer, at, { boat: sea }).map((e) => {
     const horizontal = e.dir === 'n' || e.dir === 's';
     const mid = horizontal ? Math.floor(W / 2) - 2 + Math.floor(r() * 4) : Math.floor(H / 2) - 2 + Math.floor(r() * 4);
     return { ...e, from: mid, to2: mid + GAP }; // [from, to2) 칸 범위
@@ -78,8 +82,9 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
   const g = Array.from({ length: H }, () => Array(W).fill('g'));
   const dirt = (x0, y0, w, h) => { for (let y = y0; y < y0 + h; y += 1) for (let x = x0; x < x0 + w; x += 1) if (g[y]?.[x] !== undefined) g[y][x] = 'd'; };
   const cx = Math.floor(W / 2) - 1, cy = Math.floor(H / 2) - 1;
-  dirt(cx - 3, cy - 2, 8, 5); // 빈터
-  for (const e of exits) {
+  if (!sea) dirt(cx - 3, cy - 2, 8, 5); // 빈터 (바다엔 길이 없다)
+  if (sea && cell.id === 'seaRuins' && lowTide) dirt(cx - 6, cy - 3, 14, 7); // 썰물: 지붕이 섬처럼 드러난다
+  for (const e of sea ? [] : exits) {
     const m = e.from + 1; // 출구 가운데 칸
     // 꺾이는 지점을 칸마다 다르게
     const span = (a1, b1) => [Math.min(a1, b1), Math.abs(a1 - b1) + 1];
@@ -97,6 +102,12 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
       { const [x0, w] = span(bend, cx); dirt(x0, cy, w, 2); }
     }
   }
+  // 남쪽이 바다인 바닷가: 아래쪽 띠가 물('w', 걸을 수 없음). 항구는 선착장 길이 물가까지
+  const shore = !sea && biome === 'coast' && biomeAt(at[0], at[1] + 1, season, layer) === 'sea' ? H - 10 : null;
+  if (shore) {
+    if (cell.id === 'harbor') dirt(cx, cy + 2, 2, shore - cy - 2);
+    for (let y = shore; y < H; y += 1) for (let x = 0; x < W; x += 1) g[y][x] = 'w';
+  }
   const terrain = g.map((row) => row.join(''));
   const isPath = (x, y) => g[y]?.[x] === 'd';
 
@@ -109,7 +120,7 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
     for (let y = y0 - margin; y < y0 + h + margin; y += 1) for (let x = x0 - margin; x < x0 + w + margin; x += 1) {
       if (isPath(x, y)) return false;
     }
-    for (let y = y0; y < y0 + h; y += 1) for (let x = x0; x < x0 + w; x += 1) if (occupied.has(`${x},${y}`)) return false;
+    for (let y = y0; y < y0 + h; y += 1) for (let x = x0; x < x0 + w; x += 1) if (occupied.has(`${x},${y}`) || g[y]?.[x] === 'w') return false;
     return true;
   };
   const place = (type, x, y, extra = {}) => {
@@ -159,6 +170,21 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
       features.push({ kind: 'portal', type, at: [sx, sy], to: other, down });
     }
   }
+  // 항구: 배를 대 놓았다 (E로 탄다). 바다 유적: 썰물이면 지붕, 밀물이면 물 아래 그림자
+  if (cell.id === 'harbor' && layer === 'surface') {
+    const bx = cx, by = shore ?? cy + 4; // 선착장 끝, 물 위
+    objects.push({ type: 'boat', at: [bx, by] });
+    features.push({ kind: 'boat', type: 'boat', at: [bx, by], to: { layer, at: [at[0], at[1] + 1] } });
+  }
+  if (cell.id === 'seaRuins') {
+    if (lowTide) {
+      // 섬 위에 바로 놓는다 (섬은 '길' 땅이라 빈자리 찾기가 피한다)
+      for (const [t, x, y] of [['runestone2', cx - 4, cy - 2], ['runestone2', cx + 5, cy - 2], ['runestone2', cx - 4, cy + 2], ['runestone2', cx + 5, cy + 2]]) place(t, x, y);
+      place('runestone', cx, cy - 2);
+      features.push({ kind: 'side', type: 'runestone', at: [cx, cy - 2], text: SEA_RUINS.low });
+    }
+    else addFeature('flavor', 'sea_rock', { text: SEA_RUINS.high });
+  }
   if (cell.kind === 'side' && cell.id !== 'bellCliff') addFeature('side', SIDE_OBJECT[cell.id] ?? 'runestone', { text: SIDES[cell.id].note });
   const sign = cell.kind === 'route' ? signAt(layer, at) : null;
   if (sign) addFeature('sign', 'signpost', { sign });
@@ -170,7 +196,7 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
   // 가장자리 숲(출구 자리는 비움) → 안쪽에 듬성듬성
   if (flora.big.length) for (let x = 0; x < W - 3; x += 4) { tryPlace(flora.big[Math.floor(r() * flora.big.length)], x, 0, 0); tryPlace(flora.big[Math.floor(r() * flora.big.length)], x, H - 4, 0); }
   if (flora.big.length) for (let y = 3; y < H - 4; y += 3) { tryPlace(flora.big[Math.floor(r() * flora.big.length)], 0, y, 0); tryPlace(flora.big[Math.floor(r() * flora.big.length)], W - 4, y, 0); }
-  const density = { deepForest: 0.55, frost: 0.45, snow: 0.4, temperate: 0.35, lateAutumn: 0.3, blackSnow: 0.3, coast: 0.2, dry: 0.18, desert: 0.12, volcano: 0.15 }[biome] ?? 0.3;
+  const density = { sea: 0.06, deepForest: 0.55, frost: 0.45, snow: 0.4, temperate: 0.35, lateAutumn: 0.3, blackSnow: 0.3, coast: 0.2, dry: 0.18, desert: 0.12, volcano: 0.15 }[biome] ?? 0.3;
   for (let y = EDGE; y < H - EDGE - 1; y += 2) for (let x = EDGE; x < W - EDGE - 1; x += 2) {
     if (r() > density) continue;
     const list = r() < 0.3 || !flora.small.length ? flora.big : flora.small;
@@ -193,6 +219,7 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
     if (px < 0 || py < 0 || px >= W * TILE || py >= H * TILE) return true;
     const tx = Math.floor(px / TILE), ty = Math.floor(py / TILE);
     if ((tx < EDGE || ty < EDGE || tx >= W - EDGE || ty >= H - EDGE) && !inGap(tx, ty)) return true;
+    if (terrain[ty][tx] === 'w') return true; // 뭍의 물가는 걸어 들어갈 수 없다
     return solids.some((s) => px >= s.x && px < s.x + s.w && py >= s.y && py < s.y + s.h);
   }
   const isSolidTile = (tx, ty) => isSolidPx(tx * TILE + TILE / 2, ty * TILE + TILE / 2);
@@ -204,6 +231,10 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
   }
   // 그 출구로 들어왔을 때 서는 자리 (칸 좌표)
   function entry(dir) {
+    if (dir === 'boat') {
+      const b = features.find((f) => f.kind === 'boat');
+      if (b) return [b.at[0] + 1, b.at[1] - 2];
+    }
     if (dir === 'portal') {
       const p = features.find((f) => f.kind === 'portal' || f.kind === 'bell');
       if (p) return p.kind === 'bell' ? [p.at[0] + 1, p.at[1] + 6] : [p.at[0], p.at[1] + 2];
@@ -217,7 +248,7 @@ export function buildArea(layer, at, { season = 'autumn' } = {}) {
   const hub = cell.kind === 'hub' ? HUBS[cell.id] : null;
   const side = cell.kind === 'side' ? SIDES[cell.id] : null;
   return {
-    key, layer, at, biome, theme, kind: cell.kind,
+    key, layer, at, biome, theme, kind: cell.kind, sea,
     name: hub?.name ?? side?.name ?? BIOMES[biome].name,
     note: hub?.note ?? side?.note ?? null,
     TILE, W, H, FOG, terrain, objects, animated: [], solids, exits, features,

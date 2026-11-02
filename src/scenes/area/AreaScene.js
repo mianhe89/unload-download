@@ -5,9 +5,9 @@ import Phaser from 'phaser';
 import { ZOOM, TALK_RANGE } from '../../config/game.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { season } from '../../core/util/daily.js';
-import { HUBS, BIOMES, cellKey } from '../../../content/world/world.js';
+import { HUBS, BIOMES, cellKey, biomeAt } from '../../../content/world/world.js';
 import { OBJECTS } from '../../../content/art/pack.js';
-import { signText, fillText, ringBell } from '../../world/features.js';
+import { signText, fillText, ringBell, lowTide } from '../../world/features.js';
 import { buildArea, OPPOSITE } from '../../world/buildArea.js';
 import { MapRenderer } from '../../field/MapRenderer.js';
 import { Player } from '../../field/Player.js';
@@ -35,7 +35,7 @@ export default class AreaScene extends Phaser.Scene {
   create() {
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
     this.ui = this.scene.get('UI');
-    const area = (this.area = buildArea(this.layerId, this.at, { season: season(new Date()) }));
+    const area = (this.area = buildArea(this.layerId, this.at, { season: season(new Date()), lowTide: lowTide(new Date()) }));
     this.key = area.key;
 
     this.map = new MapRenderer(this, area, { open: area.exits.map((e) => e.dir) });
@@ -44,6 +44,8 @@ export default class AreaScene extends Phaser.Scene {
 
     const [tx, ty] = area.entry(this.entryDir);
     this.player = new Player(this, tx, ty, FACE[this.entryDir] ?? 'down');
+    // 바다에선 배를 타고 있다
+    if (area.sea) this.boat = this.add.image(this.player.x, this.player.y, 'sheet.water', 'boat').setOrigin(0.5, 0.6);
 
     // 살펴볼 거리: 그림의 아래쪽 가운데가 서는 자리
     this.features = area.features.map((f) => {
@@ -79,6 +81,7 @@ export default class AreaScene extends Phaser.Scene {
     this.cooldown = Math.max(0, this.cooldown - dt);
     this.player.update(dt, (x, y) => this.area.isSolidPx(x, y));
     this.player.sync();
+    if (this.boat) this.boat.setPosition(Math.round(this.player.x), Math.round(this.player.y + 2)).setDepth(this.player.y - 1);
     this.lighting.follow(this.player.x, this.player.y);
     this.lighting.update(dt);
     if (this.leaving || this.ui.talking || this.player.frozen) { this.ui.hud.showPrompt(null); return; }
@@ -116,6 +119,7 @@ export default class AreaScene extends Phaser.Scene {
     const flags = WorldMemory.run.flags;
     if (f.kind === 'sign') return this.say(signText(f.sign, (k) => k === HOME || Boolean(flags[`visited.${k}`])));
     if (f.kind === 'bell') return this.ring(f);
+    if (f.kind === 'boat') return this.through(f.to, 'n'); // 배를 타고 바다로 (북쪽 끝에서 출발)
     if (f.kind === 'side') WorldMemory.setFlag(`found.side.${this.area.key}`);
     return this.say(fillText(f.text, { loads: WorldMemory.world.loads }));
   }
@@ -141,11 +145,11 @@ export default class AreaScene extends Phaser.Scene {
   }
 
   // 층 사이 문
-  through(to) {
+  through(to, entry = 'portal') {
     if (this.leaving) return;
     this.leaving = true;
     this.cameras.main.fadeOut(450, 0, 0, 0);
-    this.time.delayedCall(480, () => this.scene.restart({ layer: to.layer, at: to.at, entry: 'portal', back: this.back }));
+    this.time.delayedCall(480, () => this.scene.restart({ layer: to.layer, at: to.at, entry, back: this.back }));
   }
 
   go(exit) {
@@ -157,7 +161,9 @@ export default class AreaScene extends Phaser.Scene {
         this.scene.start('Field', { chapter: this.back.chapter, phase: this.back.phase, entry: OPPOSITE[exit.dir] });
         return;
       }
-      this.scene.restart({ layer: this.layerId, at: exit.at, entry: OPPOSITE[exit.dir], back: this.back });
+      // 바다에서 뭍(항구)에 닿으면 배에서 내려 배 옆에 선다
+      const landing = this.area.sea && biomeAt(exit.at[0], exit.at[1], 'autumn', this.layerId) !== 'sea';
+      this.scene.restart({ layer: this.layerId, at: exit.at, entry: landing ? 'boat' : OPPOSITE[exit.dir], back: this.back });
     });
   }
 

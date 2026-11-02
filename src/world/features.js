@@ -1,6 +1,6 @@
 // 길 맵 살펴볼 거리의 규칙 (순수 함수 — 테스트 가능)
 import { HUBS, ROUTES, cellKey } from '../../content/world/world.js';
-import { BELL } from '../../content/world/features.js';
+import { BELL, TIDE } from '../../content/world/features.js';
 import { corrupt } from '../core/script/speech.js';
 
 const L = (o) => o.layer ?? 'surface';
@@ -37,4 +37,10 @@ export function ringBell(rings, { hour, foundAll }) {
   const n = rings + 1;
   const night = hour >= BELL.nightFrom || hour < BELL.nightTo;
   return { rings: n, opens: n >= BELL.rings && night && foundAll, night };
+}
+
+// 썰물인가: 실제 시각 기준, 12시간 25분 주기 중 3.1시간
+export function lowTide(date = new Date()) {
+  const h = (date.getTime() / 3.6e6) % TIDE.period;
+  return h < TIDE.lowFor;
 }

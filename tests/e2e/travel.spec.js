@@ -101,10 +101,30 @@ test('드워프 마을의 계단으로 지하에 내려갔다가 올라온다, �
   await page.waitForFunction(() => window.__game.scene.getScene('Area').key === 'surface:7,10' && window.__game.scene.getScene('Area').features?.length);
   await page.evaluate(() => { const a = window.__game.scene.getScene('Area'); const f = a.features.find((x) => x.kind === 'sign'); a.player.sprite.x = f.x; a.player.sprite.y = f.y + 10; });
   await page.waitForTimeout(300);
-  await page.keyboard.press('e');
-  await page.waitForFunction(() => window.__game.scene.getScene('UI').talking);
+  await holdUntil(page, 'e', () => window.__game.scene.getScene('UI').talking);
   const text = await page.evaluate(() => window.__game.scene.getScene('UI').dialog.full);
   expect(text).toContain('수확제 마을');
   expect(text).not.toContain('서리 마을'); // 아직 안 가 봐서 이름이 깨져 있다
+  expect(errors).toEqual([]);
+});
+
+test('항구에서 배를 타고 바다로 나갔다가 돌아온다', async ({ page }) => {
+  const errors = await openGame(page);
+  await wipe(page);
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); g.scene.stop('Title'); g.scene.start('Area', { layer: 'surface', at: [8, 15], entry: 'boat', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
+  await page.waitForFunction(() => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').key === 'surface:8,15');
+
+  // 선착장 끝에서 E → 바다
+  await page.evaluate(() => { const a = window.__game.scene.getScene('Area'); const f = a.features.find((x) => x.kind === 'boat'); a.player.sprite.x = f.x; a.player.sprite.y = f.y - 26; });
+  await page.waitForTimeout(300);
+  await holdUntil(page, 'e', () => window.__game.scene.getScene('Area').key === 'surface:8,16');
+  expect(await page.evaluate(() => window.__game.scene.getScene('Area').area.sea)).toBe(true);
+  expect(await page.evaluate(() => Boolean(window.__game.scene.getScene('Area').boat))).toBe(true);
+
+  // 북쪽으로 노 저어 → 항구, 배 옆에 내린다
+  await page.waitForFunction(() => !window.__game.scene.getScene('Area').leaving);
+  await leaveArea(page, 'n');
+  await page.waitForFunction(() => window.__game.scene.getScene('Area').key === 'surface:8,15');
+  expect(await page.evaluate(() => window.__game.scene.getScene('Area').area.sea)).toBe(false);
   expect(errors).toEqual([]);
 });

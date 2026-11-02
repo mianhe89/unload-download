@@ -8,6 +8,7 @@ export const SHEETS = {
   house: 'Backgrounds/Tilesets/TilesetHouse.png',
   nature: 'Backgrounds/Tilesets/TilesetNature.png',
   element: 'Backgrounds/Tilesets/TilesetElement.png',
+  water: 'Backgrounds/Tilesets/TilesetWater.png',
 };
 
 // 흙길 자동 타일: 바닥 시트의 '풀 위의 흙' 블록 (타일 좌표). 8×8 사분면 단위로 조합한다.
@@ -38,6 +39,8 @@ export const THEMES = {
   cave: { offset: [0, 7], decor: false, tint: 'rgb(150,130,150)' },        // 갱도: 어두운 흙
   lava: { offset: [0, 7], decor: false, tint: 'rgb(255,120,70)' },          // 불의 산·용암 지대: 달궈진 땅
   void: { offset: [-11, 7], decor: false, tint: 'rgb(120,90,200)' },        // 은하: 보랏빛 바닥
+  // water: 땅(g) 자리에 물을 깐다. 길(d)은 모래 자동 타일 = 물 위의 모래섬
+  sea: { offset: [-11, -7], decor: false, water: { plain: [1, 1], variants: [[11, 1]] } },
 };
 
 export const DECOR = {
@@ -106,6 +109,9 @@ export const OBJECTS = {
   stairs_down_stone: { sheet: 'element', rect: [144, 176, 16, 16] },
   stairs_up: { sheet: 'element', rect: [96, 192, 16, 16] },
   stairs_up_stone: { sheet: 'element', rect: [144, 192, 16, 16] },
+  // 바다 (water 시트)
+  boat: { sheet: 'water', rect: [416, 0, 32, 16], foot: [2, 4, 28, 10] },
+  sea_rock: { sheet: 'water', rect: [384, 0, 16, 16], foot: [1, 2, 14, 13] },
 };
 
 // 움직이는 장식

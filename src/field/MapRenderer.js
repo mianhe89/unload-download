@@ -45,11 +45,26 @@ export class MapRenderer {
     ctx.imageSmoothingEnabled = false;
     const floor = scene.textures.get('sheet.floor').getSourceImage();
     const detail = scene.textures.get('sheet.detail').getSourceImage();
+    const hasWater = this.theme.water || this.map.terrain.some((row) => row.includes('w'));
+    const water = hasWater ? scene.textures.get('sheet.water').getSourceImage() : null;
+    const W_PLAIN = [1, 1], W_SPARK = [11, 1];
     const quad = (src, [sx, sy], qx, qy, dx, dy) => ctx.drawImage(src, sx * TILE + qx * 8, sy * TILE + qy * 8, 8, 8, dx + qx * 8, dy + qy * 8, 8, 8);
 
     for (let y = 0; y < this.rows; y += 1) {
       for (let x = 0; x < this.cols; x += 1) {
         const dx = x * TILE, dy = y * TILE;
+        if (this.map.terrain[y][x] === 'w') {
+          const [sx, sy] = hash(x, y) < 0.92 ? W_PLAIN : W_SPARK;
+          ctx.drawImage(water, sx * TILE, sy * TILE, TILE, TILE, dx, dy, TILE, TILE);
+          continue;
+        }
+        if (!this.isDirt(x, y) && this.theme.water) {
+          // 바다: 물 타일, 가끔 반짝이는 물결
+          const w = this.theme.water;
+          const [sx, sy] = hash(x, y) < 0.92 ? w.plain : w.variants[Math.floor(hash(x, y, 1) * w.variants.length)];
+          ctx.drawImage(water, sx * TILE, sy * TILE, TILE, TILE, dx, dy, TILE, TILE);
+          continue;
+        }
         if (!this.isDirt(x, y)) {
           // 풀: 대부분 민무늬, 가끔 무늬 있는 타일
           const r = hash(x, y);
