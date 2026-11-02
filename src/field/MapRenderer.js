@@ -1,7 +1,7 @@
 // 맵 그리기: 바닥(풀 + 흙길 자동 타일 + 풀포기)은 한 장의 캔버스로 굽고,
 // 건물·나무·소품은 각각 이미지로 올려 아래쪽 끝 기준으로 앞뒤를 정한다(나무 뒤로 걸어가면 가려짐).
 import { TILE } from '../../content/maps/village.js';
-import { OBJECTS, DIRT, GRASS, DECOR, ANIMATED } from '../../content/art/pack.js';
+import { OBJECTS, DIRT, GRASS, DECOR, ANIMATED, THEMES } from '../../content/art/pack.js';
 import { dirtQuarter } from './autotile.js';
 
 const hash = (x, y, s = 0) => {
@@ -10,17 +10,29 @@ const hash = (x, y, s = 0) => {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 };
 
+// 바닥 테마(눈·모래 등)는 같은 자동 타일 좌표를 옮겨서 쓴다 (pack.js THEMES)
+const shift = ([x, y], [dx, dy]) => [x + dx, y + dy];
+
 export class MapRenderer {
-  constructor(scene, map) {
+  // open: 열린 출구 방향들 ('n' 등). 열린 출구 자리는 안개를 걷고 걸어 나갈 수 있다
+  constructor(scene, map, { open = [] } = {}) {
     this.scene = scene;
     this.map = map;
+    this.open = open;
+    this.theme = THEMES[map.theme ?? 'village'];
+    const off = this.theme.offset;
+    this.grass = { plain: shift(GRASS.plain, off), variants: GRASS.variants.map((v) => shift(v, off)) };
+    this.dirt = {
+      center: DIRT.center.map((v) => shift(v, off)),
+      ...Object.fromEntries(['outer', 'edge', 'inner'].map((k) => [k, Object.fromEntries(Object.entries(DIRT[k]).map(([n, v]) => [n, shift(v, off)]))])),
+    };
     this.cols = map.W;
     this.rows = map.H;
     this.width = map.W * TILE;
     this.height = map.H * TILE;
   }
 
-  isSolidPx(px, py) { return this.map.isSolidPx(px, py); }
+  isSolidPx(px, py) { return this.map.isSolidPx(px, py, this.open); }
 
   isDirt(x, y) { return this.map.terrain[y]?.[x] === 'd'; }
 
@@ -41,7 +53,7 @@ export class MapRenderer {
         if (!this.isDirt(x, y)) {
           // 풀: 대부분 민무늬, 가끔 무늬 있는 타일
           const r = hash(x, y);
-          const [sx, sy] = r < 0.82 ? GRASS.plain : GRASS.variants[Math.floor(hash(x, y, 1) * GRASS.variants.length)];
+          const [sx, sy] = r < 0.82 ? this.grass.plain : this.grass.variants[Math.floor(hash(x, y, 1) * this.grass.variants.length)];
           ctx.drawImage(floor, sx * TILE, sy * TILE, TILE, TILE, dx, dy, TILE, TILE);
           continue;
         }
@@ -49,15 +61,15 @@ export class MapRenderer {
         for (const qy of [0, 1]) {
           for (const qx of [0, 1]) {
             const q = dirtQuarter((i, j) => this.isDirt(i, j), x, y, qx, qy);
-            const src = q.kind === 'center' ? DIRT.center[Math.floor(hash(x, y, 2) * DIRT.center.length)] : DIRT[q.kind][q.key];
+            const src = q.kind === 'center' ? this.dirt.center[Math.floor(hash(x, y, 2) * this.dirt.center.length)] : this.dirt[q.kind][q.key];
             quad(floor, src, qx, qy, dx, dy);
           }
         }
       }
     }
 
-    // 풀포기와 들꽃: 풀 칸에만, 길·물체 근처는 피해서
-    for (let y = this.map.FOG; y < this.rows - this.map.FOG; y += 1) {
+    // 풀포기와 들꽃: 풀 칸에만, 길·물체 근처는 피해서 (눈·모래 위엔 없다)
+    if (this.theme.decor) for (let y = this.map.FOG; y < this.rows - this.map.FOG; y += 1) {
       for (let x = this.map.FOG; x < this.cols - this.map.FOG; x += 1) {
         if (this.isDirt(x, y) || this.map.isSolidTile(x, y)) continue;
         const r = hash(x, y, 7);
@@ -81,7 +93,16 @@ export class MapRenderer {
     return key;
   }
 
+  // 열린 출구의 통로 칸인가
+  inOpenGap(x, y) {
+    const edge = this.map.FOG + 1;
+    return (this.map.exits ?? []).some((e) => this.open.includes(e.dir) && (
+      (e.dir === 'n' && y < edge && x >= e.from && x < e.to2) || (e.dir === 's' && y >= this.rows - edge && x >= e.from && x < e.to2)
+      || (e.dir === 'w' && x < edge && y >= e.from && y < e.to2) || (e.dir === 'e' && x >= this.cols - edge && y >= e.from && y < e.to2)));
+  }
+
   fogAmount(x, y) {
+    if (this.inOpenGap(x, y)) return 0;
     const d = Math.min(x, y, this.cols - 1 - x, this.rows - 1 - y);
     const edge = this.map.FOG;
     if (d > edge) return 0;

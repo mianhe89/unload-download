@@ -10,6 +10,8 @@ export const phases = {
     bonfire: 'out',
     player: { at: [16, 28], face: 'up' },
     objective: '종탑',
+    // 마을 밖 길이 처음으로 '불러와졌다' (북쪽, 서리 마을 방향)
+    exits: ['n'],
     npcs: {
       mia: { at: [26, 19], mode: 'idle', face: 'down' },
       hort: { at: [16, 16], mode: 'idle', face: 'down' },

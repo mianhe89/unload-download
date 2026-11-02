@@ -25,6 +25,17 @@ export const DIRT = {
 export const GRASS = { sheet: 'floor', plain: [11, 12], variants: [[12, 12], [13, 12], [14, 12], [15, 12]] };
 
 // 바닥 장식(밟고 지나감): 바닥 장식 시트의 풀포기·꽃
+// 바닥 테마: 바닥 시트는 '땅 + 그 위의 길' 블록이 같은 배치로 반복된다.
+// offset만큼 DIRT·GRASS 좌표를 옮기면 같은 자동 타일 규칙으로 눈길·모랫길을 그릴 수 있다.
+// decor: 풀포기·들꽃을 얹을지 (눈·모래 위엔 얹지 않는다)
+export const THEMES = {
+  village: { offset: [0, 0], decor: true },                 // 짙은 풀 + 흙길 (마을)
+  grass: { offset: [-11, 0], decor: true },                 // 밝은 풀 + 흙길
+  snow: { offset: [-11, 7], decor: false },                 // 눈 + 다져진 눈길
+  sand: { offset: [-11, -7], decor: false },                // 모래 + 모랫길
+  earth: { offset: [0, 7], decor: false },                  // 마른 땅 + 흙길
+};
+
 export const DECOR = {
   tufts: [[0, 2], [1, 2], [2, 2], [3, 2], [6, 2]],
   flowers: [[5, 2], [7, 2]],
@@ -55,6 +66,18 @@ export const OBJECTS = {
   tree_big: { sheet: 'nature', rect: [48, 288, 48, 48], foot: [16, 38, 16, 10] },
   tree_big_pink: { sheet: 'nature', rect: [0, 288, 48, 48], foot: [16, 38, 16, 10] },
   tree_big_autumn: { sheet: 'nature', rect: [144, 288, 48, 48], foot: [16, 38, 16, 10] },
+  // 기후별 (길 맵에서 쓴다)
+  tree_snow: { sheet: 'nature', rect: [128, 0, 32, 32], foot: [10, 24, 12, 8] },
+  tree_snow2: { sheet: 'nature', rect: [160, 0, 32, 32], foot: [10, 24, 12, 8] },
+  tree_snow_round: { sheet: 'nature', rect: [192, 0, 32, 32], foot: [10, 24, 12, 8] },
+  tree_pink: { sheet: 'nature', rect: [224, 0, 32, 32], foot: [10, 24, 12, 8] },
+  tree_grove_green: { sheet: 'nature', rect: [64, 32, 64, 48], foot: [6, 34, 52, 14] },
+  tree_grove_snow: { sheet: 'nature', rect: [128, 32, 64, 48], foot: [6, 34, 52, 14] },
+  pines_snow: { sheet: 'nature', rect: [64, 80, 64, 48], foot: [6, 34, 52, 14] },
+  pines_snow2: { sheet: 'nature', rect: [128, 80, 64, 48], foot: [6, 34, 52, 14] },
+  dead_grove: { sheet: 'nature', rect: [0, 80, 64, 48], foot: [6, 34, 52, 14] },
+  rocks_brown: { sheet: 'nature', rect: [192, 80, 64, 48], foot: [4, 22, 56, 26] },
+  rocks_grey: { sheet: 'nature', rect: [256, 80, 64, 48], foot: [4, 22, 56, 26] },
   bush: { sheet: 'nature', rect: [0, 160, 16, 16], foot: [2, 8, 12, 8] },
   bush2: { sheet: 'nature', rect: [16, 160, 16, 16], foot: [2, 8, 12, 8] },
   stump: { sheet: 'nature', rect: [128, 128, 16, 16], foot: [2, 6, 12, 10] },

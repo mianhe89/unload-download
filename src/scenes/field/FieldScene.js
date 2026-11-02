@@ -26,12 +26,15 @@ const px = (t) => t * TILE + TILE / 2;
 export default class FieldScene extends Phaser.Scene {
   constructor() { super('Field'); }
 
-  init({ chapter, phase }) {
+  // entry: 마을 밖 길에서 돌아올 때 들어오는 쪽 ('n' 등). 없으면 페이즈의 시작 자리
+  init({ chapter, phase, entry }) {
+    this.entry = entry ?? null;
     this.chapterId = chapter;
     this.chapter = chapters[chapter];
     this.phaseId = phase ?? this.chapter.firstPhase;
     this.phase = this.chapter.phases[this.phaseId];
     this.elapsed = 0;
+    this.leaving = false;
     this.flagTimes = {};
     this.cooldown = 0;
     WorldMemory.checkpoint(chapter, this.phaseId);
@@ -42,13 +45,15 @@ export default class FieldScene extends Phaser.Scene {
     this.ui = this.scene.get('UI');
 
     // 맵
-    this.map = new MapRenderer(this, village);
+    this.openExits = this.phase.exits ?? [];
+    this.map = new MapRenderer(this, village, { open: this.openExits });
     this.add.image(0, 0, this.map.renderGround()).setOrigin(0).setDepth(-1000);
     this.map.placeObjects();
 
     // 인물
     const p = this.phase.player;
-    this.player = new Player(this, p.at[0], p.at[1], p.face);
+    const at = this.entry ? village.entry(this.entry) : p.at;
+    this.player = new Player(this, at[0], at[1], this.entry ? { n: 'down', s: 'up', w: 'right', e: 'left' }[this.entry] : p.face);
     this.npcs = {};
     this.props = [];
     for (const [id, cfg] of Object.entries(this.phase.npcs ?? {})) {
@@ -130,6 +135,7 @@ export default class FieldScene extends Phaser.Scene {
       for (const r of runs) { WorldMemory.setFlag(`done.${r.id}`); this.cutscene.play(r.run); }
       this.updateInteraction();
       this.updateAmbient(dt);
+      this.checkExit();
     } else {
       this.ui.hud.showPrompt(null);
     }
@@ -355,6 +361,20 @@ export default class FieldScene extends Phaser.Scene {
   worldToScreen(x, y) {
     const cam = this.cameras.main;
     return { x: (x - cam.worldView.x) * cam.zoom, y: (y - cam.worldView.y) * cam.zoom };
+  }
+
+  // 열린 출구의 맨 끝을 밟으면 마을 밖 길 맵으로
+  checkExit() {
+    if (this.leaving || !this.openExits.length) return;
+    const ty = Math.floor(this.player.y / TILE);
+    const e = village.exits.find((x) => this.openExits.includes(x.dir) && x.dir === 'n' && ty <= 1);
+    if (!e) return;
+    this.leaving = true;
+    this.cameras.main.fadeOut(350, 0, 0, 0);
+    this.time.delayedCall(380, () => this.scene.start('Area', {
+      layer: 'surface', at: e.at, entry: { n: 's', s: 'n', e: 'w', w: 'e' }[e.dir],
+      back: { chapter: this.chapterId, phase: this.phaseId, time: this.phase.time },
+    }));
   }
 
   goPhase(phase) {

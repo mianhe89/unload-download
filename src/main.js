@@ -7,6 +7,7 @@ import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/title/TitleScene.js';
 import FieldScene from './scenes/field/FieldScene.js';
 import UIScene from './scenes/field/UIScene.js';
+import AreaScene from './scenes/area/AreaScene.js';
 
 async function start() {
   // 세이브를 먼저 읽고(나중에 원격 DB여도 같은 흐름), 픽셀 폰트가 준비된 뒤 게임을 연다
@@ -28,7 +29,7 @@ async function start() {
     pixelArt: true,
     roundPixels: true,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene: [BootScene, TitleScene, FieldScene, UIScene],
+    scene: [BootScene, TitleScene, FieldScene, AreaScene, UIScene],
     callbacks: { preBoot: (game) => game.registry.set('manifest', manifest) },
   });
   document.title = platform.isDesktop ? 'DOWNLOAD' : 'UNLOAD';

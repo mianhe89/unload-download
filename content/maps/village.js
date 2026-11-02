@@ -26,6 +26,8 @@ function buildTerrain() {
   dirt(34, 15, 5, 2);    // 대장간 앞
   dirt(36, 19, 2, 8);    // 큰길 → 초소
   dirt(34, 27, 5, 2);    // 초소 앞
+  dirt(34, 0, 2, 13);    // 북쪽 길 (1장부터 열린다)
+  dirt(33, 12, 2, 4);    // 북쪽 길 → 대장간 앞
   return g.map((r) => r.join(''));
 }
 
@@ -69,7 +71,7 @@ export const objects = [
 // 마을을 두르는 숲
 const ring = [];
 for (let x = 2; x < W - 4; x += 4) {
-  ring.push(O(x % 8 ? 'tree_grove' : 'tree_grove2', x, 2));
+  if (x !== 34) ring.push(O(x % 8 ? 'tree_grove' : 'tree_grove2', x, 2)); // 34: 북쪽 길 자리
   ring.push(O(x % 8 ? 'tree_grove2' : 'tree_pines', x, H - 6));
 }
 for (let y = 5; y < H - 6; y += 3) {
@@ -92,9 +94,18 @@ export const solids = objects
     return { x: o.at[0] * TILE + fx, y: o.at[1] * TILE + fy, w: fw, h: fh, type: o.type };
   });
 
+// 마을 밖으로 나가는 출구. 장(페이즈)이 exits로 열어줄 때만 지나갈 수 있다 (그 전엔 안개)
+// to: 전체 지도의 칸 (content/world/world.js), [from, to2): 출구 칸 범위
+export const exits = [
+  { dir: 'n', from: 33, to2: 36, to: 'surface:7,10', at: [7, 10] },
+];
+export const entry = (dir) => ({ n: [34, FOG + 1] })[dir];
+
 const EDGE = FOG + 1;
-export function isSolidPx(px, py) {
-  if (px < EDGE * TILE || py < EDGE * TILE || px >= (W - EDGE) * TILE || py >= (H - EDGE) * TILE) return true;
+const inGap = (tx, ty, open) => exits.some((e) => open.includes(e.dir) && e.dir === 'n' && ty < EDGE && tx >= e.from && tx < e.to2);
+export function isSolidPx(px, py, open = []) {
+  if (px < 0 || py < 0 || px >= W * TILE || py >= H * TILE) return true;
+  if ((px < EDGE * TILE || py < EDGE * TILE || px >= (W - EDGE) * TILE || py >= (H - EDGE) * TILE) && !inGap(Math.floor(px / TILE), Math.floor(py / TILE), open)) return true;
   return solids.some((s) => px >= s.x && px < s.x + s.w && py >= s.y && py < s.y + s.h);
 }
 
