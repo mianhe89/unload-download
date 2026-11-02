@@ -5,6 +5,14 @@ export default {
   role: '소꿉친구',
   color: '#ffb3c8',
   erasable: false,   // 로드 시 지워질 수 있는가
+  // 필드 스프라이트: Ninja Adventure 팩(CC0)의 'Princess'를 바탕으로 변형 (검은 머리를 주황으로, 머리 장식을 분홍으로)
+  // recolor: 원본색 → 바꿀색 (# 없이 6자리), edits: 픽셀 덧그리기. 결과는 npm run assets로 만든다
+  sprite: {
+    base: 'Princess',
+    recolor: { '3b3643': 'a5532c', '4e484a': 'd0703e', e0394c: 'e0607e' },
+    edits: [],
+  },
+  // (예전 코드 생성 픽셀. 타이틀 미리보기 도구용으로만 남김)
   art: {
     layers: ["short", "pigtails"],
     pal: { h: '#d0703e', H: '#a5532c', c: '#f1e3c8', C: '#cdb995', a: '#e0607e', p: '#b0846a', b: '#6a4030' },

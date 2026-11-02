@@ -139,13 +139,19 @@ export function drawTitle(state) {
   for (let i = 0; i < 40; i += 1) { const x = r() * TITLE_W; R.rect(x, 236 + r() * 30, 1, 3, shade('#2a4a2a', lit)); }
 
   // 언덕 위의 뒷모습. 아직 누군가 곁에 있다면 함께
-  const figures = [{ id: 'me', x: 196 }];
-  if (state.started && !(state.chapter && state.chapter !== 'prologue')) figures.push({ id: 'mia', x: 220 });
-  for (const f of figures) blitSprite(R, composeFrame(CHARACTERS[f.id].art, 'up', 0), f.x, 214, 2, lit);
+  const figures = titleFigures(state);
+  if (state.figures !== false) for (const f of figures) blitSprite(R, composeFrame(CHARACTERS[f.id].art, 'up', 0), f.x, f.y, 2, lit);
 
   // 바램: 지워진 만큼
   R.desaturate(Math.min(erased.size * 0.16, 0.65));
-  return { raster: R, weather, tod, season: sea };
+  return { raster: R, weather, tod, season: sea, figures, light: lit };
+}
+
+// 언덕 위에 서 있는 뒷모습: 아직 누군가 곁에 있다면 함께 (래스터 좌표, 32×32)
+export function titleFigures(state) {
+  const f = [{ id: 'me', x: 196, y: 214 }];
+  if (state.started && !(state.chapter && state.chapter !== 'prologue')) f.push({ id: 'mia', x: 220, y: 214 });
+  return f;
 }
 
 function blitSprite(R, px, ox, oy, scale, lit) {

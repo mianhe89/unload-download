@@ -1,9 +1,16 @@
-// 시작 시 한 번: 코드로 그린 픽셀 아트를 텍스처·애니메이션으로 올리고 타이틀로.
+// 시작 시 한 번: 에셋(public/assets/gen)을 불러오고, 프레임·애니메이션을 등록한 뒤 타이틀로.
 import Phaser from 'phaser';
-import { buildTextures, buildAnimations } from '../core/art/textures.js';
+import { loadPackAssets, buildTextures, buildAnimations } from '../core/art/textures.js';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
+
+  preload() {
+    const manifest = this.registry.get('manifest');
+    loadPackAssets(this, manifest);
+    // 불러오기 실패는 콘솔에 남기되 게임은 계속 연다
+    this.load.on('loaderror', (file) => console.error(`에셋을 불러오지 못함: ${file.key} (${file.src})`));
+  }
 
   create() {
     buildTextures(this);

@@ -4,6 +4,7 @@ export const phases = {
   aftermath: {
     place: '광장 · 아침',
     time: 'day',
+    bonfire: 'out',
     player: { at: [16, 28], face: 'up' },
     objective: '종탑',
     npcs: {

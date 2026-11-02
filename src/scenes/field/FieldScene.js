@@ -6,7 +6,7 @@ import { ZOOM, TALK_RANGE, BUBBLE_RANGE } from '../../config/game.js';
 import { chapters } from '../../../content/chapters/index.js';
 import { characters } from '../../../content/characters/index.js';
 import * as village from '../../../content/maps/village.js';
-import { TILE } from '../../../content/art/tiles.js';
+import { TILE } from '../../../content/maps/village.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { passes } from '../../core/script/ScriptRunner.js';
 import { MapRenderer } from '../../field/MapRenderer.js';
@@ -16,7 +16,8 @@ import { Pickups } from '../../field/Pickups.js';
 import { Lighting } from '../../field/Lighting.js';
 import { EventDirector } from '../../field/EventDirector.js';
 import { Cutscene } from '../../field/Cutscene.js';
-import { placeLandmarks } from '../../field/Landmarks.js';
+import { Ambient } from '../../field/Ambient.js';
+import { OBJECTS } from '../../../content/art/pack.js';
 
 const px = (t) => t * TILE + TILE / 2;
 
@@ -40,8 +41,8 @@ export default class FieldScene extends Phaser.Scene {
 
     // 맵
     this.map = new MapRenderer(this, village);
-    this.add.image(0, 0, this.map.render()).setOrigin(0).setDepth(-1000);
-    placeLandmarks(this, village.rows);
+    this.add.image(0, 0, this.map.renderGround()).setOrigin(0).setDepth(-1000);
+    this.map.placeObjects();
 
     // 인물
     const p = this.phase.player;
@@ -63,6 +64,7 @@ export default class FieldScene extends Phaser.Scene {
       time: this.phase.time, lights: this.phase.lights, erasedCount: WorldMemory.world.erased.length,
       spots: village.spots, width: this.map.width, height: this.map.height,
     });
+    this.ambient = new Ambient(this, { time: this.phase.time, bonfire: this.phase.bonfire, map: village, erasedCount: WorldMemory.world.erased.length });
 
     // 카메라
     const cam = this.cameras.main;
@@ -111,7 +113,10 @@ export default class FieldScene extends Phaser.Scene {
     for (const npc of Object.values(this.npcs)) {
       npc.update(dt, { player: this.player, paused: busy, blocked: (x, y) => this.map.isSolidPx(x, y) });
     }
+    this.player.sync();
+    for (const npc of Object.values(this.npcs)) npc.sync();
     this.lighting.follow(this.player.x, this.player.y);
+    this.lighting.update(dt);
 
     if (!busy) {
       for (const g of this.pickups.collect(this.player)) this.onPicked(g);
@@ -284,8 +289,12 @@ export default class FieldScene extends Phaser.Scene {
     if (r) this.addProp(r.prop, at, r.text);
   }
 
+  // prop: 코드로 그린 소품(prop.<이름>) 또는 팩 물체(OBJECTS의 이름)
   addProp(prop, at, text) {
-    const sprite = this.add.image(px(at[0]), px(at[1]), `prop.${prop}`).setDepth(px(at[1]) - 4);
+    const def = OBJECTS[prop];
+    const sprite = def
+      ? this.add.image(px(at[0]), px(at[1]) + TILE / 2, `sheet.${def.sheet}`, prop).setOrigin(0.5, 1).setDepth(px(at[1]) + TILE / 2)
+      : this.add.image(px(at[0]), px(at[1]), `prop.${prop}`).setDepth(px(at[1]) - 4);
     this.props.push({ sprite, text });
   }
 

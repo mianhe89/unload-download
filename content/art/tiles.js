@@ -117,6 +117,20 @@ function render(fn, seed) {
 }
 
 export const tilePixels = (kind, seed = 1) => render(draw[kind], seed);
-export const propPixels = (kind) => render(PROPS[kind], 7);
+// 소품은 Ninja Adventure 팩과 어울리게 어두운 외곽선을 두른다
+export const propPixels = (kind) => outline(render(PROPS[kind], 7), [20, 27, 27]);
+
+function outline(d, [r, g, b]) {
+  const out = new Uint8ClampedArray(d);
+  const a = (x, y) => (x < 0 || y < 0 || x >= TILE || y >= TILE ? 0 : d[(y * TILE + x) * 4 + 3]);
+  for (let y = 0; y < TILE; y += 1) for (let x = 0; x < TILE; x += 1) {
+    if (a(x, y)) continue;
+    if (a(x - 1, y) || a(x + 1, y) || a(x, y - 1) || a(x, y + 1)) {
+      const i = (y * TILE + x) * 4;
+      out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = 255;
+    }
+  }
+  return out;
+}
 export const TILE_NAMES = Object.keys(draw);
 export const PROP_NAMES = Object.keys(PROPS);

@@ -83,8 +83,8 @@ test('프롤로그 완주 → CONTINUE하면 가장 아낀 마을 사람이 지�
   expect(after.npcs).not.toContain('hort');   // 지워진 사람은 필드에 없다
 
   // 빈자리에 흔적이 남는다
-  const remnants = await page.evaluate(() => window.__game.scene.getScene('Field').props.map((p) => p.sprite.texture.key));
-  expect(remnants).toContain('prop.emptyStall');
+  const remnants = await page.evaluate(() => window.__game.scene.getScene('Field').props.map((p) => p.sprite.frame.name));
+  expect(remnants).toContain('crate'); // 호르트가 서 있던 자리의 빈 상자
 
   await skipDialog(page);
   expect(errors).toEqual([]);

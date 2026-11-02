@@ -5,7 +5,7 @@ import { platform } from '../platform/index.js';
 export const VIEW = platform.isDesktop ? { width: 1920, height: 1080 } : { width: 960, height: 540 };
 
 // 화면 배율: 16px 타일이 몇 배로 보이는가
-export const ZOOM = platform.isDesktop ? 4 : 2;
+export const ZOOM = platform.isDesktop ? 6 : 3;
 
 export const PLAYER_SPEED = 72;      // px/s (월드 좌표)
 export const TALK_RANGE = 22;        // 말 걸 수 있는 거리 (px)

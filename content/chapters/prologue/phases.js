@@ -21,6 +21,7 @@ export const phases = {
   festival: {
     place: '수확제의 광장',
     time: 'night',
+    bonfire: 'lit',
     player: { at: [24, 21], face: 'up' },
     npcs: {
       mia: { at: [22, 21], mode: 'follow' },
@@ -65,6 +66,7 @@ export const phases = {
   morning: {
     place: '광장 · 아침',
     time: 'day',
+    bonfire: 'embers',
     player: { at: [16, 28], face: 'up' },
     objective: '에다의 대장간',
     npcs: {
@@ -95,6 +97,7 @@ export const phases = {
   night: {
     place: '종탑 · 밤',
     time: 'night',
+    bonfire: 'out',
     player: { at: [24, 20], face: 'up' },
     objective: '종탑',
     npcs: {},

@@ -9,3 +9,4 @@ src-tauri/gen/
 *-preview.png
 test-results/
 playwright-report/
+public/assets/gen/

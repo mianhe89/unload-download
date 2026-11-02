@@ -5,6 +5,14 @@ export default {
   role: '꽃집 아가씨',
   color: '#ffd1a6',
   erasable: true,   // 로드 시 지워질 수 있는가
+  // 필드 스프라이트: Ninja Adventure 팩(CC0)의 'Woman'를 바탕으로 변형 (옷을 초록으로, 머리 위에 꽃 화관을 그려 넣음)
+  // recolor: 원본색 → 바꿀색 (# 없이 6자리), edits: 픽셀 덧그리기. 결과는 npm run assets로 만든다
+  sprite: {
+    base: 'Woman',
+    recolor: { '548789': '4a8044', '79b8ce': '6aa860' },
+    edits: [{ type: 'crown' }],
+  },
+  // (예전 코드 생성 픽셀. 타이틀 미리보기 도구용으로만 남김)
   art: {
     layers: ["long", "flowerCrown"],
     pal: { h: '#f0cc6a', H: '#c8a040', c: '#6aa860', C: '#4a8044', a: '#f6f0e0', p: '#6a8a5a', b: '#5a4030', f: '#f07aa0', l: '#5aa04a' },

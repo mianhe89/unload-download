@@ -3,9 +3,9 @@
 import { chapters } from '../../content/chapters/index.js';
 import { characters } from '../../content/characters/index.js';
 import * as village from '../../content/maps/village.js';
-import { TILE_KINDS } from '../../content/art/tiles.js';
 import { LAYERS } from '../../content/art/layers.js';
 import { PROP_NAMES } from '../../content/art/tiles.js';
+import { OBJECTS, SHEETS, ANIMATED } from '../../content/art/pack.js';
 import { ScriptRunner } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
 
@@ -13,19 +13,53 @@ export function validateContent() {
   const stats = {};
   const errs = [];
   const err = (m) => errs.push(m);
-  const solid = (x, y) => { const k = TILE_KINDS[village.rows[y]?.[x]]; return k ? Boolean(k.solid) : true; };
+  const solid = (x, y) => village.isSolidTile(x, y);
   const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
   const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkAway', 'despawn']);
 
   // 캐릭터
   for (const c of Object.values(characters)) {
     for (const l of c.art.layers) if (!LAYERS[l]) err(`캐릭터 ${c.id}: 레이어 없음 ${l}`);
-    if (c.remnant && !PROP_NAMES.includes(c.remnant.prop)) err(`캐릭터 ${c.id}: 흔적 소품 없음 ${c.remnant.prop}`);
+    if (c.remnant && !PROP_NAMES.includes(c.remnant.prop) && !OBJECTS[c.remnant.prop]) err(`캐릭터 ${c.id}: 흔적 소품 없음 ${c.remnant.prop}`);
   }
 
   // 맵
-  if (new Set(village.rows.map((r) => r.length)).size !== 1) err('맵: 줄 길이가 다름');
-  for (const [name, s] of Object.entries(village.spots)) if (!village.rows[Math.floor(s.y)]) err(`맵: 장소 범위 밖 ${name}`);
+  if (village.terrain.length !== village.H || village.terrain.some((r) => r.length !== village.W)) err('맵: 바닥 크기가 맞지 않음');
+  for (const [name, s] of Object.entries(village.spots)) if (s.x < 0 || s.y < 0 || s.x >= village.W || s.y >= village.H) err(`맵: 장소 범위 밖 ${name}`);
+  for (const o of village.objects) {
+    const def = OBJECTS[o.type];
+    if (!def) { err(`맵: 알 수 없는 물체 ${o.type}`); continue; }
+    if (!def.sheet.startsWith('gen:') && !SHEETS[def.sheet]) err(`맵: ${o.type}의 시트 없음 ${def.sheet}`);
+  }
+  for (const a of village.animated) if (!ANIMATED[a.type]) err(`맵: 알 수 없는 움직이는 장식 ${a.type}`);
+  // 도달 가능성: 첫 시작점에서 걸어서 갈 수 있는 칸 (막힌 칸으로 둘러싸인 곳을 찾는다)
+  const reach = new Set();
+  {
+    const start = chapters.prologue.phases.festival.player.at;
+    const q = [start];
+    reach.add(start.join(','));
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const k = `${x + dx},${y + dy}`;
+        if (!reach.has(k) && !solid(x + dx, y + dy)) { reach.add(k); q.push([x + dx, y + dy]); }
+      }
+    }
+  }
+  const reachable = (x, y) => reach.has(`${Math.round(x)},${Math.round(y)}`);
+  for (const [name, sp] of Object.entries(village.spots)) {
+    const near = [[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1], [0, 2]].some(([dx, dy]) => reachable(Math.floor(sp.x) + dx, Math.floor(sp.y) + dy));
+    if (!near) err(`맵: 장소 ${name}에 걸어갈 수 없음`);
+  }
+  // 구역은 적어도 한 칸은 걸어 들어갈 수 있어야 한다
+  for (const [name, z] of Object.entries(village.zones)) {
+    let open = 0;
+    for (let y = z.y; y < z.y + z.h; y += 1) for (let x = z.x; x < z.x + z.w; x += 1) if (!solid(x, y)) open += 1;
+    if (!open) err(`맵: 구역 ${name}에 들어갈 수 있는 칸이 없음`);
+    let reachIn = false;
+    for (let y = z.y; y < z.y + z.h; y += 1) for (let x = z.x; x < z.x + z.w; x += 1) if (reachable(x, y)) reachIn = true;
+    if (!reachIn) err(`맵: 구역 ${name}에 걸어서 닿을 수 없음`);
+  }
 
   for (const [cid, ch] of Object.entries(chapters)) {
     const S = ch.script;
@@ -40,7 +74,7 @@ export function validateContent() {
       if (n.act && !KNOWN_ACTS.has(n.act)) err(`${at} 알 수 없는 동작 ${n.act}`);
       if (n.act === 'spawnPickups') {
         if (!PROP_NAMES.includes(n.prop)) err(`${at} 소품 없음 ${n.prop}`);
-        for (const [x, y] of n.items) if (solid(x, y)) err(`${at} 물건이 막힌 칸에 있음 ${x},${y}`);
+        for (const [x, y] of n.items) { if (solid(x, y)) err(`${at} 물건이 막힌 칸에 있음 ${x},${y}`); else if (!reachable(x, y)) err(`${at} 물건에 걸어갈 수 없음 ${x},${y}`); }
         if (n.expire?.run && !S[n.expire.run]) err(`${at} 만료 컷신 없음`);
       }
       if (n.act === 'spawnNpc' && !characters[n.id]) err(`${at} 인물 없음 ${n.id}`);
@@ -53,8 +87,12 @@ export function validateContent() {
       for (const [id, n] of Object.entries(ph.npcs ?? {})) {
         if (!characters[id]) err(`${at} 인물 없음 ${id}`);
         if (solid(...n.at)) err(`${at} ${id} 위치가 막힘 ${n.at}`);
+      else if (!reachable(...n.at)) err(`${at} ${id}에게 걸어갈 수 없음 ${n.at}`);
       }
-      for (const p of ph.props ?? []) if (!PROP_NAMES.includes(p.prop)) err(`${at} 소품 없음 ${p.prop}`);
+      for (const p of ph.props ?? []) {
+      if (!PROP_NAMES.includes(p.prop) && !OBJECTS[p.prop]) err(`${at} 소품 없음 ${p.prop}`);
+      if (solid(...p.at)) err(`${at} 소품이 막힌 칸에 있음 ${p.at}`);
+    }
       for (const e of ph.events ?? []) {
         if (!S[e.run]) err(`${at} 이벤트 ${e.id}: 컷신 없음 ${e.run}`);
         const t = e.trigger;

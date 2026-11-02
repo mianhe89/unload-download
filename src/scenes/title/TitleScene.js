@@ -6,6 +6,7 @@ import Phaser from 'phaser';
 import { FONT } from '../../config/game.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { drawTitle, TITLE_W, TITLE_H } from './TitleIllustration.js';
+import { CHAR } from '../../../content/art/pack.js';
 
 export default class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
@@ -17,7 +18,8 @@ export default class TitleScene extends Phaser.Scene {
     const run = WorldMemory.run;
 
     // 일러스트
-    const { raster } = drawTitle({
+    const { raster, figures, light } = drawTitle({
+      figures: false,
       date: new Date(),
       erased: world.erased.map((e) => e.id),
       loads: world.loads,
@@ -32,6 +34,13 @@ export default class TitleScene extends Phaser.Scene {
     tex.getContext().putImageData(img, 0, 0);
     tex.refresh();
     this.add.image(width / 2, height / 2, 'title.art').setDisplaySize(width, height);
+
+    // 언덕 위의 뒷모습 (필드와 같은 캐릭터 그림). 래스터 좌표 → 화면 좌표
+    const k = width / TITLE_W;
+    const shade = Phaser.Display.Color.GetColor(...[1, 1, 1].map(() => Math.round(255 * Math.max(light, 0.55))));
+    for (const f of figures) {
+      this.add.image(f.x * k, f.y * k, `char.${f.id}`, CHAR.dirs.up).setOrigin(0, 0).setScale(2 * k).setTint(shade);
+    }
 
     // 오늘 날짜 (매일 바뀐다는 작은 신호)
     const d = new Date();
