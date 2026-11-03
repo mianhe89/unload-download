@@ -3,6 +3,7 @@
 import { chapters } from '../../content/chapters/index.js';
 import { characters } from '../../content/characters/index.js';
 import * as village from '../../content/maps/village.js';
+import { MAPS, mapOf } from '../../content/maps/index.js';
 import { existsSync } from 'node:fs';
 import { PROP_NAMES } from '../../content/art/props.js';
 import { OBJECTS, SHEETS, ANIMATED } from '../../content/art/pack.js';
@@ -45,16 +46,19 @@ export function validateContent() {
 
   // 하루 일과: 시각 형식, 장소가 있는지, 걸을 수 있는 칸인지, 집으로 가면 집(맵 objects의 residents)이 있는지
   for (const c of Object.values(characters)) {
+    const hm = MAPS[c.home ?? 'village'];
+    if (!hm) { err(`인물 ${c.id}: 사는 맵 없음 ${c.home}`); continue; }
+    const solid = (x, y) => hm.isSolidTile(x, y);
     for (const e of c.schedule ?? []) {
       const at = `일과 ${c.id} ${e.from}`;
       if (!/^\d\d:\d\d$/.test(e.from ?? '')) err(`${at}: 시각 형식`);
       if (e.home) {
-        const home = village.objects.find((o) => o.residents?.includes(c.id));
+        const home = hm.objects.find((o) => o.residents?.includes(c.id));
         if (!home) err(`${at}: 집 없음`);
         else if (solid(...doorStep(home))) err(`${at}: 집 문 앞이 막힌 칸`);
         continue;
       }
-      const p = Array.isArray(e.at) ? e.at : village.spots[e.at] && [Math.round(village.spots[e.at].x), Math.round(village.spots[e.at].y)];
+      const p = Array.isArray(e.at) ? e.at : hm.spots[e.at] && [Math.round(hm.spots[e.at].x), Math.round(hm.spots[e.at].y)];
       if (!p) err(`${at}: 장소 없음 ${e.at}`);
       else if (solid(...p)) err(`${at}: 막힌 칸 ${p}`);
     }
@@ -67,42 +71,56 @@ export function validateContent() {
     if (c.remnant && !PROP_NAMES.includes(c.remnant.prop) && !OBJECTS[c.remnant.prop]) err(`캐릭터 ${c.id}: 흔적 소품 없음 ${c.remnant.prop}`);
   }
 
-  // 맵
-  if (village.terrain.length !== village.H || village.terrain.some((r) => r.length !== village.W)) err('맵: 바닥 크기가 맞지 않음');
-  for (const [name, s] of Object.entries(village.spots)) if (s.x < 0 || s.y < 0 || s.x >= village.W || s.y >= village.H) err(`맵: 장소 범위 밖 ${name}`);
-  for (const o of village.objects) {
-    const def = OBJECTS[o.type];
-    if (!def) { err(`맵: 알 수 없는 물체 ${o.type}`); continue; }
-    if (!def.sheet.startsWith('gen:') && !SHEETS[def.sheet]) err(`맵: ${o.type}의 시트 없음 ${def.sheet}`);
-  }
-  for (const a of village.animated) if (!ANIMATED[a.type]) err(`맵: 알 수 없는 움직이는 장식 ${a.type}`);
-  // 도달 가능성: 첫 시작점에서 걸어서 갈 수 있는 칸 (막힌 칸으로 둘러싸인 곳을 찾는다)
-  const reach = new Set();
-  {
-    const start = chapters.prologue.phases.festival.player.at;
+  // 맵 (이야기 필드가 쓰는 맵마다): 크기, 물체, 장소·구역에 걸어서 닿는지
+  // 걸어 닿는 칸은 그 맵을 쓰는 첫 페이즈의 시작점에서 센다
+  const reachOf = {};
+  for (const [mid, m] of Object.entries(MAPS)) {
+    const at = `맵 ${mid}`;
+    const msolid = (x, y) => m.isSolidTile(x, y);
+    if (m.terrain.length !== m.H || m.terrain.some((r) => r.length !== m.W)) err(`${at}: 바닥 크기가 맞지 않음`);
+    for (const [name, sp] of Object.entries(m.spots)) if (sp.x < 0 || sp.y < 0 || sp.x >= m.W || sp.y >= m.H) err(`${at}: 장소 범위 밖 ${name}`);
+    for (const o of m.objects) {
+      const def = OBJECTS[o.type];
+      if (!def) { err(`${at}: 알 수 없는 물체 ${o.type}`); continue; }
+      if (!def.sheet.startsWith('gen:') && !SHEETS[def.sheet]) err(`${at}: ${o.type}의 시트 없음 ${def.sheet}`);
+    }
+    for (const a of m.animated) if (!ANIMATED[a.type]) err(`${at}: 알 수 없는 움직이는 장식 ${a.type}`);
+    const firstPhase = Object.values(chapters).flatMap((c) => Object.values(c.phases)).find((ph) => mapOf(ph) === m);
+    const start = firstPhase?.player.at ?? m.entry(m.exits[0]?.dir);
+    if (!start) { err(`${at}: 시작점이 없음`); continue; }
+    const reach = new Set([start.join(',')]);
     const q = [start];
-    reach.add(start.join(','));
     while (q.length) {
       const [x, y] = q.shift();
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const k = `${x + dx},${y + dy}`;
-        if (!reach.has(k) && !solid(x + dx, y + dy)) { reach.add(k); q.push([x + dx, y + dy]); }
+        if (!reach.has(k) && !msolid(x + dx, y + dy)) { reach.add(k); q.push([x + dx, y + dy]); }
       }
     }
+    const ok = (x, y) => reach.has(`${Math.round(x)},${Math.round(y)}`);
+    reachOf[mid] = ok;
+    for (const [name, sp] of Object.entries(m.spots)) {
+      const near = [[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1], [0, 2]].some(([dx, dy]) => ok(Math.floor(sp.x) + dx, Math.floor(sp.y) + dy));
+      if (!near) err(`${at}: 장소 ${name}에 걸어갈 수 없음`);
+    }
+    for (const [name, z] of Object.entries(m.zones)) {
+      let reachIn = false;
+      for (let y = z.y; y < z.y + z.h; y += 1) for (let x = z.x; x < z.x + z.w; x += 1) if (ok(x, y)) reachIn = true;
+      if (!reachIn) err(`${at}: 구역 ${name}에 걸어서 닿을 수 없음`);
+    }
+    // 출구는 걸어서 닿아야 한다
+    for (const e of m.exits) {
+      const cells = [];
+      for (let i = e.from; i < e.to2; i += 1) cells.push(e.dir === 'n' ? [i, m.FOG + 1] : e.dir === 's' ? [i, m.H - m.FOG - 2] : e.dir === 'w' ? [m.FOG + 1, i] : [m.W - m.FOG - 2, i]);
+      if (!cells.some(([x, y]) => ok(x, y))) err(`${at}: 출구 ${e.dir}에 걸어서 닿을 수 없음`);
+    }
   }
-  const reachable = (x, y) => reach.has(`${Math.round(x)},${Math.round(y)}`);
-  for (const [name, sp] of Object.entries(village.spots)) {
-    const near = [[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1], [0, 2]].some(([dx, dy]) => reachable(Math.floor(sp.x) + dx, Math.floor(sp.y) + dy));
-    if (!near) err(`맵: 장소 ${name}에 걸어갈 수 없음`);
-  }
-  // 구역은 적어도 한 칸은 걸어 들어갈 수 있어야 한다
-  for (const [name, z] of Object.entries(village.zones)) {
-    let open = 0;
-    for (let y = z.y; y < z.y + z.h; y += 1) for (let x = z.x; x < z.x + z.w; x += 1) if (!solid(x, y)) open += 1;
-    if (!open) err(`맵: 구역 ${name}에 들어갈 수 있는 칸이 없음`);
-    let reachIn = false;
-    for (let y = z.y; y < z.y + z.h; y += 1) for (let x = z.x; x < z.x + z.w; x += 1) if (reachable(x, y)) reachIn = true;
-    if (!reachIn) err(`맵: 구역 ${name}에 걸어서 닿을 수 없음`);
+  const reachable = (x, y) => reachOf.village(x, y);
+  // 대본 라벨이 어느 맵에서 돌아가는가: 그 라벨을 부르는 페이즈의 맵 (기본 우리 마을)
+  const labelMap = {};
+  for (const ch of Object.values(chapters)) for (const ph of Object.values(ch.phases)) {
+    const m = mapOf(ph);
+    for (const l of [ph.onEnter, ...(ph.events ?? []).map((e) => e.run)].filter(Boolean)) labelMap[l] = m;
   }
 
   for (const [cid, ch] of Object.entries(chapters)) {
@@ -110,6 +128,9 @@ export function validateContent() {
     // 대본 노드
     for (const [label, nodes] of Object.entries(S)) nodes.forEach((n, i) => {
       const at = `${cid}:${label}[${i}]`;
+      const lm = labelMap[label] ?? village;
+      const solid = (x, y) => lm.isSolidTile(x, y);
+      const reachable = (x, y) => reachOf[lm.id ?? 'village'](x, y);
       if (n.who && !characters[n.who]) err(`${at} 화자 없음 ${n.who}`);
       if (n.cg && !CG[n.cg]) err(`${at} CG 없음 ${n.cg}`);
       if (n.tint && !TINTS[n.tint]) err(`${at} 색조 없음 ${n.tint}`);
@@ -130,6 +151,10 @@ export function validateContent() {
     // 페이즈
     for (const [pid, ph] of Object.entries(ch.phases)) {
       const at = `${cid}/${pid}`;
+      const pm = mapOf(ph);
+      if (!pm) { err(`${at} 맵 없음 ${ph.map}`); continue; }
+      const solid = (x, y) => pm.isSolidTile(x, y);
+      const reachable = reachOf[pm.id];
       if (ph.onEnter && !S[ph.onEnter]) err(`${at} onEnter 없음 ${ph.onEnter}`);
       if (solid(...ph.player.at)) err(`${at} 플레이어 시작점이 막힘`);
       for (const [id, n] of Object.entries(ph.npcs ?? {})) {
@@ -144,14 +169,14 @@ export function validateContent() {
       for (const e of ph.events ?? []) {
         if (!S[e.run]) err(`${at} 이벤트 ${e.id}: 컷신 없음 ${e.run}`);
         const t = e.trigger;
-        if (t.zone && !village.zones[t.zone]) err(`${at} 이벤트 ${e.id}: 구역 없음 ${t.zone}`);
+        if (t.zone && !pm.zones[t.zone]) err(`${at} 이벤트 ${e.id}: 구역 없음 ${t.zone}`);
         for (const who of [t.near, t.dwell].filter(Boolean)) {
-          if (!characters[who] && !village.spots[who]) err(`${at} 이벤트 ${e.id}: 대상 없음 ${who}`);
+          if (!characters[who] && !pm.spots[who]) err(`${at} 이벤트 ${e.id}: 대상 없음 ${who}`);
         }
       }
       // 진행 경로: 이 페이즈에서 다음 페이즈/끝으로 가는 컷신이 하나라도 있는가
       const exits = (ph.events ?? []).filter((e) => (S[e.run] ?? []).some((n) => n.phase || n.end));
-      if (!exits.length) err(`${at} 다음으로 넘어가는 이벤트가 없음`);
+      if (!exits.length && !ph.visit) err(`${at} 다음으로 넘어가는 이벤트가 없음`); // visit: 들렀다 길로 나가는 페이즈
     }
   }
 

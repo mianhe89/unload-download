@@ -7,6 +7,7 @@
 //   { from: '18:00', at: 장소, task: '(좌판을 정리한다)' }    — 그 자리에서 하는 일 (말풍선, 2.5초 뒤 다음으로)
 //   { from: '19:00', home: true }                           — 자기 집(맵 objects의 residents에 이 사람이 있는 건물) 문으로
 //   when: 조건(대본 조건 문법)을 달면 그 조건일 때만 쓰는 줄
+// 인물 파일의 home: 사는 맵 id (기본 'village'). 그 맵에 있을 때만 일과를 산다
 // 장소: 맵 spots 이름 또는 [tx, ty]
 import { characters } from '../../../content/characters/index.js';
 import { TILE } from '../../../content/maps/village.js';
@@ -40,7 +41,8 @@ export class Schedules {
   ids() {
     if (!this.active) return [];
     const placed = this.field.phase.npcs ?? {};
-    return Object.keys(characters).filter((id) => characters[id].schedule && !placed[id] && !WorldMemory.isErased(id));
+    const here = this.mapData.id ?? 'village';
+    return Object.keys(characters).filter((id) => characters[id].schedule && (characters[id].home ?? 'village') === here && !placed[id] && !WorldMemory.isErased(id));
   }
 
   entryAt(id, minute) {

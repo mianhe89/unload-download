@@ -5,7 +5,7 @@ import Phaser from 'phaser';
 import { ZOOM, TALK_RANGE, BUBBLE_RANGE } from '../../config/game.js';
 import { chapters } from '../../../content/chapters/index.js';
 import { characters } from '../../../content/characters/index.js';
-import * as village from '../../../content/maps/village.js';
+import { MAPS, mapOf } from '../../../content/maps/index.js';
 import { TILE } from '../../../content/maps/village.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { passes } from '../../core/script/ScriptRunner.js';
@@ -40,12 +40,17 @@ export default class FieldScene extends Phaser.Scene {
   constructor() { super('Field'); }
 
   // entry: 마을 밖 길에서 돌아올 때 들어오는 쪽 ('n' 등). 없으면 페이즈의 시작 자리
-  init({ chapter, phase, entry }) {
+  // back: 다른 마을(옆 마을 등)에 들렀을 때, 길로 나가 다시 고향으로 돌아갈 { chapter, phase, time }
+  init({ chapter, phase, entry, back }) {
     this.entry = entry ?? null;
+    // 고향(우리 마을)에서 나갈 땐 돌아올 페이즈를 세이브에 남긴다 → 다른 마을에서 이어하기를 해도 고향으로 돌아갈 수 있다
+    this.back = back ?? WorldMemory.run.home ?? null;
     this.chapterId = chapter;
     this.chapter = chapters[chapter];
     this.phaseId = phase ?? this.chapter.firstPhase;
     this.phase = this.chapter.phases[this.phaseId];
+    this.mapDef = mapOf(this.phase); // 페이즈의 map (기본 우리 마을)
+    this.home = this.mapDef === MAPS.village;
     this.elapsed = 0;
     this.leaving = false;
     this.flagTimes = {};
@@ -61,14 +66,14 @@ export default class FieldScene extends Phaser.Scene {
     this.ui = this.scene.get('UI');
 
     // 맵
-    this.openExits = this.phase.exits ?? [];
-    this.map = new MapRenderer(this, village, { open: this.openExits });
+    this.openExits = this.phase.exits ?? this.mapDef.openExits ?? [];
+    this.map = new MapRenderer(this, this.mapDef, { open: this.openExits });
     this.add.image(0, 0, this.map.renderGround()).setOrigin(0).setDepth(-1000);
     this.map.placeObjects();
 
     // 인물
     const p = this.phase.player;
-    const at = this.entry ? village.entry(this.entry) : p.at;
+    const at = this.entry ? this.mapDef.entry(this.entry) : p.at;
     this.player = new Player(this, at[0], at[1], this.entry ? { n: 'down', s: 'up', w: 'right', e: 'left' }[this.entry] : p.face);
     this.npcs = {};
     this.props = [];
@@ -78,7 +83,7 @@ export default class FieldScene extends Phaser.Scene {
       else this.npcs[id] = new Npc(this, id, cfg);
     }
     // 하루 일과를 따르는 사람들 (시계가 도는 날)
-    this.schedules = new Schedules(this, village);
+    this.schedules = new Schedules(this, this.mapDef);
     this.schedules.place();
     // 생활 자리: 빵집 진열대·집·우물·허수아비에서 E (밤엔 잠만)
     this.lifeSpots = LIFE_SPOTS.filter((l) => !(l.needs && WorldMemory.isErased(l.needs)) && (!(this.clock.running ? this.clock.isNight : this.phase.time === 'night') || l.action === 'sleep'))
@@ -91,10 +96,10 @@ export default class FieldScene extends Phaser.Scene {
     this.pickups = new Pickups(this);
     this.lighting = new Lighting(this, {
       time: this.phase.time, lights: this.phase.lights, erasedCount: WorldMemory.world.erased.length,
-      spots: village.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
+      spots: this.mapDef.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
     });
     this.lighting.setClock(this.clock.night);
-    this.ambient = new Ambient(this, { time: this.phase.time, bonfire: this.phase.bonfire, map: village, erasedCount: WorldMemory.world.erased.length });
+    this.ambient = new Ambient(this, { time: this.phase.time, bonfire: this.phase.bonfire, map: this.mapDef, erasedCount: WorldMemory.world.erased.length });
 
     // 카메라
     const cam = this.cameras.main;
@@ -107,7 +112,7 @@ export default class FieldScene extends Phaser.Scene {
     this.cutscene = new Cutscene(this, this.chapter.script, this.ctx());
     this.quests = new Quests(this);
     this.clues = new Clues(this);
-    this.raids = new Raids(this, village);
+    this.raids = new Raids(this, this.mapDef);
 
     // UI 씬이 준비된 다음 프레임에 연결
     this.time.delayedCall(0, () => {
@@ -187,11 +192,11 @@ export default class FieldScene extends Phaser.Scene {
       pos: (name) => {
         const n = this.npcs[name];
         if (n) return { x: n.x, y: n.y };
-        const s = village.spots[name];
+        const s = this.mapDef.spots[name];
         return s ? { x: px(s.x), y: px(s.y) } : null;
       },
       inZone: (name) => {
-        const z = village.zones[name];
+        const z = this.mapDef.zones[name];
         const tx = this.player.x / TILE, ty = this.player.y / TILE;
         return z && tx >= z.x && tx < z.x + z.w && ty >= z.y && ty < z.y + z.h;
       },
@@ -488,15 +493,25 @@ export default class FieldScene extends Phaser.Scene {
   // 열린 출구의 맨 끝을 밟으면 마을 밖 길 맵으로
   checkExit() {
     if (this.leaving || !this.openExits.length) return;
-    const ty = Math.floor(this.player.y / TILE);
-    const e = village.exits.find((x) => this.openExits.includes(x.dir) && x.dir === 'n' && ty <= 1);
+    const tx = Math.floor(this.player.x / TILE), ty = Math.floor(this.player.y / TILE);
+    const { W, H } = this.mapDef;
+    const atEdge = { n: ty <= 1, s: ty >= H - 2, w: tx <= 1, e: tx >= W - 2 };
+    const e = this.mapDef.exits.find((x) => this.openExits.includes(x.dir) && atEdge[x.dir]);
     if (!e) return;
     this.leaving = true;
     this.cameras.main.fadeOut(350, 0, 0, 0);
     this.time.delayedCall(380, () => this.scene.start('Area', {
       layer: 'surface', at: e.at, entry: { n: 's', s: 'n', e: 'w', w: 'e' }[e.dir],
-      back: { chapter: this.chapterId, phase: this.phaseId, time: this.phase.time },
+      // 고향이 아니면, 길에서 고향으로 돌아갈 때 쓸 페이즈를 그대로 들고 나간다
+      back: this.leaveBack(),
     }));
+  }
+
+  leaveBack() {
+    if (!this.home) return this.back;
+    const back = { chapter: this.chapterId, phase: this.phaseId, time: this.phase.time };
+    WorldMemory.setHome(back);
+    return back;
   }
 
   goPhase(phase) {

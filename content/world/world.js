@@ -22,6 +22,7 @@ export const H = LAYERS.surface.H;
 export const HUBS = {
   home:      { at: [7, 11], name: '수확제 마을', kind: 'village', note: '시작 마을. 프롤로그·1장' },
   frost:     { at: [7, 6],  name: '서리 마을',   kind: 'village', note: '겨울이 끝나지 않는 산기슭' },
+  neighbor:  { at: [4, 9],  name: '옆 마을',     kind: 'village', note: '같은 영주의 땅. 무녀가 가이아의 사당을 지킨다', field: 'neighbor' },
   castle:    { at: [8, 1],  name: '검은 성',     kind: 'castle',  note: '해가 들지 않는 북쪽 끝. 이야기 속 이야기의 마왕' },
   elf:       { at: [2, 12], name: '엘프 마을',   kind: 'elf',     note: '깊은 숲 속. 숲을 지나치게 베면 마을이 보이지 않게 된다' },
   dwarf:     { at: [11, 5], name: '드워프 마을', kind: 'dwarf',   note: '산을 파고 사는 마을. 갱도가 지하로 이어진다' },
@@ -41,6 +42,8 @@ export const HUBS = {
 // by: 'boat' 배로만 가는 바닷길
 export const ROUTES = {
   'home-frost':     { path: [[7, 11], [7, 10], [7, 9], [7, 8], [7, 7], [7, 6]] },
+  // 옆 마을: 서리 마을 가는 길에서 서쪽으로 갈라진다. 2장 전까지는 안개 너머다
+  'home-neighbor':  { path: [[7, 11], [7, 10], [6, 10], [5, 10], [5, 9], [4, 9]] },
   'frost-castle':   { path: [[7, 6], [7, 5], [8, 5], [8, 4], [8, 3], [8, 2], [8, 1]] },
   'home-elf':       { path: [[7, 11], [6, 11], [5, 11], [4, 11], [4, 12], [3, 12], [2, 12]] },
   'home-empty':     { path: [[7, 11], [8, 11], [9, 11], [9, 10], [10, 10], [11, 10]] },

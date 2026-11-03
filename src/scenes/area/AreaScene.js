@@ -26,6 +26,7 @@ import { characters } from '../../../content/characters/index.js';
 import { Lighting } from '../../field/Lighting.js';
 import { Ambient } from '../../field/Ambient.js';
 import { softFlash } from '../../core/fx/softFlash.js';
+import { fieldHubAt, visitPhase } from '../../world/visits.js';
 
 const HOME = cellKey('surface', HUBS.home.at);
 const FACE = { n: 'down', s: 'up', w: 'right', e: 'left' };
@@ -293,10 +294,26 @@ export default class AreaScene extends Phaser.Scene {
         this.scene.start('Field', { chapter: this.back.chapter, phase: this.back.phase, entry: OPPOSITE[exit.dir] });
         return;
       }
+      // 이야기가 있는 다른 마을(옆 마을 등): 그 마을의 필드로 들어간다
+      const hub = this.back && fieldHubAt(exit.to);
+      const ph = hub && visitPhase(hub, this.back.chapter, this.condCtx());
+      if (ph) {
+        this.scene.start('Field', { chapter: this.back.chapter, phase: ph, entry: OPPOSITE[exit.dir], back: this.back });
+        return;
+      }
       // 바다에서 뭍(항구)에 닿으면 배에서 내려 배 옆에 선다
       const landing = this.area.sea && biomeAt(exit.at[0], exit.at[1], 'autumn', this.layerId) !== 'sea';
       this.scene.restart({ layer: this.layerId, at: exit.at, entry: landing ? 'boat' : OPPOSITE[exit.dir], back: this.back });
     });
+  }
+
+  // 대본 조건(when)을 길 맵에서 볼 때 쓰는 최소한의 상태
+  condCtx() {
+    return {
+      isErased: (id) => WorldMemory.isErased(id), erasedCount: () => WorldMemory.world.erased.length, loads: () => WorldMemory.world.loads,
+      flag: (n) => WorldMemory.run.flags[n], minute: () => WorldMemory.run.time?.minute, day: () => WorldMemory.run.time?.day,
+      quest: (id) => WorldMemory.quest(id),
+    };
   }
 
   worldToScreen(x, y) {

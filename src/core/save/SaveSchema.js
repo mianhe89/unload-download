@@ -13,6 +13,7 @@ import { freshFarm } from '../../farm/farm.js';
 //   run: null | {          // 현재 진행. RESET & START로 처음부터
 //     chapter, phase,      //   어느 장의 어느 페이즈인가 (이어하기는 페이즈 시작점부터)
 //     where: null | { layer, at },  // 마을 밖 길 맵에 있으면 그 칸 (이어하기는 그 칸에서)
+//     home: null | { chapter, phase, time },  // 다른 마을(옆 마을 등)에 들렀을 때 길에서 고향으로 돌아갈 페이즈
 //     life: { weight, muscle, fatigue, mind, walked, last },  // 생활 → 체형·마음가짐 (src/life/life.js)
 //     farm: { counts, items, skills, felled, forestChops },    // 행동 파밍: 횟수·재료·히든 스킬·베어낸 나무 (src/farm/farm.js)
 //     flags: {},           //   이벤트 진행 표시
@@ -25,7 +26,7 @@ import { freshFarm } from '../../farm/farm.js';
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 7;
+export const VERSION = 8;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -39,6 +40,7 @@ export const freshRun = (chapter = 'prologue', phase = 'prep') => ({
   chapter,
   phase,
   where: null,
+  home: null,
   life: freshLife(),
   farm: freshFarm(),
   flags: {},
@@ -67,6 +69,8 @@ const MIGRATIONS = {
   5: (s) => ({ ...s, version: 6, run: s.run ? { ...s.run, quests: {}, clues: [] } : null }),
   // v6 → v7: 게임 안 시계 추가. 기존 진행은 1일째 아침 9시로
   6: (s) => ({ ...s, version: 7, run: s.run ? { ...s.run, time: { day: 1, minute: 9 * 60 } } : null }),
+  // v7 → v8: 다른 마을에 들렀을 때 돌아갈 고향 페이즈. 기존 진행은 고향 안이니 비워 둔다
+  7: (s) => ({ ...s, version: 8, run: s.run ? { ...s.run, home: null } : null }),
 };
 
 export function migrate(raw) {

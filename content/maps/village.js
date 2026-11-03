@@ -5,6 +5,8 @@
 // 장소(spots)와 구역(zones)은 대본·이벤트가 이름으로 부른다. 좌표를 바꾸면 npm run check로 확인할 것
 import { OBJECTS } from '../art/pack.js';
 
+export const id = 'village';
+export const name = '우리 마을';
 export const TILE = 16;
 export const W = 48;
 export const H = 34;

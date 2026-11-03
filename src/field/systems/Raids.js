@@ -54,7 +54,7 @@ export class Raids {
   // 오늘이 습격 날이고 그 시각이 지났는가. 시계가 도는 날에만 온다
   check() {
     const f = this.field;
-    if (!f.clock.running) return;
+    if (!f.clock.running || !f.home) return; // 습격은 우리 마을에만 온다
     for (const r of RAIDS) {
       if (WorldMemory.run.flags[`raid.${r.id}.over`]) continue;
       if (f.clock.day < r.day || (f.clock.day === r.day && f.clock.minute < toMinute(r.at))) continue;
