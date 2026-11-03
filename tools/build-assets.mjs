@@ -30,8 +30,8 @@ const EDITS = {
   },
   // 짙은 남색 망토: 어깨 아래로 몸통 양옆에 자락이 삐져나오고(옆모습은 등 쪽만), 뒷모습은 등이 망토로 덮인다.
   // 같은 바탕을 쓰는 다른 인물과 실루엣이 갈리게 한다(레온)
-  cape(img) {
-    const CAPE = '1e2a52', DARK = '121a34', LINE = '14141c';
+  cape(img, e = {}) {
+    const CAPE = e.color ?? '1e2a52', DARK = e.dark ?? '121a34', LINE = '14141c';
     forEachFrame(img, (fx, fy, dir) => {
       for (let y = 8; y <= 14; y += 1) {
         let l = -1, r = -1;
@@ -47,6 +47,23 @@ const EDITS = {
         if (!left) { side(r + 1, true); side(r + 2, false); }
         // 뒷모습: 등을 망토로 덮는다 (외곽선 안쪽만)
         if (back) for (let x = l + 1; x < r; x += 1) setPx(img, fx + x, fy + y, y >= 13 ? DARK : CAPE);
+      }
+    });
+  },
+  // 아래턱에서 위로 솟은 하얀 엄니 두 개(오크). 앞모습은 양쪽, 옆모습은 앞쪽 하나, 뒷모습은 없다. broken이면 오른쪽 엄니가 부러졌다
+  tusks(img, e = {}) {
+    const TUSK = 'f4eedc';
+    forEachFrame(img, (fx, fy, dir) => {
+      if (dir === 'up') return;
+      const xs = dir === 'down' ? [5, 10] : dir === 'left' ? [4] : [11];
+      for (const x of xs) {
+        // 그 열의 얼굴 아래쪽(머리 윗선에서 9줄 아래)쯤에 2칸 엄니
+        const t = topAt(img, fx, fy, x);
+        if (t < 0) continue;
+        const y = Math.min(fy + 15, fy + t + 9);
+        const broken = e.broken && x === xs[xs.length - 1] && dir === 'down';
+        setPx(img, fx + x, y, TUSK);
+        if (!broken) setPx(img, fx + x, y - 1, TUSK);
       }
     });
   },

@@ -30,6 +30,7 @@ import { Quests } from '../../field/systems/Quests.js';
 import { Clues } from '../../field/systems/Clues.js';
 import { Clock } from '../../field/systems/Clock.js';
 import { Schedules } from '../../field/systems/Schedules.js';
+import { Raids } from '../../field/systems/Raids.js';
 import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 
@@ -106,6 +107,7 @@ export default class FieldScene extends Phaser.Scene {
     this.cutscene = new Cutscene(this, this.chapter.script, this.ctx());
     this.quests = new Quests(this);
     this.clues = new Clues(this);
+    this.raids = new Raids(this, village);
 
     // UI 씬이 준비된 다음 프레임에 연결
     this.time.delayedCall(0, () => {
@@ -164,6 +166,7 @@ export default class FieldScene extends Phaser.Scene {
     if (!busy || this.cutscene.walking) for (const g of this.pickups.collect(this.player)) this.onPicked(g);
     // 퀘스트·단서는 걸으며 듣는 대사 중에도 따라잡는다(그동안에도 플레이어는 움직인다)
     if (!busy || this.cutscene.walking) { this.quests.update(dt); this.clues.update(dt); this.schedules.update(dt); }
+    if (!busy) this.raids.update(dt);
     if (!busy) {
       const { runs, bubbles } = this.director.update(dt, this.world(), busy);
       bubbles.forEach((b) => this.bubble(b.who, b.text));
@@ -208,6 +211,8 @@ export default class FieldScene extends Phaser.Scene {
   updateInteraction() {
     const target = this.nearestInteractable();
     this.ui.hud.showPrompt(target ? this.worldToScreen(target.x, target.y - 20) : null);
+    // 습격 중이면 E는 먼저 곁의 몬스터에 맞서는 데 쓴다
+    if (this.raids.active && this.cooldown <= 0 && this.player.justPressed('act')) { if (this.raids.onAct()) { this.cooldown = 0.25; return; } }
     if (!target || this.cooldown > 0 || !this.player.justPressed('act')) return;
     this.player.idleTime = 0;
     if (target.npc) this.talkTo(target.npc);
@@ -441,6 +446,8 @@ export default class FieldScene extends Phaser.Scene {
 
   // 왼쪽 위 할 일: 진행 중인 퀘스트의 지금 단계가 있으면 그것, 없으면 그날의 목표
   refreshObjective() {
+    // 습격 중이면 지킬 곳이 먼저다
+    if (this.raids?.raid?.kind === 'raid' && !this.raids.busy) { this.ui.hud.setObjective(`${this.raids.raid.targetName}을(를) 지켜라`); return; }
     const step = this.quests?.tracked()?.step;
     this.ui.hud.setObjective(objectiveText(step ? step.text : this.phase.objective, this.absence()));
   }

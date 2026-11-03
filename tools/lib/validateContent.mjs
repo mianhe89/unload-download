@@ -10,6 +10,7 @@ import { ScriptRunner } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
 import { CG, TINTS, PORTRAITS } from '../../content/cg.js';
 import { doorStep } from '../../src/field/systems/Schedules.js';
+import { RAIDS } from '../../content/raids.js';
 
 export function validateContent() {
   const stats = {};
@@ -29,6 +30,18 @@ export function validateContent() {
   const solid = (x, y) => village.isSolidTile(x, y);
   const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
   const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn', 'weatherLeak']);
+
+  // 습격 (content/raids.js): 무리의 인물, 출발점·목표가 걸을 수 있는 칸인지, 시각 형식, 화자
+  for (const r of RAIDS) {
+    if (!/^\d\d:\d\d$/.test(r.at ?? '')) err(`습격 ${r.id}: 시각 형식 ${r.at}`);
+    for (const [who] of [...(r.lines ?? []), ...(r.won?.lines ?? []), ...(r.lost?.lines ?? [])]) if (who && !characters[who]) err(`습격 ${r.id}: 화자 없음 ${who}`);
+    if (r.kind !== 'raid') continue;
+    if (solid(...r.target)) err(`습격 ${r.id}: 목표가 막힌 칸 ${r.target}`);
+    for (const b of r.band) {
+      if (!characters[b.id]) err(`습격 ${r.id}: 인물 없음 ${b.id}`);
+      if (solid(...b.from)) err(`습격 ${r.id}: 출발점이 막힌 칸 ${b.from}`);
+    }
+  }
 
   // 하루 일과: 시각 형식, 장소가 있는지, 걸을 수 있는 칸인지, 집으로 가면 집(맵 objects의 residents)이 있는지
   for (const c of Object.values(characters)) {
