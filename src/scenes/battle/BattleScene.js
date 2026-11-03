@@ -37,7 +37,8 @@ export default class BattleScene extends Phaser.Scene {
     this.s = W / 960;
     if (this.scene.isActive('UI')) this.scene.setVisible(false, 'UI');
     const layer = this.data0.from?.layer ?? 'surface';
-    this.battle = createBattle({ enemies: this.data0.enemies, seed: this.data0.seed ?? 1, life: WorldMemory.run?.life ?? null, skills: WorldMemory.run?.farm?.skills ?? [] });
+    this.village = Boolean(this.data0.from?.field); // 마을(이야기 필드) 위에서 열린 전투: 끝나면 그 자리로 돌아간다
+    this.battle = createBattle({ party: this.data0.party, enemies: this.data0.enemies, seed: this.data0.seed ?? 1, life: WorldMemory.run?.life ?? null, skills: WorldMemory.run?.farm?.skills ?? [] });
 
     // 배경
     const [top, bottom] = SKY[layer] ?? SKY.surface;
@@ -81,7 +82,7 @@ export default class BattleScene extends Phaser.Scene {
     ['ENTER', 'SPACE', 'E'].forEach((k) => kb.on(`keydown-${k}`, () => this.confirm()));
 
     this.cameras.main.fadeIn(400, 0, 0, 0);
-    Sound.music(this, this.data0.boss ? 'boss' : 'battle', { fade: 300 });
+    Sound.music(this, this.data0.boss || this.data0.tough ? 'boss' : 'battle', { fade: 300 });
     Sound.ambient(this, null);
     // 되돌린 직후면 누가 지워졌는지 한 줄 (이름은 나만 기억한다)
     const opening = this.data0.victim ? `…되돌렸다. ${characters[this.data0.victim]?.name ?? '누군가'}의 얼굴이 잘 떠오르지 않는다.` : this.data0.note;
@@ -98,6 +99,16 @@ export default class BattleScene extends Phaser.Scene {
       spr = this.add.sprite(x, y, key, 3).setScale(4 * s).setOrigin(0.5, 1);
       if (this.anims.exists(`${key}.right`)) spr.play(`${key}.right`);
       spr.anims?.pause();
+    } else if (u.char) {
+      // 인물 도트를 쓰는 적(습격의 오크): 왼쪽을 보고 선다
+      const key = `char.${u.char}`;
+      spr = this.add.sprite(x, y, key, 2).setScale(4 * s).setOrigin(0.5, 1);
+      if (this.anims.exists(`${key}.left`)) { spr.play(`${key}.left`); spr.anims.pause(); }
+      spr.setInteractive().on('pointerdown', () => {
+        const i = this.targets().findIndex((t) => t.uid === u.uid);
+        if (i < 0 || this.busy || !this.panel.visible) return;
+        if (this.cursor.target === i) this.confirm(); else { this.cursor.target = i; this.highlight(); }
+      });
     } else {
       const art = MONSTER_ART[u.sprite];
       spr = this.add.sprite(x, y, `mon.${u.sprite}`, art.kind === 'walker' ? 2 : 0).setScale((art.kind === 'walker' ? 4 : 3) * s).setOrigin(0.5, 1);
@@ -304,20 +315,20 @@ export default class BattleScene extends Phaser.Scene {
     Sound.sfx(this, result === 'win' ? 'win' : 'lose');
     if (result === 'win') {
       if (from?.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss)}`);
-      this.say(this.data0.boss ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : '이겼다.', COLOR.gold);
-      this.time.delayedCall(1500, () => this.leave());
+      this.say(this.data0.winLine ?? (this.data0.boss ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : '이겼다.'), COLOR.gold);
+      this.time.delayedCall(1500, () => this.leave('win'));
       return;
     }
     // 졌다: 되돌리면 누군가 지워진다
     this.say('쓰러졌다.', COLOR.red);
     const opts = [
       { label: '되돌리기 — 이 순간, 누군가 지워진다', act: () => this.retry() },
-      { label: '물러나기', act: () => this.leave() },
+      { label: this.village ? '물러나기 — 놈은 그대로 간다' : '물러나기', act: () => this.leave('lose') },
     ];
     this.choices = opts.map((o, i) => this.add.text(W / 2, H * 0.8 + i * 30 * this.s, o.label, { fontFamily: FONT, fontSize: `${15 * this.s}px`, color: i ? COLOR.text : COLOR.red })
       .setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', o.act).setShadow(1, 1, '#000', 0));
     this.input.keyboard.once('keydown-R', () => this.retry());
-    this.input.keyboard.once('keydown-ESC', () => this.leave());
+    this.input.keyboard.once('keydown-ESC', () => this.leave('lose'));
   }
 
   // 재시도 = 로드 = 세계선 이동. 대가로 한 명이 지워진다 (기획서 '어렵지만 공정한 전투')
@@ -330,13 +341,19 @@ export default class BattleScene extends Phaser.Scene {
     this.time.delayedCall(550, () => this.scene.restart({ ...this.data0, seed: (this.data0.seed ?? 1) + WorldMemory.world.loads, victim }));
   }
 
-  leave() {
+  leave(result) {
     if (this.leaving) return;
     this.leaving = true;
     const from = this.data0.from;
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.time.delayedCall(420, () => {
       this.scene.setVisible(true, 'UI');
+      // 마을에서 열린 전투: 잠재워 둔 필드를 깨우고 결과를 넘긴다(습격은 그대로 이어진다)
+      if (this.village) {
+        this.scene.stop();
+        this.scene.wake('Field', { battle: result });
+        return;
+      }
       this.scene.start('Area', { layer: from.layer, at: from.at, entry: 'center', back: from.back });
     });
   }

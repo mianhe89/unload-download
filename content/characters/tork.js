@@ -8,7 +8,6 @@ export default {
   erasable: false,
   extra: true,
   monster: true,
-  hp: 3,
   // 오크 전사와 같은 바탕에 붉은 천 망토, 오른쪽 엄니가 부러졌다
   sprite: {
     base: 'Hunter',

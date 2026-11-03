@@ -220,6 +220,14 @@ describe('보스: 정리자의 그림자', () => {
     }
   });
 
+  it('습격의 오크: 하나는 쉽고, 토르크는 예고를 읽어야 이긴다', () => {
+    const rate = (enemies, smart) => { let w = 0; for (let s = 1; s <= 40; s += 1) if (autoplay({ enemies, seed: s, smart }).result === 'win') w += 1; return w / 40; };
+    const r = { orc: rate(['orc'], false), torkNaive: rate(['tork', 'orc'], false), torkSmart: rate(['tork', 'orc'], true) };
+    expect(r.orc).toBeGreaterThanOrEqual(0.95);
+    expect(r.torkNaive).toBeLessThan(0.4);
+    expect(r.torkSmart).toBeGreaterThan(0.6);
+  });
+
   it('게이지 상한', () => expect(GAUGE).toBe(100));
 });
 

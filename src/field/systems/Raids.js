@@ -1,7 +1,7 @@
 // 마을 습격(content/raids.js). 시계가 도는 날, 정해진 날·시각이 되면 경고 → 몬스터 무리가 북쪽 길에서 걸어와 목표로 향한다.
-// 주인공이 곁에서 E로 맞서면(onAct) 체력(hp)이 깎이고, 0이 되면 왔던 길로 달아난다. 다 물리치면 지킨 것,
-// 하나라도 목표에 닿으면 못 지킨 것. 결과는 플래그·호감도로 남고, 못 지킨 습격이 쌓이면 마을이 함락된다.
-// 전투 씬이 붙으면 onAct가 전투 진입으로 바뀐다.
+// 오크와 부딪히거나 곁에서 E를 누르면 사이드뷰 전투(Battle)로 넘어간다. 필드는 잠들어 있다가 전투가 끝나면 깨어난다.
+// 이기면 그 오크는 왔던 길로 달아나고, 물러나면 그대로 간다. 다 물리치면 지킨 것, 하나라도 목표에 닿으면 못 지킨 것.
+// 결과는 플래그·호감도로 남고, 못 지킨 습격이 쌓이면 마을이 함락된다. 전투에서 되돌리면(로드) 누군가 지워진다.
 import { RAIDS, FALL_AFTER } from '../../../content/raids.js';
 import { characters } from '../../../content/characters/index.js';
 import { TILE } from '../../../content/maps/village.js';
@@ -9,8 +9,12 @@ import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { toMinute } from '../../../content/world/clock.js';
 import { findPath, simplify } from './Path.js';
 import { Npc } from '../Npc.js';
+import { Sound } from '../../core/audio/Sound.js';
+import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 
 const REACH = 26;   // E로 맞설 수 있는 거리(px)
+const BUMP = 12;    // 이만큼 붙으면 부딪힌 것
+const HELPERS = ['selena', 'lu']; // 마을에 있으면 같이 싸운다(지워졌으면 없다)
 const pick = (list) => (list?.length ? list[Math.floor(Math.random() * list.length)] : null);
 
 export class Raids {
@@ -20,6 +24,10 @@ export class Raids {
     this.raid = null;    // 지금 진행 중인 습격 정의
     this.band = [];      // { npc, id, hp, state: 'wait'|'march'|'flee'|'gone'|'arrived', delay, from }
     this.busy = false;   // 경고·결과 장면을 보여 주는 중
+    this.fighting = null; // 지금 전투 중인 오크
+    const onWake = (_sys, data) => this.afterBattle(data?.battle);
+    field.events.on('wake', onWake);
+    field.events.once('shutdown', () => field.events.off('wake', onWake));
     if (typeof window !== 'undefined' && window.__ud) window.__ud.raid = (id) => this.begin(RAIDS.find((r) => r.id === id));
   }
 
@@ -36,7 +44,11 @@ export class Raids {
         m.delay -= dt;
         if (m.delay <= 0) this.march(m);
       }
+      if (m.cool > 0) m.cool -= dt;
     }
+    // 길을 막고 서 있으면 부딪힌다
+    const hit = this.band.find((b) => b.state === 'march' && b.npc && !(b.cool > 0) && f.player.distTo(b.npc.x, b.npc.y) < BUMP);
+    if (hit) this.engage(hit);
   }
 
   // 오늘이 습격 날이고 그 시각이 지났는가. 시계가 도는 날에만 온다
@@ -61,7 +73,7 @@ export class Raids {
     await this.scene(r.lines, r.kind === 'raid' ? 'bell' : null);
     if (r.kind === 'sign') { await this.finish(null); return; }
     f.ui.toast?.(`습격 · ${r.title} — ${r.targetName}을(를) 지켜라`);
-    this.band = r.band.map((b) => ({ ...b, hp: characters[b.id]?.hp ?? 1, state: 'wait', delay: b.delay ?? 0, npc: null }));
+    this.band = r.band.map((b) => ({ ...b, state: 'wait', delay: b.delay ?? 0, cool: 0, npc: null }));
     this.busy = false;
     f.refreshObjective?.();
   }
@@ -87,12 +99,53 @@ export class Raids {
       .filter((x) => x.d < REACH)
       .sort((a, c) => a.d - c.d)[0]?.b;
     if (!m) return false;
-    m.hp -= 1;
-    f.cameras.main.shake(120, 0.004);
-    f.tweens.add({ targets: m.npc.sprite, alpha: 0.3, duration: 120, yoyo: true });
-    if (m.hp > 0) { this.say(m, pick(characters[m.id].barks)); return true; }
-    this.flee(m);
+    this.engage(m);
     return true;
+  }
+
+  // 같이 싸우는 사람: 나 + 마을에 있는 셀레나·루
+  party() {
+    return ['me', ...HELPERS.filter((id) => !WorldMemory.isErased(id))];
+  }
+
+  // 사이드뷰 전투로. 토르크는 곁의 오크 하나를 데리고 싸운다
+  engage(m) {
+    if (this.fighting || this.busy) return;
+    const f = this.field;
+    this.fighting = m;
+    this.say(m, pick(characters[m.id].barks));
+    f.cameras.main.shake(200, 0.006);
+    Sound.sfx(f, 'heavy');
+    const tork = m.id === 'tork';
+    f.time.delayedCall(300, () => {
+      f.scene.launch('Battle', {
+        party: this.party(),
+        enemies: tork ? ['tork', 'orc'] : ['orc'],
+        seed: (this.raid.day * 100 + this.band.indexOf(m)) + WorldMemory.world.loads,
+        tough: tork,
+        note: tork ? '붉은 망토의 오크가 도끼를 고쳐 쥔다. 한쪽 엄니가 부러져 있다.' : '굶주린 오크가 몽둥이를 치켜든다.',
+        winLine: tork ? '토르크가 무릎을 꿇었다가, 이를 갈며 일어나 물러난다.' : '오크가 비틀거리며 물러난다.',
+        from: { field: true, layer: 'surface' },
+      });
+      f.scene.sleep();
+    });
+  }
+
+  // 전투에서 돌아왔다
+  afterBattle(result) {
+    const f = this.field;
+    const m = this.fighting;
+    this.fighting = null;
+    // 전투에서 되돌렸다면(로드) 누군가 지워졌다: 필드에서도 사라진다
+    for (const [id, npc] of Object.entries(f.npcs ?? {})) {
+      if (WorldMemory.isErased(id)) { npc.destroy(); delete f.npcs[id]; }
+    }
+    Sound.music(f, PHASE_MUSIC[f.phaseId] ?? null, { fade: 400 });
+    if (!m || !this.raid) return;
+    if (result === 'win') { this.flee(m); return; }
+    // 물러났다: 놈은 가던 길을 간다. 잠깐은 다시 부딪히지 않는다
+    m.cool = 4;
+    f.ui.toast?.('물러났다. 오크는 가던 길을 간다');
   }
 
   flee(m) {

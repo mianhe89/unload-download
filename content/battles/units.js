@@ -73,6 +73,25 @@ export const MONSTERS = {
       { id: 'forget', name: '잊게 하기', power: 0.3, hits: 1, target: 'one', element: 'dark', effect: { slow: 30 }, cooldown: 2 },
     ],
   },
+  // 습격의 오크(content/raids.js). 그림은 필드 인물 도트(char)를 그대로 쓴다.
+  // 굶주린 전사들이라 오래 버티지 못하고, 함성으로 서로를 몰아붙인다
+  orc: {
+    name: '오크 전사', char: 'orc', element: 'earth', maxHp: 85, atk: 17, def: 10, spd: 88, evade: 0.03,
+    skills: [
+      { id: 'club', name: '몽둥이질', power: 1.1, hits: 1, target: 'one', element: 'earth' },
+      { id: 'howl', name: '함성', power: 0, hits: 0, target: 'self', effect: { push: 35 }, cooldown: 3 },
+    ],
+  },
+  // 토르크: 족장의 아들. 큰 기술은 한 차례 먼저 예고한다(정리자의 그림자보다 짧은 순환)
+  tork: {
+    name: '토르크', char: 'tork', element: 'fire', maxHp: 560, atk: 36, def: 13, spd: 100, evade: 0.04,
+    pattern: ['cleave', 'charge', 'cleave', 'roar'],
+    skills: [
+      { id: 'cleave', name: '도끼 내려찍기', power: 1.0, hits: 1, target: 'one', element: 'fire' },
+      { id: 'charge', name: '엄니 들이받기', power: 2.7, hits: 1, target: 'one', element: 'fire', tell: '부러진 엄니를 앞으로 숙인다 — 다음 차례, 한 사람에게 강한 일격 (방어하면 절반)' },
+      { id: 'roar', name: '잿빛 함성', power: 1.15, hits: 1, target: 'all', element: 'fire', status: 'burn', tell: '횃불을 치켜들고 숨을 들이켠다 — 다음 차례, 전원에게 불길' },
+    ],
+  },
   // 보스: 정리자의 그림자. 모든 큰 기술을 한 차례 먼저 예고한다(로스트아크식 패턴 예고).
   // 순서대로 돈다: 먼지 털기(다단 → 회피형 유리) → 쓸어내기(전체 강타 → 방어·통통 유리) → 치우기(게이지 깎기)
   sweeper: {

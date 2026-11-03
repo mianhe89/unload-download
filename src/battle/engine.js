@@ -52,7 +52,7 @@ function makeUnit(id, side, def, index) {
     heavy: def.heavy ?? 1, pierce: def.pierce ?? 0, resist: def.resist ?? 0, body: def.body ?? null, mind: def.mind ?? null, startGauge: def.startGauge ?? 0,
     boss: Boolean(def.boss), pattern: def.pattern ?? null, step: 0,
     skills: def.skills, ultimate: def.ultimate ?? null, burst: 0, status: {}, cooldowns: {}, gauge: 0, guard: false, taunt: false, telegraph: null,
-    sprite: def.sprite ?? null,
+    sprite: def.sprite ?? null, char: def.char ?? null,
   };
 }
 

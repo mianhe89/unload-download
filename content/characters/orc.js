@@ -8,7 +8,6 @@ export default {
   erasable: false,
   extra: true,     // 대화 없는 상대(말풍선만)
   monster: true,
-  hp: 1,           // E로 몇 번 맞서야 물러나나
   // 필드 스프라이트: Ninja Adventure 팩(CC0)의 'Hunter' 바탕에 초록 피부, 어두운 가죽, 아래턱의 엄니
   sprite: {
     base: 'Hunter',
