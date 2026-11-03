@@ -4,6 +4,7 @@ import { VIEW, FONT } from './config/game.js';
 import { platform } from './platform/index.js';
 import { SaveRepository } from './core/save/SaveRepository.js';
 import { Sound } from './core/audio/Sound.js';
+import { mountSoundButton } from './ui/SoundButton.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/title/TitleScene.js';
 import FieldScene from './scenes/field/FieldScene.js';
@@ -40,6 +41,8 @@ async function start() {
   document.title = platform.isDesktop ? 'DOWNLOAD' : 'UNLOAD';
   // M: 소리 끄기/켜기 (어느 장면에서든)
   window.addEventListener('keydown', (e) => { if (e.key === 'm' || e.key === 'M') Sound.toggleMute(); });
+  // 화면 오른쪽 위의 소리 버튼 (휴대폰에서도 누를 수 있게)
+  mountSoundButton();
 }
 
 start();

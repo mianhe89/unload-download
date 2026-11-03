@@ -1,6 +1,6 @@
 // 소리 창구. 효과음은 시작 때 미리 받고(작다), 음악은 처음 쓸 때 받아서 튼다(첫 화면을 가볍게).
 // 음악은 장면이 바뀌면 천천히 줄이고 다음 곡으로 넘어간다. 같은 곡이면 이어서 튼다.
-// M: 소리 끄기/켜기 (이 브라우저에만 기억)
+// M 또는 화면 오른쪽 위 소리 버튼(ui/SoundButton): 소리 끄기/켜기 (이 브라우저에만 기억)
 import { SFX } from '../../../content/audio/audio.js';
 
 const BASE = 'assets/audio/';
@@ -11,6 +11,7 @@ const readMuted = () => { try { return localStorage.getItem(STORE) === '1'; } ca
 const writeMuted = (v) => { try { localStorage.setItem(STORE, v ? '1' : '0'); } catch { /* 저장소가 막혀 있어도 게임은 계속 */ } };
 
 const state = { manifest: null, game: null, music: null, musicKey: null, ambient: null, ambientKey: null, muted: readMuted() };
+const listeners = new Set(); // 끄고 켤 때 알려 줄 곳 (소리 버튼)
 
 const urls = (kind, key) => (state.manifest?.[kind]?.[key] ?? []).map((u) => BASE + u);
 
@@ -54,8 +55,12 @@ export const Sound = {
     state.muted = !state.muted;
     writeMuted(state.muted);
     if (state.game) state.game.sound.mute = state.muted;
+    listeners.forEach((fn) => fn(state.muted));
     return state.muted;
   },
+
+  // 끄고 켤 때마다 fn(muted). 돌려받은 함수를 부르면 그만 듣는다
+  onMuteChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
   sfx(scene, key, opts = {}) {
     const def = SFX[key];
