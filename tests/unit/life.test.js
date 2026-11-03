@@ -17,7 +17,7 @@ describe('생활 → 몸', () => {
   it('한 번으로는 체형이 안 바뀌고, 쌓이면 바뀐다', () => {
     const l = freshLife();
     expect(battleStats(PARTY.me, act(l, 'honeyBread')).body).toBe('normal');
-    expect(battleStats(PARTY.me, repeat(l, 'honeyBread', 140)).body).toBe('chubby');
+    expect(battleStats(PARTY.me, repeat(l, 'honeyBread', 260)).body).toBe('chubby');
     expect(battleStats(PARTY.me, repeat(l, 'drill', 12)).body).toBe('muscle');
   });
 

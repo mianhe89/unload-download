@@ -6,8 +6,10 @@
 //   fatigue 피로 +/-
 //   mind   마음가짐 쪽으로 기울기
 //   cooldown 같은 행동을 다시 하려면 (실제 분)
+//   item   가방에 하나 들어오는 것 (content/items.js)
 export const ACTIONS = {
-  honeyBread: { name: '꿀빵 먹기', kcal: 900, mind: { relaxed: 1 }, cooldown: 20, text: '꿀빵을 두 개 먹었다. 배가 든든하다.', meal: 'heavy' },
+  honeyBread: { name: '꿀빵 사기', kcal: 500, mind: { relaxed: 1 }, cooldown: 20, text: '꿀빵을 하나 먹고, 하나는 종이에 싸서 가방에 넣었다.', meal: 'heavy', item: 'honeybread' },
+  chestnut:   { name: '군밤 사기', kcal: 250, mind: { relaxed: 0.5 }, cooldown: 30, text: '겨울 장에서 군밤을 한 봉지 샀다. 하나 까먹고, 나머지는 가방에 넣었다.', item: 'chestnut' },
   homeMeal:   { name: '집밥', kcal: 600, fatigue: -10, mind: { diligent: 0.5 }, cooldown: 30, text: '집에서 밥을 차려 먹었다. 국이 따뜻했다.', meal: 'balanced' },
   sleep:      { name: '잠', fatigue: -60, mind: { relaxed: 1 }, cooldown: 60, text: '한숨 잤다. 꿈은 기억나지 않는다.' },
   water:      { name: '물 길어 나르기', burn: 500, muscle: 0.02, fatigue: 15, mind: { diligent: 1 }, cooldown: 15, text: '우물에서 물을 길어 날랐다. 팔이 뻐근하다.' },
@@ -26,11 +28,12 @@ export const MINDS = {
   balanced: { name: '균형',     desc: '막히는 데가 없다 — 특별한 보정 없음' },
 };
 
-// 마을에서 행동하는 자리 (칸 좌표, content/maps/village.js 기준)
+// 마을에서 행동하는 자리 (칸 좌표, content/maps/village.js 기준). when: 그 조건일 때만 (대본 조건 문법)
 export const LIFE_SPOTS = [
   { action: 'honeyBread', at: [15, 16], needs: 'hort' },   // 빵집 진열대 (호르트가 지워지면 없다)
   { action: 'homeMeal', at: [16, 28] },                   // 우리 집 앞
   { action: 'sleep', at: [17, 28] },
   { action: 'water', at: [8, 26] },                       // 우물 (루가 서는 자리를 피해 위쪽)
   { action: 'drill', at: [11, 24] },                      // 허수아비 (아침 꼬마 자리를 피해 왼쪽 아래)
+  { action: 'chestnut', at: [26, 16], when: { ifFlag: 'ch3.started' } }, // 겨울 장, 북쪽 상인의 좌판 앞 (3장)
 ];

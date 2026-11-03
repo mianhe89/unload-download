@@ -2,6 +2,7 @@
 // 필드를 바꿀 땐 VERSION을 올리고 MIGRATIONS에 이전 버전 → 새 버전 변환을 추가한다.
 // 나중에 DB로 옮길 때 이 구조가 그대로 테이블/문서 스키마의 기준이 된다.
 import { freshLife } from '../../life/life.js';
+import { freshBag } from '../../life/bag.js';
 import { freshFarm } from '../../farm/farm.js';
 //
 // save = {
@@ -16,6 +17,7 @@ import { freshFarm } from '../../farm/farm.js';
 //     home: null | { chapter, phase, time },  // 다른 마을(옆 마을 등)에 들렀을 때 길에서 고향으로 돌아갈 페이즈
 //     life: { weight, muscle, fatigue, mind, walked, last },  // 생활 → 체형·마음가짐 (src/life/life.js)
 //     farm: { counts, items, skills, felled, forestChops },    // 행동 파밍: 횟수·재료·히든 스킬·베어낸 나무 (src/farm/farm.js)
+//     bag: { items: { id: n }, gifted: { 인물: 날짜 } },        // 가방과 선물 (src/life/bag.js, content/items.js)
 //     flags: {},           //   이벤트 진행 표시
 //     quests: { [id]: { state: 'active'|'done', step } },  // 퀘스트 (content/quests, src/field/systems/Quests.js)
 //     clues: [id],         //   수첩에 적힌 단서 (content/clues.js). 한 번 적히면 남는다
@@ -26,7 +28,7 @@ import { freshFarm } from '../../farm/farm.js';
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 8;
+export const VERSION = 9;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -43,6 +45,7 @@ export const freshRun = (chapter = 'prologue', phase = 'prep') => ({
   home: null,
   life: freshLife(),
   farm: freshFarm(),
+  bag: freshBag(),
   flags: {},
   quests: {},
   clues: [],
@@ -71,6 +74,8 @@ const MIGRATIONS = {
   6: (s) => ({ ...s, version: 7, run: s.run ? { ...s.run, time: { day: 1, minute: 9 * 60 } } : null }),
   // v7 → v8: 다른 마을에 들렀을 때 돌아갈 고향 페이즈. 기존 진행은 고향 안이니 비워 둔다
   7: (s) => ({ ...s, version: 8, run: s.run ? { ...s.run, home: null } : null }),
+  // v8 → v9: 가방. 기존 진행은 빈 가방으로
+  8: (s) => ({ ...s, version: 9, run: s.run ? { ...s.run, bag: freshBag() } : null }),
 };
 
 export function migrate(raw) {

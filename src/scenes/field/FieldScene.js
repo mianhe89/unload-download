@@ -33,6 +33,7 @@ import { Schedules } from '../../field/systems/Schedules.js';
 import { Raids } from '../../field/systems/Raids.js';
 import { FieldBattle } from '../../field/systems/FieldBattle.js';
 import { Crow } from '../../field/systems/Crow.js';
+import { addItem, takeItem, giftResult, markGifted } from '../../life/bag.js';
 import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 
@@ -88,7 +89,8 @@ export default class FieldScene extends Phaser.Scene {
     this.schedules = new Schedules(this, this.mapDef);
     this.schedules.place();
     // 생활 자리: 빵집 진열대·집·우물·허수아비에서 E (밤엔 잠만)
-    this.lifeSpots = LIFE_SPOTS.filter((l) => !(l.needs && WorldMemory.isErased(l.needs)) && (!(this.clock.running ? this.clock.isNight : this.phase.time === 'night') || l.action === 'sleep'))
+    // 생활 자리는 우리 마을에만 있다
+    this.lifeSpots = LIFE_SPOTS.filter((l) => this.home && !(l.needs && WorldMemory.isErased(l.needs)) && (!l.when || passes(l.when, this.ctx())) && (!(this.clock.running ? this.clock.isNight : this.phase.time === 'night') || l.action === 'sleep'))
       .map((l) => ({ ...l, x: l.at[0] * TILE + TILE / 2, y: l.at[1] * TILE + TILE / 2 }));
     for (const prop of this.phase.props ?? []) {
       if (prop.when && !passes(prop.when, this.ctx())) continue;
@@ -297,8 +299,25 @@ export default class FieldScene extends Phaser.Scene {
       if (unlocked) this.time.delayedCall(2700, () => this.ui.bubbles.narrate(this.player, `히든 스킬 [${HIDDEN_SKILLS[unlocked].grade}] ${HIDDEN_SKILLS[unlocked].name} — ${HIDDEN_SKILLS[unlocked].desc}`, 4000));
     }
     WorldMemory.setLife(n);
+    if (a.item) WorldMemory.setBag(addItem(WorldMemory.run.bag, a.item));
     Sound.sfx(this, spot.action === 'drill' || spot.action === 'water' ? 'hit' : 'heal', { volume: 0.25 });
     this.ui.bubbles.narrate(this.player, `${a.text}  (${n.weight.toFixed(1)}kg)`, 2600);
+  }
+
+  // 가방에서 고른 먹을 것을 곁에 있는 사람에게 (ui/BagPanel). 마음은 숫자로 보이지 않고 말풍선으로만
+  giveItem(id) {
+    const npc = Object.values(this.npcs)
+      .filter((n) => !characters[n.id]?.monster && n.distTo(this.player.x, this.player.y) < TALK_RANGE * 1.6)
+      .sort((a, b) => a.distTo(this.player.x, this.player.y) - b.distTo(this.player.x, this.player.y))[0];
+    if (!npc) { this.ui.bubbles.narrate(this.player, '(건넬 사람이 곁에 없다)', 1800); return; }
+    const day = this.clock.day;
+    const r = giftResult(WorldMemory.run.bag, id, npc.id, day);
+    npc.faceToward(this.player.x, this.player.y);
+    if (!r.ok) { if (r.line) this.ui.bubbles.narrate(this.player, r.line, 2200); return; }
+    WorldMemory.setBag(markGifted(takeItem(WorldMemory.run.bag, id), npc.id, day));
+    if (characters[npc.id]?.erasable || ['mia', 'selena', 'lu', 'sei', 'leon'].includes(npc.id)) WorldMemory.addAffinity(npc.id, r.aff);
+    Sound.sfx(this, 'pickup');
+    this.bubble(npc.id, r.line);
   }
 
   // 가까이 가면 가끔 혼잣말

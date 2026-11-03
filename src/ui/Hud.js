@@ -1,11 +1,11 @@
 // 화면 가장자리 정보. PC 게임처럼 창 틀 안에 둔다(생김새는 ui/kit.js).
 //   왼쪽 위:   장소·날짜·시각 명판 + 지금 할 일
-//   오른쪽 아래: 키캡 안내 줄 (WASD 이동 · E 살펴보기 · J 수첩 · C 상태 · M 소리). 소리 키캡은 눌러도 바뀐다
+//   오른쪽 아래: 키캡 안내 줄 (WASD 이동 · E 살펴보기 · I 가방 · J 수첩 · C 상태 · M 소리). 소리 키캡은 눌러도 바뀐다
 //   인물 머리 위: 살펴볼 수 있을 때 E 키캡
 import { COLORS, frame, text } from './kit.js';
 import { Sound } from '../core/audio/Sound.js';
 
-const KEYS = [['WASD', '이동'], ['E', '살펴보기'], ['J', '수첩'], ['C', '상태'], ['M', '소리']];
+const KEYS = [['WASD', '이동'], ['E', '살펴보기'], ['I', '가방'], ['J', '수첩'], ['C', '상태'], ['M', '소리']];
 
 // 키캡 하나: 밝은 윗면 + 어두운 아랫단(눌리는 키처럼)
 function keycap(scene, g, x, y, label, s) {

@@ -27,6 +27,10 @@ export const WorldMemory = {
   },
 
   // 마을 밖 길 맵에 있는 칸 (null = 마을 안). 이어하기는 여기서 시작한다
+  setBag(bag) {
+    SaveRepository.update((d) => { d.run.bag = bag; });
+  },
+
   setHome(home) {
     SaveRepository.update((d) => { d.run.home = home; });
   },

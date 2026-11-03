@@ -6,6 +6,7 @@ import { SpeechBubbles } from '../../ui/SpeechBubbles.js';
 import { Hud } from '../../ui/Hud.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
+import { BagPanel } from '../../ui/BagPanel.js';
 import { NotebookPanel } from '../../ui/NotebookPanel.js';
 import { COLORS, text, scaleOf, frame } from '../../ui/kit.js';
 import { TouchControls } from '../../ui/TouchControls.js';
@@ -24,6 +25,8 @@ export default class UIScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-TAB', (e) => { e.preventDefault?.(); this.status.toggle(); });
     this.notebook = new NotebookPanel(this);
     this.input.keyboard.on('keydown-J', () => this.notebook.toggle());
+    this.bag = new BagPanel(this);
+    this.input.keyboard.on('keydown-I', () => this.bag.toggle());
     this.toasts = [];
     // 휴대폰: 조이스틱과 E·C 버튼. E는 대화가 떠 있으면 넘기고, 아니면 살펴보기
     if (wantsTouch(this.game)) {

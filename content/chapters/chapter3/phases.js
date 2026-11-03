@@ -15,7 +15,7 @@ export const phases = {
     day: 21,
     npcs: {
       // 겨울 장: 북쪽 상인이 광장에 좌판을 폈다
-      merchant: { at: [28, 15], mode: 'idle', face: 'down' },
+      merchant: { at: [26, 14], mode: 'idle', face: 'down' },
       ...villagers({
         chief: [24, 14, 'idle'], granny: [28, 21, 'idle'], kid: [12, 26, 'wander', 2], farmer: [11, 21, 'idle'],
         hunter: [40, 18, 'idle'], monk: [21, 11, 'idle'], woman: [20, 23, 'idle'], oldman: [30, 18, 'idle'],
