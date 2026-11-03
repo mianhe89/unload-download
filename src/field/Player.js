@@ -5,11 +5,12 @@ import { Actor } from './Actor.js';
 import { KEYS, PLAYER_SPEED, RUN_SPEED, RUN_TAP } from '../config/game.js';
 import { WorldMemory } from '../core/world/WorldMemory.js';
 import { skinOf } from '../life/life.js';
+import { equipSkin } from '../art/equipLook.js';
 import { Touch } from '../ui/touch.js';
 
 export class Player extends Actor {
   constructor(scene, tx, ty, face) {
-    super(scene, 'me', tx, ty, face, skinOf(WorldMemory.run?.life)); // 체형이 도트에 보인다
+    super(scene, 'me', tx, ty, face, equipSkin(scene, skinOf(WorldMemory.run?.life), WorldMemory.run?.equip)); // 체형·장비가 도트에 보인다
     const kb = scene.input.keyboard;
     this.keys = Object.fromEntries(Object.entries(KEYS).map(([k, list]) => [k, list.map((c) => kb.addKey(c))]));
     this.idleTime = 0;

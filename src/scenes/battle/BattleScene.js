@@ -10,6 +10,7 @@ import { beatKey } from '../../battle/encounters.js';
 import { BODIES } from '../../battle/body.js';
 import { ELEMENTS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
+import { ACTION_BOSSES } from '../../../content/action/action.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { characters } from '../../../content/characters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
@@ -158,6 +159,7 @@ export default class BattleScene extends Phaser.Scene {
     this.refresh();
     const r = this.battle.result;
     if (r) { this.finish(r); return; }
+    if (this.toPhase2()) return;
     const u = this.battle.next();
     this.current = u;
     this.refresh();
@@ -305,6 +307,22 @@ export default class BattleScene extends Phaser.Scene {
       [band, stripe, face, name, line].forEach((o) => o?.destroy());
       done();
     });
+  }
+
+  // 보스전 2단계: 보스 체력이 일정 이하가 되면 탑뷰 액션 전투로 넘어간다 (주인공의 남은 체력을 그대로)
+  toPhase2() {
+    const boss = this.battle.units.find((u) => u.side === 'enemy' && u.boss);
+    const A = boss && ACTION_BOSSES[boss.id];
+    if (!A || this.leaving || boss.hp / boss.maxHp > A.phaseAt) return false;
+    const me = this.battle.units.find((u) => u.id === 'me');
+    this.leaving = true;
+    this.panel.setVisible(false);
+    this.say('그림자가 빗자루를 내던졌다. 바닥이 기울어진다—', COLOR.red);
+    this.cameras.main.shake(600, 0.01);
+    Sound.sfx(this, 'tell');
+    this.time.delayedCall(900, () => this.cameras.main.fadeOut(400, 20, 10, 40));
+    this.time.delayedCall(1350, () => this.scene.start('Action', { ...this.data0, bossId: boss.id, hp: Math.max(1, Math.round((me.hp / me.maxHp) * 120)), maxHp: 120 }));
+    return true;
   }
 
   finish(result) {

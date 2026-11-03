@@ -1,6 +1,7 @@
 // 마을 밖 길 맵. 전체 지도(content/world/world.js)의 칸 하나를 걸어 다닌다.
 // 이야기 컷신은 없고(아직), 기후·빛·떨어지는 것만 있다. 맵 끝 출구를 밟으면 이웃 칸으로.
 // 시작 마을 칸으로 돌아가면 이야기 필드(Field)로 돌아간다.
+import { GRADE_RARITY } from '../../../content/items/items.js';
 import Phaser from 'phaser';
 import { ZOOM, TALK_RANGE } from '../../config/game.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
@@ -20,7 +21,7 @@ import { BIOME_MUSIC, BIOME_AMBIENT, HUB_MUSIC } from '../../../content/audio/au
 import { MONSTERS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
 import { doFarm, actionFor, freshFarm, elfVillageGone, meetsElf } from '../../farm/farm.js';
-import { FARM_TEXT, ITEM_NAMES, HIDDEN_SKILLS, ELF_LINES } from '../../../content/farm/farm.js';
+import { FARM_TEXT, HIDDEN_SKILLS, ELF_LINES } from '../../../content/farm/farm.js';
 import { maskNames, goneIds } from '../../core/script/speech.js';
 import { characters } from '../../../content/characters/index.js';
 import { Lighting } from '../../field/Lighting.js';
@@ -189,7 +190,7 @@ export default class AreaScene extends Phaser.Scene {
     Sound.sfx(this, o.action === 'chop' ? 'hit' : 'heavy', { rate: 0.8 + Math.random() * 0.3 });
     this.cameras.main.shake(90, 0.003);
     const item = { chop: 'wood', mine: 'stone' }[o.action];
-    this.ui.bubbles.narrate(this.player, `${FARM_TEXT[o.action]} (${ITEM_NAMES[item]} ${n.items[item]})`, 1600);
+    this.ui.bubbles.narrate(this.player, `${FARM_TEXT[o.action]} ([i=${item}] ${n.items[item]})`, 1600);
     if (o.action === 'chop') {
       // 나무가 쓰러진다: 그림을 치우고 충돌도 없앤다
       this.tweens.add({ targets: o.img, alpha: 0, angle: 8, duration: 350, onComplete: () => o.img.destroy() });
@@ -203,7 +204,7 @@ export default class AreaScene extends Phaser.Scene {
       this.time.delayedCall(800, () => {
         Sound.sfx(this, 'secret');
         softFlash(this, { ms: 600 });
-        this.ui.bubbles.narrate(this.player, `히든 스킬 [${sk.grade}] ${sk.name} — ${sk.desc}`, 4000);
+        this.ui.bubbles.narrate(this.player, `히든 스킬 [q=${GRADE_RARITY[sk.grade]}]〔${sk.grade}〕 ${sk.name}[/q] — ${sk.desc}`, 4000);
       });
     }
   }

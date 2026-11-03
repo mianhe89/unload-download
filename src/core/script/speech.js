@@ -30,9 +30,10 @@ export function goneIds(characters, { erased, phase }) {
   return [...ids];
 }
 
-// 말풍선이 떠 있는 시간(초): 읽을 만큼, 너무 짧거나 길지 않게
+// 말풍선이 떠 있는 시간(초): 글자가 다 찍히고(한 글자 약 0.03초) 읽을 만큼, 너무 짧거나 길지 않게. 꾸밈 태그는 세지 않는다
 export function lineSeconds(text) {
-  return Math.min(5.5, Math.max(1.8, 1.0 + text.length * 0.075));
+  const n = text.replace(/\[[^\]]*\]/g, '').length;
+  return Math.min(6.5, Math.max(1.8, 1.0 + n * 0.105));
 }
 
 // 화자와 이만큼(칸) 떨어지면 들리지 않는다

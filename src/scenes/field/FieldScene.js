@@ -1,6 +1,7 @@
 // 탑다운 필드. 한 번에 한 페이즈(어디서·누가·무슨 일이)를 돌린다.
 // 페이즈가 바뀌면 씬을 새 페이즈로 다시 시작하고, 시작점을 체크포인트로 저장한다.
 // 전투는 별도 씬(사이드뷰, scenes/battle/)으로 넘어간다 — 다음 단계에서 구현.
+import { GRADE_RARITY } from '../../../content/items/items.js';
 import Phaser from 'phaser';
 import { ZOOM, TALK_RANGE, BUBBLE_RANGE } from '../../config/game.js';
 import { chapters } from '../../../content/chapters/index.js';
@@ -34,6 +35,8 @@ import { Raids } from '../../field/systems/Raids.js';
 import { FieldBattle } from '../../field/systems/FieldBattle.js';
 import { Crow } from '../../field/systems/Crow.js';
 import { addItem, takeItem, giftResult, markGifted } from '../../life/bag.js';
+import { TALK, TALK_AFF } from '../../../content/talk/talk.js';
+import { HEROINES } from '../../../content/portraits/portraits.js';
 import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 
@@ -261,8 +264,32 @@ export default class FieldScene extends Phaser.Scene {
       this.cutscene.play(label);
       return;
     }
+    const convos = TALK[npc.id]?.[this.phaseId];
+    if (convos?.length) { this.runTalk(npc.id, convos); return; }
     const lines = characters[npc.id].bubbles?.[this.phaseId] ?? ['…'];
     this.bubble(npc.id, lines[Math.floor(Math.random() * lines.length)]);
+  }
+
+  // 말 걸기 대화: 처음 듣는 것부터, 다 들었으면 처음부터 돌아가며
+  async runTalk(id, convos) {
+    const heard = (i) => WorldMemory.run.flags[`heard.${this.phaseId}.${id}.${i}`];
+    this.talkAt ??= {};
+    let i = this.talkAt[id];
+    if (i === undefined) { i = convos.findIndex((_, k) => !heard(k)); if (i < 0) i = 0; }
+    this.talkAt[id] = (i + 1) % convos.length;
+    this.setFrozen(true);
+    for (const line of convos[i]) {
+      if (this.cutscene?.busy) break;
+      const [who, text] = typeof line === 'string' ? [id, line] : line;
+      const c = who ? characters[who] : null;
+      await this.ui.say(c?.name ?? '', c?.color ?? '#cfc9dd', this.speech(who, text), who ?? undefined);
+    }
+    if (!heard(i)) {
+      WorldMemory.setFlag(`heard.${this.phaseId}.${id}.${i}`);
+      if (HEROINES.includes(id)) WorldMemory.addAffinity(id, TALK_AFF);
+    }
+    this.ui.closeDialog();
+    this.setFrozen(false);
   }
 
   async examine(target) {
@@ -297,7 +324,7 @@ export default class FieldScene extends Phaser.Scene {
       const { farm, unlocked } = countAction(WorldMemory.run.farm ?? freshFarm(), 'sleep');
       WorldMemory.setFarm(farm);
       if (farm.skills.includes('napper')) n = { ...n, fatigue: Math.max(0, n.fatigue - 30) };
-      if (unlocked) this.time.delayedCall(2700, () => this.ui.bubbles.narrate(this.player, `히든 스킬 [${HIDDEN_SKILLS[unlocked].grade}] ${HIDDEN_SKILLS[unlocked].name} — ${HIDDEN_SKILLS[unlocked].desc}`, 4000));
+      if (unlocked) this.time.delayedCall(2700, () => this.ui.bubbles.narrate(this.player, `히든 스킬 [q=${GRADE_RARITY[HIDDEN_SKILLS[unlocked].grade]}]〔${HIDDEN_SKILLS[unlocked].grade}〕 ${HIDDEN_SKILLS[unlocked].name}[/q] — ${HIDDEN_SKILLS[unlocked].desc}`, 4000));
     }
     WorldMemory.setLife(n);
     if (a.item) WorldMemory.setBag(addItem(WorldMemory.run.bag, a.item));

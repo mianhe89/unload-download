@@ -12,7 +12,9 @@ export const TALK_RANGE = 22;        // 말 걸 수 있는 거리 (px)
 export const BUBBLE_RANGE = 48;      // 혼잣말이 보이는 거리 (px)
 
 export const FONT = 'Galmuri11';
-export const FONT_BOLD = 'Galmuri11Bold';
+export const FONT_BOLD = 'Galmuri11'; // 굵게는 fontStyle: 'bold' 로
+// 대화 본문: Galmuri14 (15px 기준으로 설계된 픽셀 글꼴 — 15의 정수배에서 가장 또렷하다)
+export const FONT_TALK = 'Galmuri14';
 
 export const KEYS = {
   up: ['W', 'UP'],

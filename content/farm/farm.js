@@ -14,7 +14,8 @@ export const FARM_TEXT = {
   mine: '바위를 깨서 돌을 얻었다.',
 };
 export const YIELD = { chop: 'wood', mine: 'stone' };
-export const ITEM_NAMES = { wood: '목재', stone: '돌' };
+import { ITEMS } from '../items/items.js';
+export const ITEM_NAMES = Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, v.name]));
 
 // 히든 스킬: min회 이상 한 뒤부터 매번 p 확률 (비공개)
 //   effect: 주인공 능력치 보정 (전투) — atk/def 배수, spd 더하기, heavy 배수

@@ -59,7 +59,7 @@ describe('걸으며 듣는 대사', () => {
 
   it('말풍선 시간은 읽을 만큼, 상한·하한이 있다', () => {
     expect(lineSeconds('아')).toBeGreaterThanOrEqual(1.8);
-    expect(lineSeconds('가'.repeat(200))).toBeLessThanOrEqual(5.5);
+    expect(lineSeconds('가'.repeat(200))).toBeLessThanOrEqual(6.5);
     expect(lineSeconds('가'.repeat(30))).toBeGreaterThan(lineSeconds('가'.repeat(5)));
   });
 

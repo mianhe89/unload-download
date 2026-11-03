@@ -16,6 +16,11 @@ export default class BootScene extends Phaser.Scene {
     for (const [id, p] of Object.entries(PORTRAITS)) {
       this.load.image(`portrait.${id}`, `assets/${p.file}`);
       for (const [face, file] of Object.entries(p.faces ?? {})) this.load.image(`portrait.${id}.${face}`, `assets/${file}`);
+      // 호감도 단계 그림 (content/portraits/portraits.js)
+      for (const [st, v] of Object.entries(p.stages ?? {})) {
+        if (v.file) this.load.image(`portrait.${id}@${st}`, `assets/${v.file}`);
+        for (const [face, file] of Object.entries(v.faces ?? {})) this.load.image(`portrait.${id}@${st}.${face}`, `assets/${file}`);
+      }
     }
     // 불러오기 실패는 콘솔에 남기되 게임은 계속 연다
     this.load.on('loaderror', (file) => console.error(`에셋을 불러오지 못함: ${file.key} (${file.src})`));

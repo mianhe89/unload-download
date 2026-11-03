@@ -19,7 +19,7 @@ export const scaleOf = (scene) => scene.scale.width / 960;
 // 글자 하나. size는 960 기준 크기
 export function text(scene, x, y, str, { size = 12, color = COLORS.text, bold = false, ...style } = {}) {
   const s = scaleOf(scene);
-  return scene.add.text(x, y, str, { fontFamily: bold ? FONT_BOLD : FONT, fontSize: `${size * s}px`, color, ...style });
+  return scene.add.text(x, y, str, { fontFamily: bold ? FONT_BOLD : FONT, fontStyle: bold ? 'bold' : '', fontSize: `${size * s}px`, color, ...style });
 }
 
 // 금 테두리 창 (g: Graphics, 왼쪽 위 기준)
