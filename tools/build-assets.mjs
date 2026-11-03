@@ -67,6 +67,23 @@ const EDITS = {
       }
     });
   },
+  // 무녀의 머리띠: 머리 윗선 두 줄 아래로 붉은·흰 끈이 번갈아 지나고, 뒤로 끈 두 가닥이 늘어진다(세이)
+  headband(img, e = {}) {
+    const RED = e.color ?? 'd23a3a', WHITE = 'f4f0e8';
+    forEachFrame(img, (fx, fy, dir) => {
+      for (let x = 2; x < 14; x += 1) {
+        const t = topAt(img, fx, fy, x);
+        if (t < 0) continue;
+        if (alphaAt(img, fx + x, fy + t + 2)) setPx(img, fx + x, fy + t + 2, x % 3 ? RED : WHITE);
+      }
+      // 뒷모습·옆모습: 뒤로 늘어진 끈
+      const tail = dir === 'up' ? [7, 8] : dir === 'left' ? [12] : dir === 'right' ? [3] : [];
+      for (const x of tail) {
+        const t = topAt(img, fx, fy, x);
+        if (t >= 0) for (let k = 3; k <= 6; k += 1) setPx(img, fx + x, fy + t + k, RED);
+      }
+    });
+  },
   // 모자 옆에 꽂은 붉은 깃털 (외곽선 포함)
   feather(img) {
     forEachFrame(img, (fx, fy, dir) => {

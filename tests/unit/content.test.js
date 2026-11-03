@@ -5,6 +5,7 @@ import { validateContent } from '../../tools/lib/validateContent.mjs';
 import { chapters } from '../../content/chapters/index.js';
 import { characters } from '../../content/characters/index.js';
 import * as village from '../../content/maps/village.js';
+import { mapOf } from '../../content/maps/index.js';
 import { ScriptRunner, passes } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
 import { QUESTS } from '../../content/quests/index.js';
@@ -52,11 +53,13 @@ function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = 
       const mins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
       for (const c of Object.values(characters)) {
         if (!c.schedule || ph.npcs?.[c.id] || erased.includes(c.id)) continue;
+        if ((c.home ?? 'village') !== (mapOf(ph).id ?? 'village')) continue; // 다른 마을 사람
         const list = c.schedule.filter((e) => !e.when || passes(e.when, ctx));
         let cur = list.at(-1);
         for (const e of list) if (mins(e.from) <= start) cur = e;
         if (!cur || cur.home) continue;
-        people[c.id] = Array.isArray(cur.at) ? cur.at : [village.spots[cur.at].x, village.spots[cur.at].y];
+        const sp = mapOf(ph).spots;
+        people[c.id] = Array.isArray(cur.at) ? cur.at : [sp[cur.at].x, sp[cur.at].y];
       }
     }
     const picked = {};
