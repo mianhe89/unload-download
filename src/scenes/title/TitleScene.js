@@ -61,9 +61,16 @@ export default class TitleScene extends Phaser.Scene {
 
     // 카메라: 오늘 머무는 곳에서 천천히 흐른다
     const cam = this.cameras.main;
+    // 가장자리 안개(바깥 FOG칸) 안쪽만 비춘다. 흐르는 폭(DRIFT)까지 셈해 맵 끝이 화면에 들어오지 않게
+    const DRIFT = 40;
+    const halfW = this.scale.width / ZOOM / 2, halfH = this.scale.height / ZOOM / 2;
+    const inner = (village.FOG + 1) * TILE;
+    const clamp = (v, lo, hi) => (lo > hi ? (lo + hi) / 2 : Math.min(Math.max(v, lo), hi));
+    const cx = clamp(px(setup.view.x), inner + halfW, map.width - inner - halfW - DRIFT);
+    const cy = clamp(px(setup.view.y), inner + halfH, map.height - inner - halfH);
     cam.setZoom(ZOOM).setBounds(0, 0, map.width, map.height).setRoundPixels(true);
-    cam.centerOn(px(setup.view.x), px(setup.view.y));
-    this.tweens.add({ targets: cam, scrollX: cam.scrollX + 40, duration: 14000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    cam.centerOn(cx, cy);
+    this.tweens.add({ targets: cam, scrollX: cam.scrollX + DRIFT, duration: 14000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     cam.fadeIn(900, 0, 0, 0);
 
     this.buildMenu();

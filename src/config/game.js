@@ -1,11 +1,9 @@
-import { platform } from '../platform/index.js';
+// 내부 해상도. 웹판도 1920×1080으로 그려 글자·그림이 선명하다(UI는 모두 width / 960 비율로 커진다).
+// 웹판의 '좁은 세계'는 해상도가 아니라 안개·가장자리 연출로 보여 준다.
+export const VIEW = { width: 1920, height: 1080 };
 
-// 웹판(UNLOAD)은 저해상도, 데스크톱판(DOWNLOAD)은 고해상도.
-// 웹판의 해상도 한계는 '좁은 세계의 증상'이라는 설정으로 연출에 쓴다.
-export const VIEW = platform.isDesktop ? { width: 1920, height: 1080 } : { width: 960, height: 540 };
-
-// 화면 배율: 16px 타일이 몇 배로 보이는가
-export const ZOOM = platform.isDesktop ? 6 : 3;
+// 화면 배율: 16px 타일이 몇 배로 보이는가. 4배면 한 화면에 가로 30칸 × 세로 17칸이 보인다
+export const ZOOM = 4;
 
 export const PLAYER_SPEED = 72;      // px/s (월드 좌표)
 export const TALK_RANGE = 22;        // 말 걸 수 있는 거리 (px)

@@ -103,17 +103,30 @@ export class MapRenderer {
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    // 가장자리 안개: 세계가 거기서 끝난다
-    for (let y = 0; y < this.rows; y += 1) {
-      for (let x = 0; x < this.cols; x += 1) {
-        const f = this.fogAmount(x, y);
+    tex.refresh();
+    this.addFog(`${key}.fog`);
+    return key;
+  }
+
+  // 가장자리 안개: 세계가 거기서 끝난다. 바닥만이 아니라 나무·건물 같은 물체 위에도 덮이도록 따로 한 층(물체 위, 조명 아래)으로 둔다.
+  // 칸 단위 띠가 아니라 4px 덩이로, 경계가 물결치며 안쪽으로 옅어진다
+  addFog(key) {
+    const { scene } = this;
+    if (scene.textures.exists(key)) scene.textures.remove(key);
+    const tex = scene.textures.createCanvas(key, this.width, this.height);
+    const ctx = tex.getContext();
+    const B = 4;
+    for (let py = 0; py < this.height; py += B) {
+      for (let px = 0; px < this.width; px += B) {
+        const f = this.fogAt(px + B / 2, py + B / 2);
         if (f <= 0) continue;
-        ctx.fillStyle = `rgba(214,218,230,${f})`;
-        ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+        ctx.fillStyle = `rgba(214,218,230,${f.toFixed(3)})`;
+        ctx.fillRect(px, py, B, B);
       }
     }
     tex.refresh();
-    return key;
+    this.fog?.destroy();
+    this.fog = scene.add.image(0, 0, key).setOrigin(0).setDepth(8900);
   }
 
   // 열린 출구의 통로 칸인가
@@ -124,13 +137,17 @@ export class MapRenderer {
       || (e.dir === 'w' && x < edge && y >= e.from && y < e.to2) || (e.dir === 'e' && x >= this.cols - edge && y >= e.from && y < e.to2)));
   }
 
-  fogAmount(x, y) {
-    if (this.inOpenGap(x, y)) return 0;
-    const d = Math.min(x, y, this.cols - 1 - x, this.rows - 1 - y);
-    const edge = this.map.FOG;
-    if (d > edge) return 0;
-    if (d === edge) return 0.12;
-    return Math.min(0.96, 0.4 + (edge - 1 - d) * 0.28);
+  // 한 점(px)의 안개 짙기 0~0.95. 맵 끝에서 FOG칸 남짓까지, 경계는 사인 두 개로 물결치고 아주 약한 얼룩을 섞는다
+  fogAt(px, py) {
+    if (this.inOpenGap(Math.floor(px / TILE), Math.floor(py / TILE))) return 0;
+    const d = Math.min(px, py, this.width - px, this.height - py) / TILE; // 맵 끝에서 몇 칸 안쪽인가
+    const reach = this.map.FOG + 0.8;
+    if (d > reach + 1) return 0;
+    const wave = 0.55 * Math.sin(px * 0.043 + py * 0.017) + 0.4 * Math.sin(py * 0.051 - px * 0.023 + 1.7);
+    const depth = reach + wave - d; // 안개 속으로 몇 칸 들어왔나
+    if (depth <= 0) return 0;
+    const grain = ((Math.sin(px * 12.9898 + py * 78.233) * 43758.5453) % 1 + 1) % 1; // 고정된 얼룩
+    return Math.min(0.95, Math.pow(depth / reach, 0.8) * 1.05 + (grain - 0.5) * 0.06);
   }
 
   // ── 물체 ────────────────────────────────────────────
