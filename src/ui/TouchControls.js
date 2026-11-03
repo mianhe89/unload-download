@@ -1,11 +1,11 @@
-// 휴대폰용 조작: 왼쪽 아래 가상 조이스틱(phaser4-rex-plugins), 오른쪽 아래 E(살펴보기·넘기기)·C(상태) 버튼.
+// 휴대폰용 조작: 왼쪽 아래 가상 조이스틱(phaser4-rex-plugins), 오른쪽 아래 E(살펴보기·넘기기)·C(상태)·J(수첩) 버튼.
 import VirtualJoyStick from 'phaser4-rex-plugins/plugins/virtualjoystick.js';
 import { FONT } from '../config/game.js';
 import { Touch } from './touch.js';
 
 export class TouchControls {
-  // onAct: E 버튼 (대화 넘기기 또는 살펴보기), onStatus: C 버튼
-  constructor(scene, { onAct, onStatus }) {
+  // onAct: E 버튼 (대화 넘기기 또는 살펴보기), onStatus: C 버튼, onNotebook: J 버튼
+  constructor(scene, { onAct, onStatus, onNotebook }) {
     const { width, height } = scene.scale;
     const s = width / 960;
     const r = 56 * s;
@@ -23,6 +23,7 @@ export class TouchControls {
     };
     button(width - 72 * s, 'E', onAct);
     button(width - 160 * s, 'C', onStatus);
+    if (onNotebook) button(width - 248 * s, 'J', onNotebook);
     scene.input.addPointer(2); // 조이스틱 + 버튼 동시에
   }
 

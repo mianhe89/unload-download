@@ -6,6 +6,8 @@ import { SpeechBubbles } from '../../ui/SpeechBubbles.js';
 import { Hud } from '../../ui/Hud.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
+import { NotebookPanel } from '../../ui/NotebookPanel.js';
+import { COLORS, text, scaleOf } from '../../ui/kit.js';
 import { TouchControls } from '../../ui/TouchControls.js';
 import { Touch, wantsTouch } from '../../ui/touch.js';
 
@@ -20,13 +22,17 @@ export default class UIScene extends Phaser.Scene {
     this.status = new StatusPanel(this);
     this.input.keyboard.on('keydown-C', () => this.status.toggle());
     this.input.keyboard.on('keydown-TAB', (e) => { e.preventDefault?.(); this.status.toggle(); });
+    this.notebook = new NotebookPanel(this);
+    this.input.keyboard.on('keydown-J', () => this.notebook.toggle());
+    this.toasts = [];
     // 휴대폰: 조이스틱과 E·C 버튼. E는 대화가 떠 있으면 넘기고, 아니면 살펴보기
     if (wantsTouch(this.game)) {
       this.touch = new TouchControls(this, {
         onAct: () => { if (this.dialog.advance()) return; this.events.emit('skip'); Touch.actQueued = true; },
         onStatus: () => this.status.toggle(),
+        onNotebook: () => this.notebook.toggle(),
       });
-      this.hud.controls.setText('M 소리'); // 키보드 안내 대신
+      this.hud.controls.setText(''); // 키보드 안내 대신 버튼이 있다
     }
     this.toScreen = (x, y) => ({ x, y });
 
@@ -44,5 +50,16 @@ export default class UIScene extends Phaser.Scene {
 
   say(name, color, text, face, expr) { return this.dialog.say(name, color, text, face, expr); }
   closeDialog() { this.dialog.close(); }
+
+  // 위쪽 가운데에 잠깐 뜨는 알림(퀘스트 시작·완료, 단서). 여러 개가 겹치면 아래로 쌓인다
+  toast(msg) {
+    const s = scaleOf(this);
+    const y = 70 * s + this.toasts.length * 34 * s;
+    const t = text(this, this.scale.width / 2, y, msg, { size: 13, color: COLORS.text, backgroundColor: '#3d2b22e8', padding: { x: 14 * s, y: 6 * s } })
+      .setOrigin(0.5).setDepth(95).setAlpha(0);
+    this.toasts.push(t);
+    this.tweens.add({ targets: t, alpha: 1, y: y + 6 * s, duration: 250, hold: 2400, yoyo: true,
+      onComplete: () => { t.destroy(); this.toasts = this.toasts.filter((o) => o !== t); } });
+  }
   get talking() { return this.dialog.open; }
 }

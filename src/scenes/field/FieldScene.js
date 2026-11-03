@@ -26,6 +26,8 @@ import { trackWalk } from '../../life/track.js';
 import { countAction, freshFarm } from '../../farm/farm.js';
 import { HIDDEN_SKILLS } from '../../../content/farm/farm.js';
 import { Sound } from '../../core/audio/Sound.js';
+import { Quests } from '../../field/systems/Quests.js';
+import { Clues } from '../../field/systems/Clues.js';
 import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 
 const px = (t) => t * TILE + TILE / 2;
@@ -93,6 +95,8 @@ export default class FieldScene extends Phaser.Scene {
     // 이벤트와 컷신
     this.director = new EventDirector(this.phase.events ?? []);
     this.cutscene = new Cutscene(this, this.chapter.script, this.ctx());
+    this.quests = new Quests(this);
+    this.clues = new Clues(this);
 
     // UI 씬이 준비된 다음 프레임에 연결
     this.time.delayedCall(0, () => {
@@ -143,6 +147,8 @@ export default class FieldScene extends Phaser.Scene {
 
     // 걸으며 듣는 대사 중에도 물건은 주울 수 있다
     if (!busy || this.cutscene.walking) for (const g of this.pickups.collect(this.player)) this.onPicked(g);
+    // 퀘스트·단서는 걸으며 듣는 대사 중에도 따라잡는다(그동안에도 플레이어는 움직인다)
+    if (!busy || this.cutscene.walking) { this.quests.update(dt); this.clues.update(dt); }
     if (!busy) {
       const { runs, bubbles } = this.director.update(dt, this.world(), busy);
       bubbles.forEach((b) => this.bubble(b.who, b.text));
@@ -214,6 +220,7 @@ export default class FieldScene extends Phaser.Scene {
 
   talkTo(npc) {
     npc.faceToward(this.player.x, this.player.y);
+    if (this.quests.onTalk(npc.id)) return; // 퀘스트 단계의 대화, 또는 그 사람이 주는 퀘스트
     const label = `talk.${this.phaseId}.${npc.id}`;
     const seen = `talked.${this.chapterId}.${this.phaseId}.${npc.id}`;
     if (this.cutscene.has(label) && !WorldMemory.run.flags[seen]) {
@@ -390,7 +397,20 @@ export default class FieldScene extends Phaser.Scene {
     return absence(WorldMemory.world.erased.map((e) => e.id), ids, WorldMemory.run.flags);
   }
 
-  refreshObjective() { this.ui.hud.setObjective(objectiveText(this.phase.objective, this.absence())); }
+  // 왼쪽 위 할 일: 진행 중인 퀘스트의 지금 단계가 있으면 그것, 없으면 그날의 목표
+  refreshObjective() {
+    const step = this.quests?.tracked()?.step;
+    this.ui.hud.setObjective(objectiveText(step ? step.text : this.phase.objective, this.absence()));
+  }
+
+  // 대화창에 한 줄 말하고 닫는다(퀘스트 제안 등)
+  async sayOnce(id, line) {
+    const c = characters[id];
+    this.setFrozen(true);
+    await this.ui.say(c?.name ?? '', c?.color ?? '#cfc9dd', line, id);
+    this.ui.closeDialog();
+    this.setFrozen(false);
+  }
 
   // prop: 코드로 그린 소품(prop.<이름>) 또는 팩 물체(OBJECTS의 이름)
   addProp(prop, at, text) {

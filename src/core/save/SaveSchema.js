@@ -16,13 +16,15 @@ import { freshFarm } from '../../farm/farm.js';
 //     life: { weight, muscle, fatigue, mind, walked, last },  // 생활 → 체형·마음가짐 (src/life/life.js)
 //     farm: { counts, items, skills, felled, forestChops },    // 행동 파밍: 횟수·재료·히든 스킬·베어낸 나무 (src/farm/farm.js)
 //     flags: {},           //   이벤트 진행 표시
+//     quests: { [id]: { state: 'active'|'done', step } },  // 퀘스트 (content/quests, src/field/systems/Quests.js)
+//     clues: [id],         //   수첩에 적힌 단서 (content/clues.js). 한 번 적히면 남는다
 //     affinity: {},        //   인물별 호감도 (지워지는 순서를 정한다)
 //     startedAt,
 //   },
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 5;
+export const VERSION = 6;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -38,6 +40,8 @@ export const freshRun = () => ({
   life: freshLife(),
   farm: freshFarm(),
   flags: {},
+  quests: {},
+  clues: [],
   affinity: {},
   startedAt: Date.now(),
 });
@@ -56,6 +60,8 @@ const MIGRATIONS = {
   3: (s) => ({ ...s, version: 4, run: s.run ? { ...s.run, life: freshLife() } : null }),
   // v4 → v5: 행동 파밍 추가
   4: (s) => ({ ...s, version: 5, run: s.run ? { ...s.run, farm: freshFarm() } : null }),
+  // v5 → v6: 퀘스트와 단서 수첩 추가. 기존 진행은 빈 수첩에서 (진행 중인 퀘스트는 플래그를 보고 저절로 따라잡는다)
+  5: (s) => ({ ...s, version: 6, run: s.run ? { ...s.run, quests: {}, clues: [] } : null }),
 };
 
 export function migrate(raw) {

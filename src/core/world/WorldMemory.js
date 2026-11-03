@@ -43,6 +43,18 @@ export const WorldMemory = {
     SaveRepository.update((d) => { d.run.flags[name] = value; });
   },
 
+  // 퀘스트: { state: 'active'|'done', step }
+  quest(id) { return this.run?.quests?.[id] ?? null; },
+  setQuest(id, patch) {
+    SaveRepository.update((d) => { d.run.quests ??= {}; d.run.quests[id] = { ...(d.run.quests[id] ?? {}), ...patch }; });
+  },
+
+  // 단서 수첩: 한 번 적히면 남는다
+  hasClue(id) { return Boolean(this.run?.clues?.includes(id)); },
+  addClue(id) {
+    SaveRepository.update((d) => { d.run.clues ??= []; if (!d.run.clues.includes(id)) d.run.clues.push(id); });
+  },
+
   addAffinity(id, amount) {
     SaveRepository.update((d) => { d.run.affinity[id] = (d.run.affinity[id] ?? 0) + amount; });
   },

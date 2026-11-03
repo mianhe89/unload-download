@@ -43,7 +43,16 @@ describe('세이브 스키마', () => {
     expect(s.run).toMatchObject({ chapter: 'chapter1', phase: 'aftermath', flags: { a: true }, where: null });
     expect(s.run.life.weight).toBeGreaterThan(0); // v4: 생활 상태도 채워진다
     expect(s.run.farm.skills).toEqual([]); // v5: 행동 파밍
+    expect(s.run.quests).toEqual({}); // v6: 퀘스트와 단서 수첩
+    expect(s.run.clues).toEqual([]);
     expect(migrate({ ...v2, run: null }).run).toBeNull();
+  });
+
+  it('v5 세이브: 진행·플래그는 그대로, 퀘스트와 단서 수첩은 빈 채로 붙는다', () => {
+    const v5 = { version: 5, world: { loads: 1, erased: [] }, run: { chapter: 'prologue', phase: 'morning', flags: { 'smithy.seen': true }, affinity: {}, farm: { counts: {}, items: {}, skills: [] } }, meta: {} };
+    const s = migrate(v5);
+    expect(s.version).toBe(VERSION);
+    expect(s.run).toMatchObject({ phase: 'morning', flags: { 'smithy.seen': true }, quests: {}, clues: [] });
   });
 
   it('현재 버전 세이브는 그대로 둔다', () => {
