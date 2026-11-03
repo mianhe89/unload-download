@@ -4,6 +4,8 @@ import * as village from './village.js';
 import * as neighbor from './neighbor.js';
 import ruin from './ruin.js';
 import frost from './frost.js';
+import harbor from './harbor.js';
+import dwarf from './dwarf.js';
 
-export const MAPS = { village, neighbor, ruin, frost };
+export const MAPS = { village, neighbor, ruin, frost, harbor, dwarf };
 export const mapOf = (phase) => MAPS[phase?.map ?? 'village'];

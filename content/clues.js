@@ -65,4 +65,13 @@ export const CLUES = [
     text: '첫눈 축제 밤, 종소리를 처음부터 내가 셌다. 열둘에서 멈췄다. 열셋째는 울리지 않았다. 그날 밤엔 아무도 지워지지 않았다.' },
   { id: 'clue.muster', title: '소집령', when: { ifFlag: 'part1.done' },
     text: '국왕의 소집령. 정체를 알 수 없는 악마들이 마을을 덮친다. 곡식도 사람도 가져가지 않고, 지나간 자리가 비어 있을 뿐이라고 한다.' },
+  // ── 다른 마을
+  { id: 'clue.name_wall', title: '빈 마을의 이름 벽', when: { ifFlag: 'ruin.wall' },
+    text: '사람이 전부 지워진 마을, 회관 앞 바위에 이름이 빽빽했다. 글씨가 다 달랐다. 잊지 않으려고 이름을 새긴 사람이 나 말고도 있었다. 맨 아래 줄은 한 글자에서 멈춰 있었다.' },
+  { id: 'clue.plateau', title: '먹혀 드는 고원', when: { ifFlag: 'frost.met_brenna' },
+    text: '서리 마을 경비대장 브렌나: 예전엔 한 해에 한두 번이던 오크가 요즘은 거의 날마다 온다. 북쪽 고원 끝이 하얗게 먹혀 들어간다고.' },
+  { id: 'clue.straight_ring', title: '곧은 테두리', when: { ifFlag: 'dwarf.ring' },
+    text: '드워프 대장장이 브로크가 에다의 반지를 보고 말했다. 솜씨는 거칠어도, 한 사람만 생각하며 두드린 곧은 테두리라고.' },
+  { id: 'clue.third_shaft', title: '셋째 갈래', when: { ifFlag: 'dwarf.mine' },
+    text: '드워프 광부 헬가의 지도엔 갱도 셋째 갈래가 있다. 가 보면 막장이다. 지난달엔 거기서 은을 캤다고 한다. 다들 원래 막장이었다고 한다.' },
 ];

@@ -4,6 +4,8 @@ import * as prologue from './prologue/phases.js';
 import { script as prologueScript } from './prologue/script.js';
 import * as ruin from '../places/ruin.js';
 import * as frost from '../places/frost.js';
+import * as harbor from '../places/harbor.js';
+import * as dwarf from '../places/dwarf.js';
 import * as chapter1 from './chapter1/phases.js';
 import { script as chapter1Script } from './chapter1/script.js';
 import * as chapter2 from './chapter2/phases.js';
@@ -11,7 +13,7 @@ import { script as chapter2Script } from './chapter2/script.js';
 import * as chapter3 from './chapter3/phases.js';
 import { script as chapter3Script } from './chapter3/script.js';
 
-const PLACES = [ruin, frost];
+const PLACES = [ruin, frost, harbor, dwarf];
 const withPlaces = (c) => ({
   ...c,
   phases: { ...c.phases, ...Object.assign({}, ...PLACES.map((p) => p.phases)) },
