@@ -15,6 +15,7 @@ import { characters } from '../../../content/characters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { act, freshLife, skinOf } from '../../life/life.js';
 import { softFlash } from '../../core/fx/softFlash.js';
+import { frame } from '../../ui/kit.js';
 
 const SKY = { surface: [0x8fb7d8, 0xd9e6c8], under: [0x1c1620, 0x3a2c2a], sky: [0x0a0820, 0x2a1e5a] };
 const GROUND = { surface: 0x6c8a3c, under: 0x4a3a30, sky: 0x3a2a6a };
@@ -62,7 +63,9 @@ export default class BattleScene extends Phaser.Scene {
 
     // 아래: 명령 창
     this.panel = this.add.container(0, 0);
-    this.panelBg = this.add.rectangle(W / 2, H - 62 * this.s, W - 24 * this.s, 104 * this.s, 0x101018, 0.9).setStrokeStyle(2, 0x4a4466);
+    // 명령 창: 대화창·HUD와 같은 금테 창(ui/kit.js)
+    this.panelBg = this.add.graphics();
+    frame(this.panelBg, 12 * this.s, H - 114 * this.s, W - 24 * this.s, 104 * this.s, this.s, { corners: 'diamond', sheen: false });
     this.who = this.add.text(28 * this.s, H - 108 * this.s, '', { fontFamily: FONT, fontSize: `${13 * this.s}px`, color: COLOR.gold });
     this.skillTexts = [0, 1, 2, 3].map((i) => this.add.text(28 * this.s + i * 228 * this.s, H - 84 * this.s, '', { fontFamily: FONT, fontSize: `${12 * this.s}px`, color: COLOR.text, wordWrap: { width: 218 * this.s } })
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.cursor.skill = i; this.confirm(); }));
@@ -102,7 +105,7 @@ export default class BattleScene extends Phaser.Scene {
     } else if (u.char) {
       // 인물 도트를 쓰는 적(습격의 오크): 왼쪽을 보고 선다
       const key = `char.${u.char}`;
-      spr = this.add.sprite(x, y, key, 2).setScale(4 * s).setOrigin(0.5, 1);
+      spr = this.add.sprite(x, y, key, 2).setScale((u.boss ? 6 : 4) * s).setOrigin(0.5, 1);
       if (this.anims.exists(`${key}.left`)) { spr.play(`${key}.left`); spr.anims.pause(); }
       spr.setInteractive().on('pointerdown', () => {
         const i = this.targets().findIndex((t) => t.uid === u.uid);
@@ -205,7 +208,7 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   highlight() {
-    this.skillTexts.forEach((t, i) => t.setBackgroundColor(i === this.cursor.skill ? '#2a2640' : null));
+    this.skillTexts.forEach((t, i) => t.setBackgroundColor(i === this.cursor.skill ? '#5a4030' : null));
     const ts = this.targets();
     const t = ts[this.cursor.target % Math.max(1, ts.length)];
     if (t) { const v = this.sprites[t.uid]; this.targetMark.setPosition(v.x, v.top - 30 * this.s).setVisible(true); } else this.targetMark.setVisible(false);

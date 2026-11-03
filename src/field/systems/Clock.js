@@ -19,8 +19,9 @@ export class Clock {
   get running() { return Boolean(this.field.phase.clock); }
 
   // 페이즈(이야기의 하루)에 처음 들어설 때: 그날의 날짜(phase.day)와 시작 시각으로 맞춘다
+  // keepTime: 들르는 페이즈(옆 마을 등)는 시계를 그대로 이어 간다
   enterPhase(phase, firstTime) {
-    if (!firstTime) return;
+    if (!firstTime || phase.keepTime) return;
     if (phase.day != null) this.day = phase.day;
     this.minute = toMinute(phase.startAt ?? START_BY_TIME[phase.time] ?? '09:00');
     this.save();

@@ -79,7 +79,7 @@ export const script = {
     { flag: 'ch1.departed' },
     { fx: 'fade' },
     N('— 1장 「빈 대장간」 끝. 2장 「안개 너머」는 아직 쓰이지 않았다 —'),
-    { end: 'title', next: { chapter: 'chapter1', phase: 'aftermath' } },
+    { end: 'title', next: { chapter: 'chapter2', phase: 'fogroad' } },
   ],
 
   // ─────────────────────────────── 6일: 레온

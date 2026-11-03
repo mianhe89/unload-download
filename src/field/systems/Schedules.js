@@ -8,6 +8,8 @@
 //   { from: '19:00', home: true }                           — 자기 집(맵 objects의 residents에 이 사람이 있는 건물) 문으로
 //   when: 조건(대본 조건 문법)을 달면 그 조건일 때만 쓰는 줄
 // 인물 파일의 home: 사는 맵 id (기본 'village'). 그 맵에 있을 때만 일과를 산다
+// 인물 파일의 away: 조건(대본 조건 문법)이 맞는 동안은 마을에 없다 (예: 루가 사흘 동안 가장자리를 보러 떠난 날)
+// 누군가를 따라 걷는 중(mode 'follow')인 사람은 일과가 끌어가지 않는다
 // 장소: 맵 spots 이름 또는 [tx, ty]
 import { characters } from '../../../content/characters/index.js';
 import { TILE } from '../../../content/maps/village.js';
@@ -42,7 +44,9 @@ export class Schedules {
     if (!this.active) return [];
     const placed = this.field.phase.npcs ?? {};
     const here = this.mapData.id ?? 'village';
-    return Object.keys(characters).filter((id) => characters[id].schedule && (characters[id].home ?? 'village') === here && !placed[id] && !WorldMemory.isErased(id));
+    const ctx = this.field.ctx();
+    return Object.keys(characters).filter((id) => characters[id].schedule && (characters[id].home ?? 'village') === here && !placed[id] && !WorldMemory.isErased(id)
+      && !(characters[id].away && passes(characters[id].away, ctx)));
   }
 
   entryAt(id, minute) {
@@ -86,7 +90,7 @@ export class Schedules {
     const f = this.field;
     for (const id of this.ids()) {
       const e = this.entryAt(id, f.clock.minute);
-      if (!e || e === this.current[id]) continue;
+      if (!e || e === this.current[id] || f.npcs[id]?.mode === 'follow') continue;
       this.current[id] = e;
       this.go(id, e);
     }

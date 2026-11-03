@@ -95,12 +95,14 @@ export default class AreaScene extends Phaser.Scene {
     this.encounter = flags0['dev.peace'] ? null : encounterAt(this.key, { kind: area.kind, biome: area.biome }, new Date(), (k) => Boolean(flags0[`beat.${k}`]), (w) => passes(w, this.condCtx()));
     if (this.encounter) {
       const lead = MONSTERS[this.encounter.enemies[0]];
-      const art = MONSTER_ART[lead.sprite];
       const c = area.spots.center;
       const mx = (c.x - 4) * 16, my = (c.y - 3) * 16;
-      this.monster = this.add.sprite(mx, my, `mon.${lead.sprite}`, art.kind === 'walker' ? 0 : 0).setOrigin(0.5, 0.9).setDepth(my);
-      if (this.anims.exists(`mon.${lead.sprite}`)) this.monster.play(`mon.${lead.sprite}`);
-      if (lead.boss) this.monster.setScale(1.4).setAlpha(0.85);
+      // 인물 도트를 쓰는 적(길 잃은 기사 등)은 그 인물 그림으로, 나머지는 팩의 몬스터 그림으로
+      const key = lead.char ? `char.${lead.char}` : `mon.${lead.sprite}`;
+      const anim = lead.char ? `${key}.down` : key;
+      this.monster = this.add.sprite(mx, my, key, 0).setOrigin(0.5, 0.9).setDepth(my);
+      if (this.anims.exists(anim)) this.monster.play(anim);
+      if (lead.boss) this.monster.setScale(lead.char ? 1.2 : 1.4).setAlpha(0.85);
       this.tweens.add({ targets: this.monster, x: mx + 20, duration: 1800 + Math.random() * 800, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     }
 

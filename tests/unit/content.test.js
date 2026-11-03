@@ -9,6 +9,7 @@ import { mapOf } from '../../content/maps/index.js';
 import { ScriptRunner, passes } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
 import { QUESTS } from '../../content/quests/index.js';
+import { BOSSES } from '../../content/battles/encounters.js';
 
 describe('콘텐츠 검증', () => {
   it('대본·페이즈·캐릭터·맵에 문제가 없다', () => {
@@ -31,6 +32,9 @@ function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = 
   const clock = { day: 1, minute: 9 * 60 };
   let phaseId = ch.firstPhase;
   let ended = null;
+  const entered = new Set();   // 처음 들어선 페이즈 (날짜·시각은 처음에만 맞춘다, onEnter도 처음에만)
+  let returnTo = null;         // 다른 마을(visit 페이즈)에 들렀다 돌아갈 페이즈
+  const visitedOn = {};        // 그날 이미 들른 마을
 
   while (!ended) {
     const ph = ch.phases[phaseId];
@@ -39,8 +43,9 @@ function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = 
       flag: (n) => flags[n], setFlag: (n) => { flags[n] = true; flagTimes[n] = time; }, addAffinity: (id, n) => { aff[id] = (aff[id] ?? 0) + n; },
       minute: () => clock.minute, day: () => clock.day, quest: (id) => quests[id],
     };
-    if (ph.day != null) clock.day = ph.day;
-    clock.minute = 9 * 60;
+    const first = !entered.has(phaseId);
+    entered.add(phaseId);
+    if (first && !ph.keepTime) { if (ph.day != null) clock.day = ph.day; clock.minute = 9 * 60; }
     const flagTimes = {};
     const people = {};
     for (const [id, cfg] of Object.entries(ph.npcs ?? {})) {
@@ -77,11 +82,12 @@ function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = 
         if (n.act === 'spawnNpc') people[n.id] = n.at ?? [Math.round(player.x / TILE) + n.offset[0], Math.round(player.y / TILE) + n.offset[1]];
         if (n.act === 'despawn' || n.act === 'walkAway') delete people[n.id];
         if (n.act === 'spawnPickups') pickups[n.group] = n.items;
+        if (n.act === 'battle' && n.flag) ctx.setFlag(n.flag); // 전투는 이긴 것으로 (이길 수 있는지는 battle.test가 지킨다)
         if (n.phase) { next = { phase: n.phase }; return; }
         if (n.end) { next = { end: n.next }; return; }
       }
     };
-    if (ph.onEnter) play(ph.onEnter);
+    if (ph.onEnter && first) play(ph.onEnter);
 
     const director = new EventDirector(ph.events ?? []);
     const world = () => ({
@@ -135,12 +141,25 @@ function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = 
       for (const r of runs) { flags[`done.${r.id}`] = true; play(r.run); if (next) break; }
       if (!next && questStep()) idle = 0;
       // 시계가 도는 날: 일어날 일이 없으면 다음 날 아침으로 (잠)
-      if (ph.clock && !next && !runs.length && (idle += 1) > 20) { clock.day += 1; clock.minute = 9 * 60; idle = 0; log.push(`${clock.day}일째`); }
+      if (ph.clock && !next && !runs.length && (idle += 1) > 20) {
+        idle = 0;
+        // 길의 보스: 나타날 조건이 맞으면 찾아가서 이긴 것으로 (전투는 battle.test가 지킨다)
+        const boss = Object.values(BOSSES).find((b) => b.flag && !flags[b.flag] && (!b.when || passes(b.when, ctx)));
+        // 들를 마을: 아직 일어날 일이 남은 visit 페이즈 (하루에 한 번)
+        const open = (p) => (p.events ?? []).some((e) => !flags[`done.${e.id}`] && (!e.when || passes(e.when, ctx)));
+        const visit = !ph.visit && Object.entries(ch.phases).find(([id, p]) => p.visit && visitedOn[id] !== clock.day && (!p.when || passes(p.when, ctx)) && (open(p) || !entered.has(id)))?.[0];
+        if (boss) { flags[boss.flag] = true; log.push(`보스 ${boss.enemies.join(',')}`); }
+        else if (visit) { visitedOn[visit] = clock.day; next = { phase: visit, back: phaseId }; log.push(`→ ${visit}`); }
+        else if (ph.visit) { next = { phase: returnTo }; log.push(`← ${returnTo}`); }
+        // 할 일이 없으면 시간을 흘려보낸다(두 시간씩, 밤 11시까지). 그래도 없으면 자고 다음 날 아침
+        else if (!ph.visit && clock.minute < 23 * 60) clock.minute += 120;
+        else { clock.day += 1; clock.minute = 9 * 60; log.push(`${clock.day}일째`); }
+      }
       time += 0.5;
     }
     if (!next) return { stuck: phaseId, log, flags };
     if (next.end) ended = next.end;
-    else phaseId = next.phase;
+    else { if (next.back) returnTo = next.back; phaseId = next.phase; }
   }
   return { ended, log, flags, aff };
 }
@@ -164,6 +183,21 @@ describe('논리 플레이스루 (모든 지워짐 조합)', () => {
   it('아무도 안 지워졌으면 마을 사람 이벤트를 모두 겪을 수 있다', () => {
     const r = playChapter('prologue', []);
     for (const f of ['ev.hort', 'ev.tom', 'ev.rine', 'ev.per']) expect(r.flags[f], f).toBe(true);
+  });
+
+  // 2·3장: 앞 장들을 마친 상태에서 시작한다
+  const PART1 = { 'selena.done': true, 'done.lu': true, 'done.keeper': true, 'ch1.departed': true, 'leon.arrived': true };
+  it.each([[[]], [['hort', 'elder']]])('2장 「안개 너머」를 끝까지 간다 — 지워짐: %j', (erased) => {
+    const r = playChapter('chapter2', erased, { flags: PART1, maxSeconds: 6000 });
+    expect(r.stuck, r.log.join('\n')).toBeUndefined();
+    expect(r.ended).toEqual({ chapter: 'chapter3', phase: 'winter' });
+    for (const f of ['ch2.knight_beaten', 'ch2.sei_eda', 'rank.squire']) expect(r.flags[f], f).toBe(true);
+  });
+  it.each([[[]], [['hort', 'tom', 'rine', 'per']]])('3장 「겨울 준비」를 끝까지 간다 — 지워짐: %j', (erased) => {
+    const r = playChapter('chapter3', erased, { flags: { ...PART1, 'rank.squire': true, 'ch2.done': true }, maxSeconds: 8000 });
+    expect(r.stuck, r.log.join('\n')).toBeUndefined();
+    expect(r.flags['part1.done']).toBe(true);
+    for (const f of ['route.mia.hands', 'route.selena.made_up', 'route.lu.back']) expect(r.flags[f], f).toBe(true);
   });
 
   it('1장 도입도 끝까지 간다 (1명 이상 지워진 상태)', () => {

@@ -5,5 +5,7 @@
 //   done 조건: { flag } { talk: 인물 } { zone } { when: 대본 조건 } (여럿 적으면 모두 맞아야 한다)
 import { quests as prologue } from './prologue.js';
 import { quests as chapter1 } from './chapter1.js';
+import { quests as chapter2 } from './chapter2.js';
+import { quests as chapter3 } from './chapter3.js';
 
-export const QUESTS = Object.fromEntries([...prologue, ...chapter1].map((q) => [q.id, q]));
+export const QUESTS = Object.fromEntries([...prologue, ...chapter1, ...chapter2, ...chapter3].map((q) => [q.id, q]));
