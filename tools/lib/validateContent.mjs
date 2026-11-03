@@ -12,7 +12,7 @@ import { EventDirector } from '../../src/field/EventDirector.js';
 import { CG, TINTS, PORTRAITS } from '../../content/cg.js';
 import { doorStep } from '../../src/field/systems/Schedules.js';
 import { RAIDS } from '../../content/raids.js';
-import { MONSTERS } from '../../content/battles/units.js';
+import { MONSTERS, PARTY } from '../../content/battles/units.js';
 
 export function validateContent() {
   const stats = {};
@@ -30,7 +30,8 @@ export function validateContent() {
     for (const file of [p.file, ...Object.values(p.faces ?? {})]) if (assetMissing(file)) err(`일러스트 ${id}: 파일 없음 ${file}`);
   }
   const solid = (x, y) => village.isSolidTile(x, y);
-  const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
+  // 지워짐 조합은 우리 마을 사람만 (다른 마을 사람은 그 마을 페이즈에만 나온다)
+  const ERASABLE = Object.values(characters).filter((c) => c.erasable && (c.home ?? 'village') === 'village').map((c) => c.id);
   const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn', 'weatherLeak', 'battle']);
 
   // 습격 (content/raids.js): 무리의 인물, 출발점·목표가 걸을 수 있는 칸인지, 시각 형식, 화자
@@ -38,6 +39,10 @@ export function validateContent() {
     if (!/^\d\d:\d\d$/.test(r.at ?? '')) err(`습격 ${r.id}: 시각 형식 ${r.at}`);
     for (const [who] of [...(r.lines ?? []), ...(r.won?.lines ?? []), ...(r.lost?.lines ?? [])]) if (who && !characters[who]) err(`습격 ${r.id}: 화자 없음 ${who}`);
     if (r.kind !== 'raid') continue;
+    const rm = MAPS[r.map ?? 'village'];
+    if (!rm) { err(`습격 ${r.id}: 맵 없음 ${r.map}`); continue; }
+    const solid = (x, y) => rm.isSolidTile(x, y);
+    for (const id of r.party ?? []) if (!PARTY[id]) err(`습격 ${r.id}: 같이 싸울 사람의 전투 능력치 없음 ${id}`);
     if (solid(...r.target)) err(`습격 ${r.id}: 목표가 막힌 칸 ${r.target}`);
     for (const b of r.band) {
       if (!characters[b.id]) err(`습격 ${r.id}: 인물 없음 ${b.id}`);

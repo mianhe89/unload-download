@@ -46,6 +46,17 @@ export const PARTY = {
   },
 };
 
+// 다른 마을에서 함께 싸우는 사람 (그 마을 습격 때)
+PARTY.brenna = {
+  name: '브렌나', element: 'wind', maxHp: 130, atk: 21, def: 11, spd: 106, evade: 0.06,
+  skills: [
+    { id: 'shot', name: '겨눠 쏘기', power: 1.0, hits: 1, target: 'one', element: 'wind' },
+    { id: 'volley', name: '흩뿌려 쏘기', power: 0.55, hits: 1, target: 'all', element: 'wind', cooldown: 2 },
+    { id: 'snare', name: '덫', power: 0.3, hits: 1, target: 'one', effect: { slow: 40 }, cooldown: 2, desc: '대상 게이지 -40' },
+  ],
+  ultimate: { id: 'ult', name: '서리 화살비', power: 0.9, hits: 1, target: 'all', element: 'wind', effect: { slow: 30 }, line: '고개 숙여.', desc: '적 전체 공격, 게이지 -30' },
+};
+
 export const MONSTERS = {
   slime: {
     name: '슬라임', sprite: 'Slime', element: 'earth', maxHp: 60, atk: 12, def: 6, spd: 80, evade: 0.02,

@@ -45,3 +45,18 @@ test('정찰대: 오크와 부딪히면 전투, 이기면 마을로 돌아와 �
   expect(await page.evaluate(() => window.__game.scene.isVisible('UI'))).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('서리 마을: 해 질 녘 오크와 부딪히면 브렌나와 둘이서 싸운다', async ({ page }) => {
+  const errors = await openGame(page);
+  await wipe(page);
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'frost'); u.setFlag('visited.frost'); g.scene.stop('Title'); g.scene.start('Field', { chapter: 'chapter1', phase: 'frost', entry: 's', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
+  await waitField(page, 'frost');
+  await skipDialog(page);
+  await page.evaluate(() => { window.__ud.raid('frost'); });
+  await advanceUntil(page, () => window.__game.scene.getScene('Field').raids.band[0]?.state === 'march', null, 20_000, '오크 등장');
+  await page.evaluate(() => { const f = window.__game.scene.getScene('Field'); const o = f.raids.band[0].npc; f.player.sprite.x = o.x; f.player.sprite.y = o.y + 6; });
+  await page.waitForFunction(() => window.__game.scene.isActive('Battle'), null, { timeout: 10_000 });
+  const party = await page.evaluate(() => window.__game.scene.getScene('Battle').battle.units.filter((u) => u.side === 'party').map((u) => u.id));
+  expect(party).toEqual(['me', 'brenna']);
+  expect(errors).toEqual([]);
+});

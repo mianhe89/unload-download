@@ -46,13 +46,18 @@ export class Raids {
     if (hit) this.engage(hit);
   }
 
-  // 오늘이 습격 날이고 그 시각이 지났는가. 시계가 도는 날에만 온다
+  // 이 습격의 기록 열쇠: 한 번뿐인 습격은 raid.<id>, 날마다 오는 습격(daily)은 raid.<id>.d<날짜>
+  keyOf(r) { return r.daily ? `raid.${r.id}.d${this.field.clock.day}` : `raid.${r.id}`; }
+
+  // 오늘이 습격 날이고 그 시각이 지났는가. 시계가 도는 날, 그 습격의 맵(map, 기본 우리 마을)에서만 온다
   check() {
     const f = this.field;
-    if (!f.clock.running || !f.home) return; // 습격은 우리 마을에만 온다
+    if (!f.clock.running) return;
     for (const r of RAIDS) {
-      if (WorldMemory.run.flags[`raid.${r.id}.over`]) continue;
-      if (f.clock.day < r.day || (f.clock.day === r.day && f.clock.minute < toMinute(r.at))) continue;
+      if ((r.map ?? 'village') !== (f.mapDef.id ?? 'village')) continue;
+      if (WorldMemory.run.flags[`${this.keyOf(r)}.over`]) continue;
+      if (f.clock.minute < toMinute(r.at)) continue;
+      if (!r.daily && f.clock.day < r.day) continue;
       if (r.when && !f.world().passes(r.when)) continue;
       this.begin(r);
       return;
@@ -64,7 +69,8 @@ export class Raids {
     const f = this.field;
     this.raid = r;
     this.busy = true;
-    WorldMemory.setFlag(`raid.${r.id}.on`);
+    this.key = this.keyOf(r);
+    WorldMemory.setFlag(`${this.key}.on`);
     await this.scene(r.lines, r.kind === 'raid' ? 'bell' : null);
     if (r.kind === 'sign') { await this.finish(null); return; }
     f.ui.toast?.(`습격 · ${r.title} — ${r.targetName}을(를) 지켜라`);
@@ -98,8 +104,9 @@ export class Raids {
     return true;
   }
 
-  // 같이 싸우는 사람: 나 + 마을에 있는 셀레나·루
+  // 같이 싸우는 사람: 습격에 적힌 party, 없으면 나 + 마을에 있는 셀레나·루
   party() {
+    if (this.raid?.party) return this.raid.party.filter((id) => id === 'me' || !WorldMemory.isErased(id));
     return ['me', ...HELPERS.filter((id) => !WorldMemory.isErased(id))];
   }
 
@@ -169,11 +176,12 @@ export class Raids {
       for (const [id, n] of Object.entries(out.aff ?? {})) if (!WorldMemory.isErased(id)) WorldMemory.addAffinity(id, n);
       for (const fl of out.flags ?? []) WorldMemory.setFlag(fl);
       await this.scene(out.lines);
-      if (!won) this.countLoss();
+      if (!won && !r.map) this.countLoss(); // 함락은 우리 마을 이야기다
     } else {
       for (const fl of r.flags ?? []) WorldMemory.setFlag(fl);
     }
-    WorldMemory.setFlag(`raid.${r.id}.over`);
+    if (won !== null) WorldMemory.setFlag(`${this.key}.${won ? 'won' : 'lost'}`);
+    WorldMemory.setFlag(`${this.key}.over`);
     this.raid = null;
     this.band = [];
     this.busy = false;

@@ -11,6 +11,7 @@
 //     lost: { lines, flags, aff }   못 지켰을 때 }
 // 습격마다 raid.<id>.on / .won / .lost / .over 플래그가 켜진다. lost가 FALL_AFTER번 쌓이면 village.fallen.
 // 시계가 도는 날(phase.clock)에만 온다.
+//   map: 그 습격이 오는 맵 (기본 우리 마을). daily: 날마다 그 시각에 온다(day 대신). party: 같이 싸우는 사람
 
 export const FALL_AFTER = 3;
 
@@ -85,6 +86,34 @@ export const RAIDS = [
         ['', '불은 새벽에야 꺼졌다. 호르트 아저씨는 다치지 않았지만, 빵집은 한동안 문을 열 수 없다.'],
       ],
       flags: ['raid.first.lost', 'bakery.burned'],
+    },
+  },
+  // 서리 마을: 북쪽 회색 고원에 가장 가까워 해 질 녘마다 오크가 내려온다. 브렌나와 둘이서 막는다
+  {
+    id: 'frost', kind: 'raid', map: 'frost', daily: true, at: '17:30', title: '해 질 녘의 오크',
+    party: ['me', 'brenna'],
+    lines: [
+      ['yuna', '오크다! 북문으로 둘! …아니, 셋!'],
+      ['brenna', '또냐. 화살 들어. 창고 앞으로 못 가게 해.'],
+    ],
+    band: [
+      { id: 'orc', from: [19, 4] },
+      { id: 'orc', from: [21, 4], delay: 6 },
+      { id: 'orc', from: [20, 4], delay: 12 },
+    ],
+    target: [27, 21], targetName: '서리 마을 곡식 창고',
+    won: {
+      lines: [
+        ['brenna', '…물러갔군. 외지인치곤 쓸 만하다.'],
+        ['gord', '다들 들어와! 국 끓였다!'],
+      ],
+      aff: { brenna: 2, yuna: 2, gord: 1 },
+    },
+    lost: {
+      lines: [
+        ['brenna', '창고 문이 뜯겼다. 자루 몇 개 가져갔군.'],
+        ['yuna', '…내일은 제가 더 일찍 볼게요.'],
+      ],
     },
   },
 ];

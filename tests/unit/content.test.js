@@ -19,7 +19,8 @@ describe('콘텐츠 검증', () => {
 });
 
 const TILE = 16;
-const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
+// 지워짐 조합은 우리 마을 사람만 (다른 마을 사람은 그 마을 페이즈에만 나온다)
+const ERASABLE = Object.values(characters).filter((c) => c.erasable && (c.home ?? 'village') === 'village').map((c) => c.id);
 
 // 한 장을 처음부터 끝까지 '봇'이 플레이한다.
 // 봇은 아직 안 일어난 이벤트의 목표(인물·구역·물건)로 순간이동하고, 컷신은 즉시 넘긴다.

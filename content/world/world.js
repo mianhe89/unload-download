@@ -21,12 +21,12 @@ export const H = LAYERS.surface.H;
 // 거점: 마을·성·유적. at: [x, y] (y가 작을수록 북쪽), layer 기본 surface
 export const HUBS = {
   home:      { at: [7, 11], name: '수확제 마을', kind: 'village', note: '시작 마을. 프롤로그·1장' },
-  frost:     { at: [7, 6],  name: '서리 마을',   kind: 'village', note: '겨울이 끝나지 않는 산기슭' },
+  frost:     { at: [7, 6],  name: '서리 마을',   kind: 'village', note: '겨울이 끝나지 않는 산기슭', field: 'frost' },
   neighbor:  { at: [4, 9],  name: '옆 마을',     kind: 'village', note: '같은 영주의 땅. 무녀가 가이아의 사당을 지킨다', field: 'neighbor' },
   castle:    { at: [8, 1],  name: '검은 성',     kind: 'castle',  note: '해가 들지 않는 북쪽 끝. 이야기 속 이야기의 마왕' },
   elf:       { at: [2, 12], name: '엘프 마을',   kind: 'elf',     note: '깊은 숲 속. 숲을 지나치게 베면 마을이 보이지 않게 된다' },
   dwarf:     { at: [11, 5], name: '드워프 마을', kind: 'dwarf',   note: '산을 파고 사는 마을. 갱도가 지하로 이어진다' },
-  empty:     { at: [11, 10], name: '빈 마을',    kind: 'empty',   note: '사람이 전부 지워진 마을. 집과 이름만 남았다' },
+  empty:     { at: [11, 10], name: '빈 마을',    kind: 'empty',   note: '사람이 전부 지워진 마을. 집과 이름만 남았다', field: 'ruin' },
   ancient:   { at: [14, 13], name: '고대 유적',  kind: 'ancient', note: '사막에 묻힌 석상들. 이 세계보다 오래된 글자가 새겨져 있다' },
   volcano:   { at: [13, 2],  name: '불의 산',    kind: 'volcano', note: '북쪽인데도 땅이 뜨겁다. 드워프의 대장간 불씨가 여기서 온다' },
   harbor:    { at: [8, 15],  name: '항구',        kind: 'village', note: '배를 타면 바다로 나갈 수 있다' },
