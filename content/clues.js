@@ -2,6 +2,8 @@
 //   { id, title, text, when: 대본 조건 }  when이 맞는 순간 수첩에 적힌다(한 번 적히면 남는다).
 //   text는 주인공이 적어 둔 메모처럼 쓴다. 그때 알 수 있는 것만 쓴다(앞질러 반전을 흘리지 않는다).
 export const CLUES = [
+  { id: 'clue.eda_secret', title: '에다의 비밀', when: { ifFlag: 'ev.prep.eda' },
+    text: '수확제 전날, 에다가 작업대 위의 무언가를 앞치마로 덮었다. "내일 알려 줄게." 내일 밤 광장에서 찾으러 온다고 했다.' },
   { id: 'clue.ring', title: '거친 쇠반지', when: { ifFlag: 'has.ring' },
     text: '수확제 밤, 에다가 내 손바닥에 올려 준 반지. 테두리가 아직 거칠다. 다음 날 아침 대장간에 오면 마무리해 주겠다고 했다.' },
   { id: 'clue.bells', title: '한 번 더 울린 종', when: { ifFlag: 'done.bells' },

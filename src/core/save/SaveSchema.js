@@ -33,9 +33,10 @@ export const freshSave = () => ({
   meta: { createdAt: Date.now(), updatedAt: Date.now(), playerId: null },
 });
 
-export const freshRun = () => ({
-  chapter: 'prologue',
-  phase: 'festival',
+// 새 진행. 시작 페이즈는 그 장의 firstPhase(content/chapters)를 넘겨받는다
+export const freshRun = (chapter = 'prologue', phase = 'prep') => ({
+  chapter,
+  phase,
   where: null,
   life: freshLife(),
   farm: freshFarm(),

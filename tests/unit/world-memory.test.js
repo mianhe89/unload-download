@@ -66,7 +66,7 @@ describe('지워짐 규칙 (WorldMemory)', () => {
     WorldMemory.checkpoint('prologue', 'night');
     WorldMemory.load();
     WorldMemory.startNew();
-    expect(WorldMemory.run).toMatchObject({ chapter: 'prologue', phase: 'festival', flags: {}, affinity: {} });
+    expect(WorldMemory.run).toMatchObject({ chapter: 'prologue', phase: 'prep', flags: {}, affinity: {} });
     expect(WorldMemory.world.erased).toHaveLength(1);
     expect(WorldMemory.world.loads).toBe(1);
   });

@@ -26,6 +26,7 @@ export class Quests {
     WorldMemory.setQuest(id, { state: 'active', step: 0 });
     this.field.ui.toast?.(`새 ${KIND_NAME[def.kind] ?? ''} 퀘스트 · ${def.title}`);
     this.check();
+    this.field.refreshObjective?.();
   }
 
   // 대본의 { questStep: 'id' }: 지금 단계를 끝낸 것으로
@@ -87,6 +88,7 @@ export class Quests {
     if (r.flag) WorldMemory.setFlag(r.flag);
     if (r.run) this.field.cutscene.play(r.run);
     this.field.ui.toast?.(`완료 · ${def.title}`);
+    this.field.refreshObjective?.();
   }
 
   // 화면 왼쪽 위에 띄울 지금 할 일: 진행 중인 메인 퀘스트, 없으면 가장 최근 퀘스트

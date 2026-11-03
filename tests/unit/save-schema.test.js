@@ -10,8 +10,8 @@ describe('세이브 스키마', () => {
     expect(s.meta.playerId).toBeNull();
   });
 
-  it('새 진행은 프롤로그 축제에서 시작한다', () => {
-    expect(freshRun()).toMatchObject({ chapter: 'prologue', phase: 'festival', flags: {}, affinity: {} });
+  it('새 진행은 프롤로그 수확제 전날에서 시작한다', () => {
+    expect(freshRun()).toMatchObject({ chapter: 'prologue', phase: 'prep', flags: {}, affinity: {} });
   });
 
   it('세이브가 없으면 새 세이브', () => {
@@ -28,7 +28,7 @@ describe('세이브 스키마', () => {
     expect(s.version).toBe(VERSION);
     expect(s.world.loads).toBe(3);
     expect(s.world.erased.map((e) => e.id)).toEqual(['hort', 'per']);
-    expect(s.run).toMatchObject({ chapter: 'prologue', phase: 'festival', affinity: { rine: 2 } });
+    expect(s.run).toMatchObject({ chapter: 'prologue', phase: 'prep', affinity: { rine: 2 } });
     expect(s.run.flags).toEqual({});
   });
 

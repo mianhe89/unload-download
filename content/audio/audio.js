@@ -48,7 +48,7 @@ export const SFX = {
 };
 
 // 이야기 페이즈 → 음악
-export const PHASE_MUSIC = { festival: 'festival', morning: 'morning', night: 'night', aftermath: 'aftermath' };
+export const PHASE_MUSIC = { prep: 'morning', festival: 'festival', morning: 'morning', night: 'night', aftermath: 'aftermath' };
 
 // 길 맵 기후 → 음악, 깔리는 소리
 export const BIOME_MUSIC = {

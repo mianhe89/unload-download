@@ -368,6 +368,18 @@ export default class FieldScene extends Phaser.Scene {
         this.npcs[node.id] = npc;
         return;
       }
+      case 'walkTo': {
+        // 경유지(path)를 차례로 걸어가 그 자리에 머문다(walkAway와 달리 사라지지 않는다). wait면 도착까지 기다린다
+        const npc = this.npcs[node.id];
+        if (!npc) return;
+        const go = async () => {
+          for (const [x, y] of node.path ?? [node.to]) await npc.walkTo(x, y);
+          npc.home = { x: npc.x, y: npc.y };
+          if (node.mode) npc.mode = node.mode;
+        };
+        if (node.wait) await go(); else go();
+        return;
+      }
       case 'walkAway': {
         const npc = this.npcs[node.id];
         if (!npc) return;

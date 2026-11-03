@@ -4,6 +4,7 @@
 // - 개인 데이터는 막지 않는다(기획서 '조작 정책'). 공유 데이터는 GlobalWorld를 통해 서버에서 검증한다.
 import { SaveRepository } from '../save/SaveRepository.js';
 import { freshRun } from '../save/SaveSchema.js';
+import { chapters } from '../../../content/chapters/index.js';
 import { GlobalWorld } from './GlobalWorld.js';
 import { ERASE_ORDER } from '../../../content/characters/index.js';
 
@@ -16,7 +17,7 @@ export const WorldMemory = {
 
   // RESET & START
   startNew() {
-    SaveRepository.update((d) => { d.run = freshRun(); });
+    SaveRepository.update((d) => { d.run = freshRun('prologue', chapters.prologue.firstPhase); });
     return this.run;
   },
 

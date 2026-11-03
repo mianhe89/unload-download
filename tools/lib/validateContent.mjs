@@ -27,7 +27,7 @@ export function validateContent() {
   }
   const solid = (x, y) => village.isSolidTile(x, y);
   const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
-  const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkAway', 'despawn']);
+  const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn']);
 
   // 캐릭터
   for (const c of Object.values(characters)) {
@@ -88,6 +88,7 @@ export function validateContent() {
       if (n.phase && !ch.phases[n.phase]) err(`${at} 페이즈 없음 ${n.phase}`);
       if (n.end && n.next && !chapters[n.next.chapter]?.phases[n.next.phase]) err(`${at} 다음 지점 없음`);
       if (n.act && !KNOWN_ACTS.has(n.act)) err(`${at} 알 수 없는 동작 ${n.act}`);
+      if (n.act === 'walkTo') for (const [x, y] of n.path ?? [n.to]) if (solid(x, y)) err(`${at} 걸어갈 칸이 막혀 있음 ${x},${y}`);
       if (n.act === 'spawnPickups') {
         if (!PROP_NAMES.includes(n.prop)) err(`${at} 소품 없음 ${n.prop}`);
         for (const [x, y] of n.items) { if (solid(x, y)) err(`${at} 물건이 막힌 칸에 있음 ${x},${y}`); else if (!reachable(x, y)) err(`${at} 물건에 걸어갈 수 없음 ${x},${y}`); }

@@ -48,5 +48,5 @@ export const script = {
   ],
 
   'talk.aftermath.selena': [WALK, T('selena', '명부의 빈 줄이 늘었다. 너는 뭔가 알고 있지.')],
-  'talk.aftermath.lu': [WALK, T('lu', '치우는 소리가 어젯밤보다 커졌어. 들려?')],
+  'talk.aftermath.lu': [WALK, T('lu', '종탑 쪽 비질 소리, 어젯밤보다 커졌어. 너도 들려?')],
 };

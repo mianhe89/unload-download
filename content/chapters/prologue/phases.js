@@ -18,8 +18,60 @@
 const villagers = (m) => Object.fromEntries(Object.entries(m).map(([id, [x, y, mode, radius]]) => [id, { at: [x, y], mode, radius, face: 'down' }]));
 
 const FEST_DONE = ['ev.hort', 'ev.tom', 'ev.rine', 'ev.per', 'ev.mia'];
+const PREP_DONE = ['ev.prep.eda', 'ev.prep.hort', 'ev.prep.tom', 'ev.prep.rine', 'ev.prep.per', 'ev.prep.selena'];
 
 export const phases = {
+  // ── 수확제 전날 (낮) ──────────────────────────
+  // 이야기는 평화에서 시작한다. 어두운 일은 하나도 일어나지 않는다(기획서 '평화에서 시작').
+  // 마을을 돌며 축제 준비를 돕고, 특히 에다와 정을 붙인다(내일 밤의 반지로 이어진다).
+  prep: {
+    place: '수확제 전날',
+    time: 'day',
+    bonfire: 'out',
+    player: { at: [16, 28], face: 'up' },
+    objective: '축제 준비 돕기',
+    npcs: {
+      mia: { at: [24, 20], mode: 'idle', face: 'down' },
+      eda: { at: [36, 16], mode: 'idle', face: 'down' },
+      hort: { at: [16, 16], mode: 'idle', face: 'down' },
+      tom: { at: [33, 21], mode: 'wander', radius: 1 },
+      rine: { at: [28, 13], mode: 'idle', face: 'down' },
+      per: { at: [20, 21], mode: 'idle', face: 'right' },
+      selena: { at: [36, 28], mode: 'idle', face: 'up' },
+      // 배경 주민: 축제를 준비하는 낮
+      ...villagers({
+        chief: [22, 15, 'wander', 2], granny: [28, 21, 'idle'], kid: [26, 18, 'wander', 3], farmer: [11, 21, 'idle'],
+        hunter: [40, 18, 'idle'], monk: [21, 11, 'idle'], woman: [14, 19, 'wander', 2], oldman: [29, 16, 'idle'],
+      }),
+    },
+    onEnter: 'prep.intro',
+    events: [
+      { id: 'prep.eda', trigger: { zone: 'smithy' }, run: 'prep.eda' },
+      // 에다의 심부름: 호르트에게 탄 빵을 받아다 준다 (호르트가 지워졌으면 이 심부름은 없다)
+      { id: 'prep.eda_bread', when: { ifFlag: 'eda.asked', unlessErased: 'hort' }, trigger: { near: 'hort', r: 3 }, run: 'prep.eda_bread' },
+      { id: 'prep.eda_thanks', when: { ifFlag: 'got.burnt' }, trigger: { near: 'eda', r: 2 }, run: 'prep.eda_thanks' },
+      { id: 'prep.hort', when: { unlessErased: 'hort' }, trigger: { near: 'hort', r: 3 }, run: 'prep.hort' },
+      { id: 'prep.tom', when: { unlessErased: 'tom' }, trigger: { near: 'tom', r: 3 }, run: 'prep.tom' },
+      {
+        id: 'prep.rine', when: { unlessErased: 'rine' }, run: 'prep.rine',
+        trigger: {
+          dwell: 'rine', r: 2, seconds: 6,
+          ticks: [
+            { at: 1, bubble: { who: 'rine', text: '어, 거기 가만히 있어 봐.' } },
+            { at: 3.5, bubble: { who: 'rine', text: '머리 둘레 재는 중이야…' } },
+          ],
+        },
+      },
+      { id: 'prep.per', when: { unlessErased: 'per' }, trigger: { near: 'per', r: 3 }, run: 'prep.per' },
+      { id: 'prep.selena', trigger: { zone: 'post' }, run: 'prep.selena' },
+
+      // 세 군데 이상 도왔으면(또는 시간이 꽤 지나면) 미아가 부른다 → 광장의 미아에게 가면 저녁
+      { id: 'prep.ready', when: { unlessFlag: 'prep.ready' }, trigger: { count: PREP_DONE, n: 3 }, run: 'prep.ready' },
+      { id: 'prep.ready_timer', when: { unlessFlag: 'prep.ready' }, trigger: { timer: 300 }, run: 'prep.ready' },
+      { id: 'prep.end', when: { ifFlag: 'prep.ready' }, trigger: { near: 'mia', r: 3 }, run: 'prep.evening' },
+    ],
+  },
+
   // ── 수확제의 밤 ───────────────────────────────
   festival: {
     place: '수확제의 광장',
@@ -128,4 +180,4 @@ export const phases = {
   },
 };
 
-export const firstPhase = 'festival';
+export const firstPhase = 'prep';
