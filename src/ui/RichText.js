@@ -89,23 +89,38 @@ export class RichText {
   get done() { return this.shown >= this.glyphs.length; }
 
   // 한 글자씩 찍기. onChar(glyph, i) — 소리 등. 돌려주는 Promise는 다 찍히면 끝난다
+  // 프레임이 느려도 제 속도로: 실제로 흐른 시간만큼 여러 글자를 한 번에 찍는다 (소리는 마지막 글자만)
+  typingStep() {
+    const t = this.typer;
+    if (!t) return;
+    // 실제 흐른 시간 (게임 시계는 느린 기기에서 늦게 갈 수 있다)
+    const now = performance.now();
+    t.wait -= now - (t.at ?? now);
+    t.at = now;
+    let last = null;
+    while (t.wait <= 0 && this.shown < this.glyphs.length) {
+      const i = this.shown;
+      this.shown += 1;
+      if (voiced(this.glyphs[i].ch)) last = i;
+      t.wait += delayAfter(this.glyphs, i, t.speed);
+    }
+    this.reveal(this.shown);
+    if (last !== null) t.onChar?.(this.glyphs[last], last);
+    if (this.shown >= this.glyphs.length) { this.stopTyping(); t.resolve(); }
+  }
+
   type({ speed = 30, onChar } = {}) {
     this.stopTyping();
     return new Promise((resolve) => {
+      const tick = () => this.typingStep();
+      this.typer = { speed, onChar, resolve, wait: 0, tick };
       this.finishTyping = () => { this.stopTyping(); this.reveal(this.glyphs.length); resolve(); };
-      const step = () => {
-        if (this.shown >= this.glyphs.length) { this.typer = null; resolve(); return; }
-        const i = this.shown;
-        this.reveal(i + 1);
-        const g = this.glyphs[i];
-        if (voiced(g.ch)) onChar?.(g, i);
-        this.typer = this.scene.time.delayedCall(delayAfter(this.glyphs, i, speed), step);
-      };
-      step();
+      this.scene.events.on('update', tick);
+      this.typingStep();
     });
   }
 
-  stopTyping() { this.typer?.remove(); this.typer = null; }
+  stopTyping() { if (this.typer) this.scene.events.off('update', this.typer.tick); this.typer = null; }
   skip() { this.finishTyping?.(); }
   get typing() { return Boolean(this.typer); }
 

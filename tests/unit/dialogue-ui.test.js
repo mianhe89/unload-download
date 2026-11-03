@@ -115,10 +115,11 @@ describe('말 걸기 대화', async () => {
   const { chapters } = await import('../../content/chapters/index.js');
   const phases = {};
   for (const ch of Object.values(chapters)) for (const [pid, ph] of Object.entries(ch.phases)) phases[pid] = new Set([...(phases[pid] ?? []), ...Object.keys(ph.npcs ?? {})]);
-  it('대화가 있는 인물은 그 페이즈에 실제로 있다', () => {
+  it('대화가 있는 인물은 그 페이즈에 실제로 있다 (배치 또는 일과)', () => {
     for (const [id, byPhase] of Object.entries(TALK)) for (const pid of Object.keys(byPhase)) {
       expect(phases[pid], pid).toBeTruthy();
-      expect(phases[pid].has(id), `${pid}:${id}`).toBe(true);
+      // 페이즈가 직접 세우거나, 하루 일과(schedule)로 그 맵에 사는 사람
+      expect(phases[pid].has(id) || Boolean(characters[id].schedule), `${pid}:${id}`).toBe(true);
     }
   });
   it('화자는 등장인물이거나 내레이션, 태그는 알려진 것만', () => {
