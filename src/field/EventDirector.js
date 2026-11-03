@@ -3,7 +3,7 @@
 //
 // world (매 프레임 필드가 넘겨주는 상태)
 //   time               페이즈 시작 후 경과 초
-//   player             { x, y, idleTime }  (px)
+//   player             { x, y, idleTime, running }  (px)
 //   pos(name)          인물/장소 이름 → { x, y } (px) | null(없음)
 //   inZone(name)       플레이어가 구역 안인가
 //   pickedAll(group)   묶음을 다 주웠는가
@@ -43,6 +43,7 @@ export class EventDirector {
     };
 
     if (t.minTime != null && world.time < t.minTime) return false;
+    if (t.running && !world.player.running) return false; // 뛰어서 지나갈 때만
     if (t.near && !t.pickedAll && !t.idle && !near(t.near, t.r)) return false;
 
     if (t.zone) return world.inZone(t.zone);

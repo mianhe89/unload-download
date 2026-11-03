@@ -166,3 +166,15 @@ describe('이벤트 실행 규칙', () => {
     expect(ids(d.update(0.1, fakeWorld().view(), true))).toEqual([]);
   });
 });
+
+describe('running 계기', () => {
+  it('뛰어서 지나갈 때만 켜진다', async () => {
+    const { EventDirector } = await import('../../src/field/EventDirector.js');
+    const ev = [{ id: 'run', trigger: { near: 'tom', r: 4, running: true }, run: 'x' }];
+    const w = (running) => ({ time: 1, player: { x: 0, y: 0, idleTime: 0, running }, pos: () => ({ x: 0, y: 0 }), inZone: () => false, pickedAll: () => false, flag: () => false, passes: () => true });
+    const d1 = new EventDirector(ev);
+    expect(d1.update(0.1, w(false), false).runs.length).toBe(0);
+    const d2 = new EventDirector(ev);
+    expect(d2.update(0.1, w(true), false).runs.length).toBe(1);
+  });
+});

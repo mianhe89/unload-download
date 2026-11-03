@@ -52,6 +52,7 @@ export const phases = {
       { id: 'prep.eda_thanks', when: { ifFlag: 'got.burnt' }, trigger: { near: 'eda', r: 2 }, run: 'prep.eda_thanks' },
       { id: 'prep.hort', when: { unlessErased: 'hort' }, trigger: { near: 'hort', r: 3 }, run: 'prep.hort' },
       { id: 'prep.tom', when: { unlessErased: 'tom' }, trigger: { near: 'tom', r: 3 }, run: 'prep.tom' },
+      { id: 'prep.tom_run', when: { unlessErased: 'tom' }, trigger: { near: 'tom', r: 4, running: true }, run: 'prep.tom_run' },
       {
         id: 'prep.rine', when: { unlessErased: 'rine' }, run: 'prep.rine',
         trigger: {

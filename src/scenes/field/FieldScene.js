@@ -183,7 +183,7 @@ export default class FieldScene extends Phaser.Scene {
   world() {
     return {
       time: this.elapsed,
-      player: { x: this.player.x, y: this.player.y, idleTime: this.player.idleTime },
+      player: { x: this.player.x, y: this.player.y, idleTime: this.player.idleTime, running: this.player.running },
       pos: (name) => {
         const n = this.npcs[name];
         if (n) return { x: n.x, y: n.y };

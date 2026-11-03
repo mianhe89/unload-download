@@ -62,6 +62,11 @@ export const script = {
     { aff: { hort: 2 }, flag: 'ev.prep.hort' },
   ],
 
+  // 뛰어서 톰 곁을 지나갈 때만 (걸어서는 아무 일 없다)
+  'prep.tom_run': [
+    WALK,
+    T('tom', '어이, 뛰지 마라! 축제 전에 다치면 내 탓이다.'),
+  ],
   'prep.tom': [
     WALK,
     T('tom', '어, 너냐? 반갑다.'),

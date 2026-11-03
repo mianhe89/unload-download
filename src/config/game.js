@@ -6,6 +6,8 @@ export const VIEW = { width: 1920, height: 1080 };
 export const ZOOM = 4;
 
 export const PLAYER_SPEED = 72;      // px/s (월드 좌표)
+export const RUN_SPEED = 1.9;        // 달리기 배율 (방향키를 두 번 빠르게 누르면 달린다)
+export const RUN_TAP = 0.28;         // 두 번 누름으로 치는 간격 (초)
 export const TALK_RANGE = 22;        // 말 걸 수 있는 거리 (px)
 export const BUBBLE_RANGE = 48;      // 혼잣말이 보이는 거리 (px)
 

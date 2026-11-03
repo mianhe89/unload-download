@@ -102,6 +102,7 @@ function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = 
       if (t.near) toTile(t.near);
       if (t.dwell) toTile(t.dwell);
       player.idleTime = 99;
+      player.running = Boolean(t.running); // 뛰어야 켜지는 계기면 뛰어서 간다
     };
 
     // 퀘스트: 조건이 맞으면 저절로 시작하고, 지금 단계의 일을 한다(말 걸기·구역·시각). 맞으면 다음 단계로
