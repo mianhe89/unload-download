@@ -149,6 +149,7 @@ export default class FieldScene extends Phaser.Scene {
       minute: () => this.clock?.minute,
       day: () => this.clock?.day,
       quest: (id) => WorldMemory.quest(id),
+      forestChops: () => WorldMemory.run.farm?.forestChops ?? 0,
     };
   }
 

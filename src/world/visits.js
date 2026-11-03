@@ -4,6 +4,10 @@
 import { HUBS, cellKey } from '../../content/world/world.js';
 import { chapters } from '../../content/chapters/index.js';
 import { passes } from '../core/script/ScriptRunner.js';
+import { elfVillageGone } from '../farm/farm.js';
+
+// 거점마다 따로 있는 문턱: 엘프 마을은 깊은 숲을 지나치게 베면 보이지 않는다(그 칸은 그루터기만 남은 길 맵)
+const GATES = { elf: (run) => !elfVillageGone(run?.farm) };
 
 // 칸 키 → 이야기 필드가 있는 거점 id (고향 제외)
 export function fieldHubAt(key) {
@@ -11,7 +15,8 @@ export function fieldHubAt(key) {
 }
 
 // 그 거점에서 지금 장이 쓰는 visit 페이즈 id
-export function visitPhase(hubId, chapterId, ctx) {
+export function visitPhase(hubId, chapterId, ctx, run) {
+  if (GATES[hubId] && !GATES[hubId](run)) return null;
   const map = HUBS[hubId]?.field;
   const ch = chapters[chapterId];
   if (!map || !ch) return null;

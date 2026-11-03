@@ -4,6 +4,7 @@ import { makeTown, O } from './town.js';
 
 export default makeTown({
   id: 'ruin', name: '빈 마을', W: 36, H: 26, theme: 'earth',
+  objectTint: 0x9a948c, // 색이 빠진 지붕과 벽
   dirt: [[3, 11, 15, 3], [10, 7, 14, 12], [16, 4, 3, 4], [23, 9, 7, 2], [23, 15, 7, 2]],
   objects: [
     O('house_plain', 9, 3, { name: '빈 집' }), O('house_wood', 20, 2, { name: '빈 집' }),

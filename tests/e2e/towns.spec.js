@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { openGame, wipe, waitField, skipDialog } from './game.js';
 
-for (const [phase, entry, people] of [['ruin', 'w', 0], ['frost', 's', 3], ['harbor', 'n', 2], ['dwarf', 's', 2]]) {
+for (const [phase, entry, people] of [['ruin', 'w', 0], ['frost', 's', 3], ['harbor', 'n', 2], ['dwarf', 's', 2], ['elf', 'e', 2]]) {
   test(`${phase}: 열리고, 사람 ${people}명`, async ({ page }) => {
     const errors = await openGame(page);
     await wipe(page);

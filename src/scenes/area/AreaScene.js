@@ -300,7 +300,7 @@ export default class AreaScene extends Phaser.Scene {
       }
       // 이야기가 있는 다른 마을(옆 마을 등): 그 마을의 필드로 들어간다
       const hub = this.back && fieldHubAt(exit.to);
-      const ph = hub && visitPhase(hub, this.back.chapter, this.condCtx());
+      const ph = hub && visitPhase(hub, this.back.chapter, this.condCtx(), WorldMemory.run);
       if (ph) {
         this.scene.start('Field', { chapter: this.back.chapter, phase: ph, entry: OPPOSITE[exit.dir], back: this.back });
         return;
@@ -317,6 +317,7 @@ export default class AreaScene extends Phaser.Scene {
       isErased: (id) => WorldMemory.isErased(id), erasedCount: () => WorldMemory.world.erased.length, loads: () => WorldMemory.world.loads,
       flag: (n) => WorldMemory.run.flags[n], minute: () => WorldMemory.run.time?.minute, day: () => WorldMemory.run.time?.day,
       quest: (id) => WorldMemory.quest(id),
+      forestChops: () => WorldMemory.run.farm?.forestChops ?? 0,
     };
   }
 

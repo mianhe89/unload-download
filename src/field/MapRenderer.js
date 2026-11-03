@@ -159,6 +159,7 @@ export class MapRenderer {
       const [, , w, h] = def.rect;
       const x = o.at[0] * TILE, y = o.at[1] * TILE;
       const img = scene.add.image(x, y, textureOf(def), o.type).setOrigin(0, 0).setDepth(y + h);
+      if (this.map.objectTint) img.setTint(this.map.objectTint); // 빛바랜 마을(빈 마을)
       // 땅에 닿는 그림자 (막히는 물체만)
       if (def.foot) {
         const [fx, fy, fw, fh] = def.foot;

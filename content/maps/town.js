@@ -2,6 +2,7 @@
 // (id W H FOG theme terrain objects solids exits openExits entry isSolidPx isSolidTile spots zones).
 //   makeTown({ id, name, W, H, theme?, dirt: [[x, y, w, h]…], objects: [O(...)…],
 //              ring: { types: [나무…], gaps: { n|s|w|e: [from, to] } },   // 마을을 두르는 숲, 출구 자리는 비운다
+//              objectTint?: 건물·나무를 곱하기로 덮는 색 (빛바랜 마을),
 //              exits: [{ dir, from, to2, to: '층:x,y', at: [x, y] }], entry: { dir: [tx, ty] }, spots, zones })
 import { OBJECTS } from '../art/pack.js';
 
@@ -45,7 +46,7 @@ export function makeTown(spec) {
   };
 
   return {
-    id: spec.id, name: spec.name, TILE, W, H, FOG, theme: spec.theme,
+    id: spec.id, name: spec.name, TILE, W, H, FOG, theme: spec.theme, objectTint: spec.objectTint,
     terrain, objects, animated: spec.animated ?? [], solids, exits,
     openExits: exits.map((e) => e.dir),
     entry: (dir) => spec.entry?.[dir],
