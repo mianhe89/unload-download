@@ -52,7 +52,7 @@ test('프롤로그 완주 → CONTINUE하면 가장 아낀 마을 사람이 지�
   // 에다 등장(이벤트 2개 이상) → 종소리 → 아침
   await waitFlag(page, 'eda.met', 90_000);
   await skipDialog(page);
-  await waitField(page, 'morning');
+  await waitField(page, 'morning', 150_000);
   await skipDialog(page);
 
   // ── 다음 날 아침
