@@ -113,3 +113,11 @@ describe('빈자리 찾기', async () => {
     expect(a).toEqual({ total: 1, found: 1, all: true });
   });
 });
+
+describe('없는 인물 id', () => {
+  it('세이브에 이 판본에 없는 인물이 지워져 있어도 goneIds가 건너뛴다 (상호작용하면 멈추던 버그)', async () => {
+    const { goneIds } = await import('../../src/core/script/speech.js');
+    const chars = { hort: { id: 'hort', name: '호르트' } };
+    expect(goneIds(chars, { erased: ['hort', 'ghost'], phase: 'x' })).toEqual(['hort']);
+  });
+});

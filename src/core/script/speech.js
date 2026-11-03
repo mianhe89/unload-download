@@ -23,8 +23,9 @@ export function maskNames(text, speaker, goneNames) {
 
 // 이야기 속에서 지워진 사람: 세상(로드)에 지워진 사람 + 대본상 이미 사라진 사람(에다는 수확제 다음 날부터)
 // gone: { notInPhases: [...] } — 그 페이즈들 밖에서는 사라진 사람
+// 세이브에 이 판본에 없는 인물 id가 남아 있을 수 있다(예전 갈래의 세이브): 그런 id는 건너뛴다
 export function goneIds(characters, { erased, phase }) {
-  const ids = new Set(erased);
+  const ids = new Set(erased.filter((id) => characters[id]));
   for (const c of Object.values(characters)) if (c.gone && !c.gone.notInPhases.includes(phase)) ids.add(c.id);
   return [...ids];
 }
