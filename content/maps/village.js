@@ -37,16 +37,16 @@ export const terrain = buildTerrain();
 const O = (type, x, y, extra = {}) => ({ type, at: [x, y], ...extra });
 
 export const objects = [
-  // 건물 (owner: 지워지면 바뀌는 집의 주인)
+  // 건물 (owner: 지워지면 바뀌는 집의 주인, residents: 그 집에 사는 사람 — 하루 일과의 home이 이 집 문으로 들어간다)
   O('belltower', 22, 5),
-  O('bakery', 14, 12, { owner: 'hort' }),
-  O('house_stone', 35, 12, { name: '에다의 대장간' }),
+  O('bakery', 14, 12, { owner: 'hort', residents: ['hort'] }),
+  O('house_stone', 35, 12, { name: '에다의 대장간', residents: ['eda'] }),
   O('forge', 38, 11),
-  O('house_tall', 34, 23, { owner: 'tom', name: '기사단 초소' }),
-  O('house_orange', 14, 24, { name: '우리 집' }),
-  O('house_plain', 12, 4),
-  O('house_red', 29, 4),
-  O('house_wood', 27, 24),
+  O('house_tall', 34, 23, { owner: 'tom', name: '기사단 초소', residents: ['tom', 'selena'] }),
+  O('house_orange', 14, 24, { name: '우리 집', residents: ['me'] }),
+  O('house_plain', 12, 4, { name: '페르의 하숙방', residents: ['per'] }),
+  O('house_red', 29, 4, { name: '리네의 꽃집', residents: ['rine'] }),
+  O('house_wood', 27, 24, { name: '미아네 집', residents: ['mia'] }),
   O('shop', 4, 11),
 
   // 광장과 생활 소품
@@ -117,6 +117,7 @@ export const spots = {
   plaza: { x: 24, y: 20 },
   fire: { x: 24, y: 17 },
   bakeryStall: { x: 16, y: 16 },
+  fireside: { x: 21, y: 19 },  // 모닥불 곁 (페르가 노래하는 자리)
   flowerBed: { x: 28, y: 12 },
   smithyDoor: { x: 36, y: 15 },
   anvil: { x: 39, y: 16 },

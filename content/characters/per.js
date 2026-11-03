@@ -15,6 +15,13 @@ export default {
   silhouette: '깃털 꽂은 챙모자와 흰 수염. 바랜 붉은 외투.',
   // 페이즈별로 근처에 가면 머리 위에 뜨는 혼잣말
   bubbles: {"festival": ["♪ 북쪽 끝, 검은 성에…", "좋은 노래는 닳지 않지."], "morning": ["노래 한 소절이 비는군."]},
+  // 하루 일과. 늦게 일어나 모닥불 곁에서 노래하고, 오후엔 우물가에서 쉬고, 저녁에 다시 한 곡 하고 하숙방으로
+  schedule: [
+    { from: '10:00', at: 'fireside', face: 'right', say: ['♪ 북쪽 끝, 해가 들지 않는 검은 성에…'] },
+    { from: '14:00', at: 'well', mode: 'wander', radius: 1, say: ['늙으면 볕이 제일이지.'] },
+    { from: '18:30', at: 'fireside', face: 'right', say: ['저녁엔 느린 노래가 어울리지.'] },
+    { from: '21:30', home: true },
+  ],
   // 지워진 뒤 그 자리에 남는 흔적
   remnant: { prop: 'lute', text: "주인 없는 류트. 마왕 노래를 아는 사람은 이제 없다." },
 };

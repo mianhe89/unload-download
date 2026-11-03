@@ -5,21 +5,17 @@ const villagers = (m) => Object.fromEntries(Object.entries(m).map(([id, [x, y, m
 
 export const phases = {
   aftermath: {
-    place: '광장 · 아침',
+    place: '우리 마을',
     time: 'day',
     bonfire: 'out',
     player: { at: [16, 28], face: 'up' },
     objective: '종탑',
     // 마을 밖 길이 처음으로 '불러와졌다' (북쪽, 서리 마을 방향)
     exits: ['n'],
+    // 시계가 돈다: 이름 있는 사람들은 배치 대신 각자 하루 일과(인물 파일의 schedule)대로 산다
+    clock: true,
+    day: 4,
     npcs: {
-      mia: { at: [26, 19], mode: 'idle', face: 'down' },
-      hort: { at: [16, 16], mode: 'idle', face: 'down' },
-      tom: { at: [33, 21], mode: 'wander', radius: 1 },
-      rine: { at: [28, 13], mode: 'idle', face: 'down' },
-      per: { at: [20, 21], mode: 'idle', face: 'down' },
-      selena: { at: [36, 28], mode: 'idle', face: 'up' },
-      lu: { at: [10, 28], mode: 'idle', face: 'right' },
       // 배경 주민: 같은 아침인데 어딘가 빈 마을
       ...villagers({
         chief: [24, 14, 'idle'], granny: [28, 21, 'idle'], kid: [12, 26, 'wander', 2], farmer: [11, 21, 'idle'],

@@ -20,8 +20,21 @@
 //   ifErasedAny: true
 //   minLoads / maxLoads: n
 //   ifFlag / unlessFlag: name
+//   afterTime / beforeTime: 'HH:MM', minDay: n   게임 안 시각·날짜 (시계가 도는 날)
+//   ifQuest: 'id' | 'id.done' | 'id.step2'      퀘스트 진행 중 / 끝남 / 세 번째 단계(0부터)에 와 있음
 
 const arr = (v) => (v == null ? [] : Array.isArray(v) ? v : [v]);
+
+const hm = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+// 'id' 진행 중 | 'id.done' 끝남 | 'id.step2' 세 번째 단계에 와 있음
+function questIs(ctx, spec) {
+  const m = /^(.*?)(?:\.(done|step(\d+)))?$/.exec(spec);
+  const q = ctx.quest?.(m[1]);
+  if (!q) return false;
+  if (!m[2]) return q.state === 'active';
+  if (m[2] === 'done') return q.state === 'done';
+  return q.state === 'active' && q.step === Number(m[3]);
+}
 
 export function passes(node, ctx) {
   if (node.ifErased && !arr(node.ifErased).every((id) => ctx.isErased(id))) return false;
@@ -31,6 +44,10 @@ export function passes(node, ctx) {
   if (node.maxLoads != null && ctx.loads() > node.maxLoads) return false;
   if (node.ifFlag && !ctx.flag(node.ifFlag)) return false;
   if (node.unlessFlag && ctx.flag(node.unlessFlag)) return false;
+  if (node.afterTime && !(ctx.minute?.() >= hm(node.afterTime))) return false;
+  if (node.beforeTime && !(ctx.minute?.() < hm(node.beforeTime))) return false;
+  if (node.minDay != null && !(ctx.day?.() >= node.minDay)) return false;
+  if (node.ifQuest && !questIs(ctx, node.ifQuest)) return false;
   return true;
 }
 

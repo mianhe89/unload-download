@@ -44,6 +44,11 @@ export const WorldMemory = {
     SaveRepository.update((d) => { d.run.flags[name] = value; });
   },
 
+  // 게임 안 시계 { day, minute }
+  setTime(time) {
+    SaveRepository.update((d) => { d.run.time = time; });
+  },
+
   // 퀘스트: { state: 'active'|'done', step }
   quest(id) { return this.run?.quests?.[id] ?? null; },
   setQuest(id, patch) {

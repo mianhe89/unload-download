@@ -9,6 +9,7 @@ import { OBJECTS, SHEETS, ANIMATED } from '../../content/art/pack.js';
 import { ScriptRunner } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
 import { CG, TINTS, PORTRAITS } from '../../content/cg.js';
+import { doorStep } from '../../src/field/systems/Schedules.js';
 
 export function validateContent() {
   const stats = {};
@@ -28,6 +29,23 @@ export function validateContent() {
   const solid = (x, y) => village.isSolidTile(x, y);
   const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
   const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn']);
+
+  // 하루 일과: 시각 형식, 장소가 있는지, 걸을 수 있는 칸인지, 집으로 가면 집(맵 objects의 residents)이 있는지
+  for (const c of Object.values(characters)) {
+    for (const e of c.schedule ?? []) {
+      const at = `일과 ${c.id} ${e.from}`;
+      if (!/^\d\d:\d\d$/.test(e.from ?? '')) err(`${at}: 시각 형식`);
+      if (e.home) {
+        const home = village.objects.find((o) => o.residents?.includes(c.id));
+        if (!home) err(`${at}: 집 없음`);
+        else if (solid(...doorStep(home))) err(`${at}: 집 문 앞이 막힌 칸`);
+        continue;
+      }
+      const p = Array.isArray(e.at) ? e.at : village.spots[e.at] && [Math.round(village.spots[e.at].x), Math.round(village.spots[e.at].y)];
+      if (!p) err(`${at}: 장소 없음 ${e.at}`);
+      else if (solid(...p)) err(`${at}: 막힌 칸 ${p}`);
+    }
+  }
 
   // 캐릭터
   for (const c of Object.values(characters)) {

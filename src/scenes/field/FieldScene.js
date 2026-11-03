@@ -28,6 +28,8 @@ import { HIDDEN_SKILLS } from '../../../content/farm/farm.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { Quests } from '../../field/systems/Quests.js';
 import { Clues } from '../../field/systems/Clues.js';
+import { Clock } from '../../field/systems/Clock.js';
+import { Schedules } from '../../field/systems/Schedules.js';
 import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 
@@ -49,6 +51,8 @@ export default class FieldScene extends Phaser.Scene {
     this.cooldown = 0;
     WorldMemory.checkpoint(chapter, this.phaseId);
     if (WorldMemory.run.where) WorldMemory.setWhere(null); // 마을 안으로 돌아왔다
+    this.clock = new Clock(this);
+    this.clock.enterPhase(this.phase, !WorldMemory.run.flags[`entered.${chapter}.${this.phaseId}`]);
   }
 
   create() {
@@ -72,8 +76,11 @@ export default class FieldScene extends Phaser.Scene {
       if (WorldMemory.isErased(id)) this.placeRemnant(id, cfg.at);
       else this.npcs[id] = new Npc(this, id, cfg);
     }
+    // 하루 일과를 따르는 사람들 (시계가 도는 날)
+    this.schedules = new Schedules(this, village);
+    this.schedules.place();
     // 생활 자리: 빵집 진열대·집·우물·허수아비에서 E (밤엔 잠만)
-    this.lifeSpots = LIFE_SPOTS.filter((l) => !(l.needs && WorldMemory.isErased(l.needs)) && (this.phase.time !== 'night' || l.action === 'sleep'))
+    this.lifeSpots = LIFE_SPOTS.filter((l) => !(l.needs && WorldMemory.isErased(l.needs)) && (!(this.clock.running ? this.clock.isNight : this.phase.time === 'night') || l.action === 'sleep'))
       .map((l) => ({ ...l, x: l.at[0] * TILE + TILE / 2, y: l.at[1] * TILE + TILE / 2 }));
     for (const prop of this.phase.props ?? []) {
       if (prop.when && !passes(prop.when, this.ctx())) continue;
@@ -83,8 +90,9 @@ export default class FieldScene extends Phaser.Scene {
     this.pickups = new Pickups(this);
     this.lighting = new Lighting(this, {
       time: this.phase.time, lights: this.phase.lights, erasedCount: WorldMemory.world.erased.length,
-      spots: village.spots, width: this.map.width, height: this.map.height,
+      spots: village.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
     });
+    this.lighting.setClock(this.clock.night);
     this.ambient = new Ambient(this, { time: this.phase.time, bonfire: this.phase.bonfire, map: village, erasedCount: WorldMemory.world.erased.length });
 
     // 카메라
@@ -125,6 +133,9 @@ export default class FieldScene extends Phaser.Scene {
       setFlag: (n) => { WorldMemory.setFlag(n); this.flagTimes[n] = this.elapsed; },
       addAffinity: (id, n) => WorldMemory.addAffinity(id, n),
       lastErasedName: () => characters[WorldMemory.world.erased.at(-1)?.id]?.name ?? '',
+      minute: () => this.clock?.minute,
+      day: () => this.clock?.day,
+      quest: (id) => WorldMemory.quest(id),
     };
   }
 
@@ -143,13 +154,16 @@ export default class FieldScene extends Phaser.Scene {
     this.player.sync();
     trackWalk(this, dt);
     for (const npc of Object.values(this.npcs)) npc.sync();
+    if (!busy) this.clock.update(dt);
+    this.lighting.setClock(this.clock.night);
+    this.ui.hud.setClock(this.clock.running ? this.clock.label : '');
     this.lighting.follow(this.player.x, this.player.y);
     this.lighting.update(dt);
 
     // 걸으며 듣는 대사 중에도 물건은 주울 수 있다
     if (!busy || this.cutscene.walking) for (const g of this.pickups.collect(this.player)) this.onPicked(g);
     // 퀘스트·단서는 걸으며 듣는 대사 중에도 따라잡는다(그동안에도 플레이어는 움직인다)
-    if (!busy || this.cutscene.walking) { this.quests.update(dt); this.clues.update(dt); }
+    if (!busy || this.cutscene.walking) { this.quests.update(dt); this.clues.update(dt); this.schedules.update(dt); }
     if (!busy) {
       const { runs, bubbles } = this.director.update(dt, this.world(), busy);
       bubbles.forEach((b) => this.bubble(b.who, b.text));
@@ -253,6 +267,8 @@ export default class FieldScene extends Phaser.Scene {
     const life = WorldMemory.run.life ?? freshLife();
     const a = ACTIONS[spot.action];
     this.cooldown = 0.5;
+    // 시계가 도는 날의 밤(20시~4시)에 잠자리에 들면 다음 날 아침 6시로
+    if (spot.action === 'sleep' && this.clock.running && (this.clock.minute >= 20 * 60 || this.clock.minute < 4 * 60)) { this.sleep(); return; }
     if (!canDo(life, spot.action)) {
       this.ui.bubbles.narrate(this.player, `(${a.name}은 조금 이따가 — ${minutesLeft(life, spot.action)}분)`, 1800);
       return;
@@ -414,6 +430,16 @@ export default class FieldScene extends Phaser.Scene {
   refreshObjective() {
     const step = this.quests?.tracked()?.step;
     this.ui.hud.setObjective(objectiveText(step ? step.text : this.phase.objective, this.absence()));
+  }
+
+  // 잠자리에 든다: 다음 날 아침 6시, 같은 하루(또는 phase.next)를 새로 시작한다
+  sleep() {
+    this.setFrozen(true);
+    this.cameras.main.fadeOut(900, 0, 0, 0);
+    this.time.delayedCall(950, () => {
+      this.clock.sleepUntil('06:00');
+      this.scene.restart({ chapter: this.chapterId, phase: this.phase.next ?? this.phaseId });
+    });
   }
 
   // 대화창에 한 줄 말하고 닫는다(퀘스트 제안 등)

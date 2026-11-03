@@ -40,6 +40,19 @@ function playChapter(chapterId, erased, { maxSeconds = 900 } = {}) {
       if (cfg.when && !passes(cfg.when, ctx)) continue;
       if (!erased.includes(id)) people[id] = cfg.at;
     }
+    // 시계가 도는 날: 배치되지 않은 사람은 하루 일과대로 (그날 시작 시각에 있는 자리)
+    if (ph.clock) {
+      const start = 9 * 60;
+      const mins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+      for (const c of Object.values(characters)) {
+        if (!c.schedule || ph.npcs?.[c.id] || erased.includes(c.id)) continue;
+        const list = c.schedule.filter((e) => !e.when || passes(e.when, ctx));
+        let cur = list.at(-1);
+        for (const e of list) if (mins(e.from) <= start) cur = e;
+        if (!cur || cur.home) continue;
+        people[c.id] = Array.isArray(cur.at) ? cur.at : [village.spots[cur.at].x, village.spots[cur.at].y];
+      }
+    }
     const picked = {};
     const pickups = {};
     let time = 0;

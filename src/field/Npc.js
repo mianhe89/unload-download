@@ -1,4 +1,4 @@
-// NPC 행동: idle(제자리), wander(주변 배회), follow(플레이어 따라다니기 — 발자취를 밟아 온다).
+// NPC 행동: idle(제자리), wander(주변 배회), follow(플레이어 따라다니기 — 발자취를 밟아 온다), route(일과 따라 걷기).
 // 플레이어가 가까이 오면 그쪽을 본다. 컷신에서는 walkTo로 움직인다.
 import { Actor } from './Actor.js';
 import { TILE } from '../../content/art/props.js';
@@ -25,6 +25,16 @@ export class Npc extends Actor {
       return;
     }
     if (paused) { this.move(0, 0, blocked); return; }
+
+    // 일과 이동: 길찾기로 받은 경로를 따라 걷는다 (systems/Schedules)
+    if (this.route?.length) {
+      const [tx, ty] = this.route[0];
+      if (this.stepToward(tx * TILE + TILE / 2, ty * TILE + TILE / 2, 40 * dt, () => false)) {
+        this.route.shift();
+        if (!this.route.length) { this.home = { x: this.x, y: this.y }; const cb = this.onArrive; this.onArrive = null; cb?.(); }
+      }
+      return;
+    }
 
     if (this.mode === 'follow') { this.follow(dt, player, blocked); return; }
 

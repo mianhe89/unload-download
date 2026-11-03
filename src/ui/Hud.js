@@ -18,7 +18,10 @@ export class Hud {
     scene.tweens.add({ targets: this.prompt, y: '-=2', duration: 400, yoyo: true, repeat: -1 });
   }
 
-  setPlace(text) { this.place.setText(text ?? ''); }
+  // 장소 이름 옆에 게임 안 시계를 붙인다 (시계가 도는 날에만): '우리 마을 · 4일째 21:00'
+  setPlace(text) { this.placeName = text ?? ''; this.drawPlace(); }
+  setClock(text) { if (this.clockText !== (text ?? '')) { this.clockText = text ?? ''; this.drawPlace(); } }
+  drawPlace() { this.place.setText(this.clockText ? `${this.placeName} · ${this.clockText}` : this.placeName); }
   setObjective(text) { this.objective.setText(text ? `› ${text}` : ''); }
   hideControls() { this.scene.tweens.add({ targets: this.controls, alpha: 0, duration: 800 }); }
 

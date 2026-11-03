@@ -53,6 +53,7 @@ describe('세이브 스키마', () => {
     const s = migrate(v5);
     expect(s.version).toBe(VERSION);
     expect(s.run).toMatchObject({ phase: 'morning', flags: { 'smithy.seen': true }, quests: {}, clues: [] });
+    expect(s.run.time).toEqual({ day: 1, minute: 9 * 60 }); // v7: 게임 안 시계
   });
 
   it('현재 버전 세이브는 그대로 둔다', () => {
