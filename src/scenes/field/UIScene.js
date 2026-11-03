@@ -7,7 +7,7 @@ import { Hud } from '../../ui/Hud.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
 import { NotebookPanel } from '../../ui/NotebookPanel.js';
-import { COLORS, text, scaleOf } from '../../ui/kit.js';
+import { COLORS, text, scaleOf, frame } from '../../ui/kit.js';
 import { TouchControls } from '../../ui/TouchControls.js';
 import { Touch, wantsTouch } from '../../ui/touch.js';
 
@@ -32,7 +32,7 @@ export default class UIScene extends Phaser.Scene {
         onStatus: () => this.status.toggle(),
         onNotebook: () => this.notebook.toggle(),
       });
-      this.hud.controls.setText(''); // 키보드 안내 대신 버튼이 있다
+      this.hud.hideKeys(); // 키보드 안내 대신 버튼이 있다
     }
     this.toScreen = (x, y) => ({ x, y });
 
@@ -51,12 +51,16 @@ export default class UIScene extends Phaser.Scene {
   say(name, color, text, face, expr) { return this.dialog.say(name, color, text, face, expr); }
   closeDialog() { this.dialog.close(); }
 
-  // 위쪽 가운데에 잠깐 뜨는 알림(퀘스트 시작·완료, 단서). 여러 개가 겹치면 아래로 쌓인다
+  // 위쪽 가운데에 잠깐 뜨는 알림(퀘스트 시작·완료, 단서). 금테 창 띠로, 여러 개가 겹치면 아래로 쌓인다
   toast(msg) {
     const s = scaleOf(this);
-    const y = 70 * s + this.toasts.length * 34 * s;
-    const t = text(this, this.scale.width / 2, y, msg, { size: 13, color: COLORS.text, backgroundColor: '#3d2b22e8', padding: { x: 14 * s, y: 6 * s } })
-      .setOrigin(0.5).setDepth(95).setAlpha(0);
+    const y = 76 * s + this.toasts.length * 40 * s;
+    const label = text(this, 0, 0, msg, { size: 13, color: COLORS.text }).setOrigin(0.5);
+    const w = label.width + 48 * s, h = 32 * s;
+    const g = this.add.graphics();
+    frame(g, -w / 2, -h / 2, w, h, s, { corners: 'diamond', radius: 5, sheen: false });
+    g.fillStyle(COLORS.goldLight, 1).fillRect(-w / 2 + 14 * s, -1.5 * s, 5 * s, 3 * s).fillRect(w / 2 - 19 * s, -1.5 * s, 5 * s, 3 * s);
+    const t = this.add.container(this.scale.width / 2, y, [g, label]).setDepth(95).setAlpha(0);
     this.toasts.push(t);
     this.tweens.add({ targets: t, alpha: 1, y: y + 6 * s, duration: 250, hold: 2400, yoyo: true,
       onComplete: () => { t.destroy(); this.toasts = this.toasts.filter((o) => o !== t); } });
