@@ -384,6 +384,19 @@ export default class FieldScene extends Phaser.Scene {
         this.npcs[node.id] = npc;
         return;
       }
+      case 'weatherLeak': {
+        // 날씨 새어 듦(기획서 '시간'): 계절과 상관없이 잠깐 눈이나 비가 내리다 그친다
+        const kind = node.kind ?? 'snow';
+        const W = this.map.width, H = this.map.height;
+        const zone = new Phaser.Geom.Rectangle(0, 0, W, H);
+        const p = this.add.particles(0, 0, `fx.${kind}`, kind === 'rain'
+          ? { frame: [0, 1, 2], emitZone: { type: 'random', source: zone }, lifespan: 500, speedY: { min: 140, max: 180 }, speedX: -20, alpha: { start: 0.7, end: 0 }, frequency: 12, quantity: 2 }
+          : { frame: [0, 1, 2, 3, 4, 5, 6], emitZone: { type: 'random', source: zone }, lifespan: 6000, speedY: { min: 8, max: 18 }, speedX: { min: -6, max: 6 }, alpha: { start: 0.9, end: 0 }, frequency: 40 }).setDepth(9004);
+        this.time.delayedCall((node.seconds ?? 40) * 1000, () => p.stop());
+        this.time.delayedCall((node.seconds ?? 40) * 1000 + 7000, () => p.destroy());
+        WorldMemory.setFlag('leak.seen');
+        return;
+      }
       case 'walkTo': {
         // 경유지(path)를 차례로 걸어가 그 자리에 머문다(walkAway와 달리 사라지지 않는다). wait면 도착까지 기다린다
         const npc = this.npcs[node.id];

@@ -41,9 +41,14 @@ describe('에셋 빌드', () => {
     expect(diffCount(base, out)).toBeGreaterThan(30);
   });
 
-  it('두 캐릭터가 같은 바탕을 쓰지 않는다 (실루엣 원칙)', () => {
-    const bases = Object.values(characters).map((c) => c.sprite.base);
+  it('두 캐릭터가 같은 바탕을 쓰지 않는다 (실루엣 원칙) — 같이 쓰려면 실루엣을 바꾸는 덧그림이 있어야 한다', () => {
+    const plain = Object.values(characters).filter((c) => !c.sprite.shareBase);
+    const bases = plain.map((c) => c.sprite.base);
     expect(new Set(bases).size).toBe(bases.length);
+    for (const c of Object.values(characters).filter((x) => x.sprite.shareBase)) {
+      expect(characters[c.sprite.shareBase]?.sprite.base, `${c.id}가 같이 쓰는 바탕`).toBe(c.sprite.base);
+      expect(c.sprite.edits?.length, `${c.id}는 실루엣을 바꾸는 덧그림이 필요하다`).toBeGreaterThan(0);
+    }
   });
 
   it('종탑은 회관 그림에 종을 그려 넣은 변형본이다', () => {

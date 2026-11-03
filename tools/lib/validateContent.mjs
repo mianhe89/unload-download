@@ -28,7 +28,7 @@ export function validateContent() {
   }
   const solid = (x, y) => village.isSolidTile(x, y);
   const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
-  const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn']);
+  const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn', 'weatherLeak']);
 
   // 하루 일과: 시각 형식, 장소가 있는지, 걸을 수 있는 칸인지, 집으로 가면 집(맵 objects의 residents)이 있는지
   for (const c of Object.values(characters)) {

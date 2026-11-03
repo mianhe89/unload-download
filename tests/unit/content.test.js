@@ -7,6 +7,7 @@ import { characters } from '../../content/characters/index.js';
 import * as village from '../../content/maps/village.js';
 import { ScriptRunner, passes } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
+import { QUESTS } from '../../content/quests/index.js';
 
 describe('콘텐츠 검증', () => {
   it('대본·페이즈·캐릭터·맵에 문제가 없다', () => {
@@ -20,11 +21,13 @@ const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => 
 
 // 한 장을 처음부터 끝까지 '봇'이 플레이한다.
 // 봇은 아직 안 일어난 이벤트의 목표(인물·구역·물건)로 순간이동하고, 컷신은 즉시 넘긴다.
-function playChapter(chapterId, erased, { maxSeconds = 900 } = {}) {
+function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = {} } = {}) {
   const ch = chapters[chapterId];
-  const flags = {};
+  const flags = { ...startFlags };
   const aff = {};
   const log = [];
+  const quests = {};
+  const clock = { day: 1, minute: 9 * 60 };
   let phaseId = ch.firstPhase;
   let ended = null;
 
@@ -33,7 +36,10 @@ function playChapter(chapterId, erased, { maxSeconds = 900 } = {}) {
     const ctx = {
       isErased: (id) => erased.includes(id), erasedCount: () => erased.length, loads: () => erased.length,
       flag: (n) => flags[n], setFlag: (n) => { flags[n] = true; flagTimes[n] = time; }, addAffinity: (id, n) => { aff[id] = (aff[id] ?? 0) + n; },
+      minute: () => clock.minute, day: () => clock.day, quest: (id) => quests[id],
     };
+    if (ph.day != null) clock.day = ph.day;
+    clock.minute = 9 * 60;
     const flagTimes = {};
     const people = {};
     for (const [id, cfg] of Object.entries(ph.npcs ?? {})) {
@@ -98,11 +104,34 @@ function playChapter(chapterId, erased, { maxSeconds = 900 } = {}) {
       player.idleTime = 99;
     };
 
+    // 퀘스트: 조건이 맞으면 저절로 시작하고, 지금 단계의 일을 한다(말 걸기·구역·시각). 맞으면 다음 단계로
+    const questStep = () => {
+      for (const [id, def] of Object.entries(QUESTS)) {
+        if (!quests[id] && def.start?.auto && (!def.start.when || passes(def.start.when, ctx))) quests[id] = { state: 'active', step: 0 };
+        const q = quests[id];
+        if (q?.state !== 'active') continue;
+        const st = def.steps[q.step];
+        const d = st.done;
+        if (d.talk && !people[d.talk]) continue;
+        if (d.when?.afterTime) clock.minute = Math.max(clock.minute, Number(d.when.afterTime.slice(0, 2)) * 60 + Number(d.when.afterTime.slice(3)));
+        const ok = (!d.flag || flags[d.flag]) && (!d.when || passes(d.when, ctx));
+        if (!ok) continue;
+        if (st.onDone) play(st.onDone);
+        log.push(`퀘스트 ${id} ${q.step + 1}단계`);
+        if (q.step + 1 < def.steps.length) q.step += 1; else q.state = 'done';
+        return true;
+      }
+      return false;
+    };
+    let idle = 0;
     while (!next && time < maxSeconds) {
       const pending = director.events.find((e) => !e.fired && (!e.when || passes(e.when, ctx)));
       if (pending) goTo(pending);
       const { runs } = director.update(0.5, world(), false);
       for (const r of runs) { flags[`done.${r.id}`] = true; play(r.run); if (next) break; }
+      if (!next && questStep()) idle = 0;
+      // 시계가 도는 날: 일어날 일이 없으면 다음 날 아침으로 (잠)
+      if (ph.clock && !next && !runs.length && (idle += 1) > 20) { clock.day += 1; clock.minute = 9 * 60; idle = 0; log.push(`${clock.day}일째`); }
       time += 0.5;
     }
     if (!next) return { stuck: phaseId, log, flags };
@@ -134,8 +163,9 @@ describe('논리 플레이스루 (모든 지워짐 조합)', () => {
   });
 
   it('1장 도입도 끝까지 간다 (1명 이상 지워진 상태)', () => {
-    const r = playChapter('chapter1', ['hort']);
-    expect(r.stuck).toBeUndefined();
+    // 1장은 프롤로그를 마친 뒤에만 온다(셀레나·루를 만났고, 종탑의 밤을 지났다)
+    const r = playChapter('chapter1', ['hort'], { flags: { 'selena.done': true, 'done.lu': true, 'done.keeper': true }, maxSeconds: 3000 });
+    expect(r.stuck, r.log.join('\n')).toBeUndefined();
     expect(r.ended).toBeDefined();
   });
 });

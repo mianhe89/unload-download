@@ -28,6 +28,28 @@ const EDITS = {
       }
     });
   },
+  // 짙은 남색 망토: 어깨 아래로 몸통 양옆에 자락이 삐져나오고(옆모습은 등 쪽만), 뒷모습은 등이 망토로 덮인다.
+  // 같은 바탕을 쓰는 다른 인물과 실루엣이 갈리게 한다(레온)
+  cape(img) {
+    const CAPE = '1e2a52', DARK = '121a34', LINE = '14141c';
+    forEachFrame(img, (fx, fy, dir) => {
+      for (let y = 8; y <= 14; y += 1) {
+        let l = -1, r = -1;
+        for (let x = 0; x < 16; x += 1) if (alphaAt(img, fx + x, fy + y)) { if (l < 0) l = x; r = x; }
+        if (l < 0) continue;
+        const side = (x, inner) => {
+          if (alphaAt(img, fx + x, fy + y)) return;
+          setPx(img, fx + x, fy + y, inner ? CAPE : LINE);
+        };
+        const back = dir === 'up', left = dir === 'left', right = dir === 'right';
+        // 옆모습은 등 쪽(오른쪽을 보면 왼쪽)으로만 자락이 나온다
+        if (!right) { side(l - 1, true); side(l - 2, false); }
+        if (!left) { side(r + 1, true); side(r + 2, false); }
+        // 뒷모습: 등을 망토로 덮는다 (외곽선 안쪽만)
+        if (back) for (let x = l + 1; x < r; x += 1) setPx(img, fx + x, fy + y, y >= 13 ? DARK : CAPE);
+      }
+    });
+  },
   // 모자 옆에 꽂은 붉은 깃털 (외곽선 포함)
   feather(img) {
     forEachFrame(img, (fx, fy, dir) => {

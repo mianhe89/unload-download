@@ -42,7 +42,7 @@ export const objects = [
   O('bakery', 14, 12, { owner: 'hort', residents: ['hort'] }),
   O('house_stone', 35, 12, { name: '에다의 대장간', residents: ['eda'] }),
   O('forge', 38, 11),
-  O('house_tall', 34, 23, { owner: 'tom', name: '기사단 초소', residents: ['tom', 'selena'] }),
+  O('house_tall', 34, 23, { owner: 'tom', name: '기사단 초소', residents: ['tom', 'selena', 'leon'] }),
   O('house_orange', 14, 24, { name: '우리 집', residents: ['me'] }),
   O('house_plain', 12, 4, { name: '페르의 하숙방', residents: ['per'] }),
   O('house_red', 29, 4, { name: '리네의 꽃집', residents: ['rine'] }),
