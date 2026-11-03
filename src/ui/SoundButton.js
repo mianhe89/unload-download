@@ -15,9 +15,10 @@ export function mountSoundButton(parent = document.body) {
   Object.assign(btn.style, {
     position: 'fixed', zIndex: 10, width: '34px', height: '34px', padding: '6px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(61, 43, 34, 0.82)', color: '#f8dc90',
-    border: '1.5px solid #e8b860', borderRadius: '8px', cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.35)', touchAction: 'manipulation',
+    // 대화창·HUD와 같은 밤색 바탕에 금 이중 테두리 (ui/kit.js의 COLORS)
+    background: 'rgba(61, 43, 34, 0.9)', color: '#f8dc90',
+    border: '2px solid #e8b860', outline: '1px solid #8a6038', outlineOffset: '-5px', borderRadius: '4px', cursor: 'pointer',
+    boxShadow: '2px 3px 0 rgba(0,0,0,0.35)', touchAction: 'manipulation',
   });
 
   const render = (muted) => {

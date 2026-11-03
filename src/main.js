@@ -5,7 +5,6 @@ import { platform } from './platform/index.js';
 import { SaveRepository } from './core/save/SaveRepository.js';
 import { Sound } from './core/audio/Sound.js';
 import { mountSoundButton } from './ui/SoundButton.js';
-import { wantsTouch } from './ui/touch.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/title/TitleScene.js';
 import FieldScene from './scenes/field/FieldScene.js';
@@ -42,8 +41,8 @@ async function start() {
   document.title = platform.isDesktop ? 'DOWNLOAD' : 'UNLOAD';
   // M: 소리 끄기/켜기 (어느 장면에서든)
   window.addEventListener('keydown', (e) => { if (e.key === 'm' || e.key === 'M') Sound.toggleMute(); });
-  // 휴대폰엔 M 키가 없으니 화면 구석에 소리 버튼을 띄운다. 컴퓨터에선 HUD의 [M] 키캡을 누르면 된다
-  if (wantsTouch()) mountSoundButton();
+  // 화면 오른쪽 위의 소리 버튼 (타이틀·필드·전투 어디서나. 휴대폰에서도 누를 수 있게)
+  mountSoundButton();
 }
 
 start();
