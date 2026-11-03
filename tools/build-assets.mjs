@@ -178,7 +178,8 @@ export function buildAssets({ quiet = false } = {}) {
   manifest.sheets['gen:belltower'] = 'sheets/belltower.png';
 
   for (const [key, m] of Object.entries(MONSTER_ART)) {
-    copyFileSync(join(SRC, m.src), join(OUT, 'mon', `${key}.png`));
+    if (m.recolor) { const img = readPng(join(SRC, m.src)); recolor(img, m.recolor); writePng(join(OUT, 'mon', `${key}.png`), img); }
+    else copyFileSync(join(SRC, m.src), join(OUT, 'mon', `${key}.png`));
     manifest.mon[key] = `mon/${key}.png`;
   }
   for (const [key, a] of Object.entries(ANIMATED)) {

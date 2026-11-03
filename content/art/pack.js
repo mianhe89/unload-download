@@ -150,4 +150,6 @@ export const MONSTER_ART = {
   Mole: { src: 'Actor/Monsters/Mole/Mole.png', frame: [16, 16], kind: 'walker' },
   Skull: { src: 'Actor/Monsters/Skull/SpriteSheet.png', frame: [16, 16], kind: 'walker' },
   GiantSpirit: { src: 'Actor/Boss/GiantSpirit/Idle.png', frame: [50, 50], kind: 'idle', frames: 5 },
+  // 까마귀(마스코트): 올빼미를 검게 칠했다. 몬스터가 아니라 종탑 위에 앉아 주인공을 지켜보는 새다
+  Crow: { src: 'Actor/Monsters/Owl/Owl.png', frame: [16, 16], kind: 'walker', recolor: { fce2ca: '4a4a5a', ffad5d: 'b8b8c4', d14b34: '22222c', '8d977f': '3c3c4a' } },
 };
