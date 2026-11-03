@@ -14,6 +14,7 @@ import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { characters } from '../../../content/characters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { act, freshLife, skinOf } from '../../life/life.js';
+import { softFlash } from '../../core/fx/softFlash.js';
 
 const SKY = { surface: [0x8fb7d8, 0xd9e6c8], under: [0x1c1620, 0x3a2c2a], sky: [0x0a0820, 0x2a1e5a] };
 const GROUND = { surface: 0x6c8a3c, under: 0x4a3a30, sky: 0x3a2a6a };
@@ -286,7 +287,7 @@ export default class BattleScene extends Phaser.Scene {
     if (face) this.tweens.add({ targets: face, x: W * 0.2, duration: 260, delay: 60, ease: 'Back.out' });
     this.tweens.add({ targets: [name, line], alpha: 1, x: '+=12', duration: 220, delay: 180 });
     this.time.delayedCall(1100, () => {
-      this.cameras.main.flash(180, 255, 255, 255);
+      softFlash(this, { alpha: 0.22, ms: 350 });
       [band, stripe, face, name, line].forEach((o) => o?.destroy());
       done();
     });
@@ -325,7 +326,7 @@ export default class BattleScene extends Phaser.Scene {
     this.leaving = true;
     const { victim } = WorldMemory.load();
     Sound.sfx(this, 'spirit', { detune: -1200 });
-    this.cameras.main.flash(500, 255, 255, 255);
+    softFlash(this, { color: 0xd8d4ec, alpha: 0.3, ms: 600 });
     this.time.delayedCall(550, () => this.scene.restart({ ...this.data0, seed: (this.data0.seed ?? 1) + WorldMemory.world.loads, victim }));
   }
 

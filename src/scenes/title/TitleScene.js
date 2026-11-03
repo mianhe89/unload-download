@@ -124,11 +124,8 @@ export default class TitleScene extends Phaser.Scene {
   update(_, deltaMs) {
     const dt = deltaMs / 1000;
     this.lighting.update(dt);
-    // 로드한 만큼 화면이 이따금 튄다
-    if (this.setup.glitch && Math.random() < this.setup.glitch * dt) {
-      this.cameras.main.shake(90, 0.004);
-      this.cameras.main.flash(60, 180, 200, 255, false);
-    }
+    // 로드한 만큼 화면이 이따금 아주 살짝 어긋난다(번쩍임 없이, 눈에 부담 없게)
+    if (this.setup.glitch && Math.random() < this.setup.glitch * dt) this.cameras.main.shake(70, 0.0012);
   }
 
   continue() {

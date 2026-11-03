@@ -25,6 +25,7 @@ import { maskNames, goneIds } from '../../core/script/speech.js';
 import { characters } from '../../../content/characters/index.js';
 import { Lighting } from '../../field/Lighting.js';
 import { Ambient } from '../../field/Ambient.js';
+import { softFlash } from '../../core/fx/softFlash.js';
 
 const HOME = cellKey('surface', HUBS.home.at);
 const FACE = { n: 'down', s: 'up', w: 'right', e: 'left' };
@@ -197,7 +198,7 @@ export default class AreaScene extends Phaser.Scene {
       const sk = HIDDEN_SKILLS[unlocked];
       this.time.delayedCall(800, () => {
         Sound.sfx(this, 'secret');
-        this.cameras.main.flash(300, 255, 240, 200);
+        softFlash(this, { ms: 600 });
         this.ui.bubbles.narrate(this.player, `히든 스킬 [${sk.grade}] ${sk.name} — ${sk.desc}`, 4000);
       });
     }
@@ -250,7 +251,7 @@ export default class AreaScene extends Phaser.Scene {
     if (r.opens) {
       this.leaving = true;
       this.ui.bubbles.narrate(this.player, '열셋. 종소리가 하늘에 부딪혀 돌아오지 않았다. 발밑이 보랏빛으로 젖는다.', 3200);
-      this.cameras.main.flash(900, 190, 160, 255);
+      softFlash(this, { color: 0xbea0ff, alpha: 0.3, ms: 1400 });
       Sound.sfx(this, 'secret');
       this.time.delayedCall(2400, () => { this.leaving = false; this.through(f.to); });
       return;
@@ -265,8 +266,8 @@ export default class AreaScene extends Phaser.Scene {
   fight() {
     this.leaving = true;
     this.ui.hud.showPrompt(null);
-    this.cameras.main.flash(250, 255, 255, 255);
-    this.cameras.main.shake(200, 0.01);
+    softFlash(this, { alpha: 0.22, ms: 400 });
+    this.cameras.main.shake(200, 0.006);
     Sound.sfx(this, 'heavy');
     this.time.delayedCall(300, () => this.scene.start('Battle', {
       enemies: this.encounter.enemies, seed: this.encounter.seed, boss: this.encounter.boss, note: this.encounter.note,
