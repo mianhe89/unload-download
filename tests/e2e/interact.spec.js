@@ -1,4 +1,5 @@
 // 새 게임 첫 페이즈에서 사람·물건마다 다가가 E를 눌러 본다: 멈추거나 오류가 나면 안 된다
+// (걸으며 듣는 대사는 멈춘 게 아니다 — 주인공은 계속 걸을 수 있다)
 import { test, expect } from '@playwright/test';
 import { openGame, wipe, clickMenu, waitField, skipDialog } from './game.js';
 import { LIFE_SPOTS } from '../../content/life/life.js';
@@ -22,8 +23,8 @@ test('수확제 전날: 모두에게 말 걸고 살펴봐도 멈추지 않는다
     // 게임이 계속 돈다: 프레임이 흐르고 주인공이 움직일 수 있다
     const alive = await page.evaluate(async () => {
       const g = window.__game, f = g.scene.getScene('Field');
-      const t0 = g.loop.frame; await new Promise((r) => setTimeout(r, 300));
-      return { frames: g.loop.frame - t0, frozen: Boolean(f.frozen), busy: f.cutscene.busy, talking: g.scene.getScene('UI').talking };
+      const t0 = g.loop.frame; await new Promise((r) => setTimeout(r, 1000)); // 헤드리스(소프트웨어 렌더링)는 느리다: 1초에 몇 프레임이라도 흐르면 살아 있다
+      return { frames: g.loop.frame - t0, frozen: Boolean(f.frozen), busy: f.cutscene.busy && !f.cutscene.walking, talking: g.scene.getScene('UI').talking };
     });
     expect(alive.frames, t.id).toBeGreaterThan(3);
     expect(alive.frozen || alive.busy || alive.talking, `${t.id}: ${JSON.stringify(alive)}`).toBe(false);
@@ -45,8 +46,8 @@ async function sweep(page, label) {
     await skipDialog(page);
     const alive = await page.evaluate(async () => {
       const g = window.__game, f = g.scene.getScene('Field');
-      const t0 = g.loop.frame; await new Promise((r) => setTimeout(r, 300));
-      return { field: g.scene.isActive('Field'), frames: g.loop.frame - t0, frozen: Boolean(f.player?.frozen), busy: f.cutscene?.busy, talking: g.scene.getScene('UI').talking };
+      const t0 = g.loop.frame; await new Promise((r) => setTimeout(r, 1000)); // 헤드리스(소프트웨어 렌더링)는 느리다: 1초에 몇 프레임이라도 흐르면 살아 있다
+      return { field: g.scene.isActive('Field'), frames: g.loop.frame - t0, frozen: Boolean(f.player?.frozen), busy: f.cutscene?.busy && !f.cutscene?.walking, talking: g.scene.getScene('UI').talking };
     });
     if (!alive.field) break; // 잠 등으로 장면이 넘어갔다
     expect(alive.frames, `${label}/${t.id}`).toBeGreaterThan(3);

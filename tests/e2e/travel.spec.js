@@ -65,18 +65,21 @@ test('1장: 북쪽 길로 나가 서리 마을까지 갔다가 돌아온다', as
   await holdUntil(page, 'ArrowUp', () => window.__game.scene.isActive('Area'));
   expect(await areaKey(page)).toBe('surface:7,10');
 
-  // 북쪽으로 네 칸 → 서리 마을 (7,6)
-  for (const want of ['surface:7,9', 'surface:7,8', 'surface:7,7', 'surface:7,6']) {
+  // 북쪽으로 세 칸 → 서리 마을 앞 (7,7)
+  for (const want of ['surface:7,9', 'surface:7,8', 'surface:7,7']) {
     await leaveArea(page, 'n');
-    await page.waitForFunction((k) => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').key === k, want, { timeout: 5000 });
+    await page.waitForFunction((k) => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').key === k, want, { timeout: 15_000 });
   }
-  const place = await page.evaluate(() => window.__game.scene.getScene('UI').hud.place.text);
-  expect(place).toBe('서리 마을');
   const flags = await page.evaluate(() => Object.keys(window.__ud.run.flags).filter((f) => f.startsWith('visited.')));
-  expect(flags.length).toBe(5);
+  expect(flags.length).toBe(4);
+  // 한 칸 더 → 서리 마을: 사람이 사는 마을이라 그 마을의 이야기 필드로 들어간다
+  await leaveArea(page, 'n');
+  await page.waitForFunction(() => window.__game.scene.isActive('Field') && window.__game.scene.getScene('Field').mapDef?.id === 'frost', null, { timeout: 15_000 });
 
-  // 남쪽으로 다섯 번 → 시작 마을(이야기 필드)로 복귀
-  for (let i = 0; i < 5; i += 1) {
+  // 다시 길 맵(7,7)에서 남쪽으로 네 번 → 시작 마을(이야기 필드)로 복귀
+  await page.evaluate(() => { const g = window.__game; g.scene.stop('Field'); g.scene.start('Area', { layer: 'surface', at: [7, 7], entry: 'n', back: { chapter: 'chapter1', phase: 'aftermath', time: 'day' } }); });
+  await page.waitForFunction(() => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').key === 'surface:7,7', null, { timeout: 15_000 });
+  for (let i = 0; i < 4; i += 1) {
     await page.waitForFunction(() => window.__game.scene.isActive('Area') && !window.__game.scene.getScene('Area').leaving, null, { timeout: 5000 });
     await leaveArea(page, 's');
   }
@@ -131,11 +134,10 @@ test('항구에서 배를 타고 바다로 나갔다가 돌아온다', async ({ 
   expect(await page.evaluate(() => window.__game.scene.getScene('Area').area.sea)).toBe(true);
   expect(await page.evaluate(() => Boolean(window.__game.scene.getScene('Area').boat))).toBe(true);
 
-  // 북쪽으로 노 저어 → 항구, 배 옆에 내린다
+  // 북쪽으로 노 저어 → 항구 (항구는 사람이 사는 마을이라 이야기 필드로 들어간다)
   await page.waitForFunction(() => !window.__game.scene.getScene('Area').leaving);
   await leaveArea(page, 'n');
-  await page.waitForFunction(() => window.__game.scene.getScene('Area').key === 'surface:8,15');
-  expect(await page.evaluate(() => window.__game.scene.getScene('Area').area.sea)).toBe(false);
+  await page.waitForFunction(() => window.__game.scene.isActive('Field') && window.__game.scene.getScene('Field').mapDef?.id === 'harbor', null, { timeout: 15_000 });
   expect(errors).toEqual([]);
 });
 

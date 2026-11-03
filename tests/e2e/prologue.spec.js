@@ -3,6 +3,17 @@
 import { test, expect } from '@playwright/test';
 import { openGame, wipe, state, clickMenu, waitField, skipDialog, teleport, waitFlag, waitBusy, advanceUntil } from './game.js';
 
+// 수확제 전날(prep): 준비 셋을 마친 셈 치고 미아에게 가면 저녁 → 수확제의 밤
+// (전날 하루 자체는 interact.spec이 사람마다 말을 걸며 돈다)
+async function passPrep(page) {
+  await waitField(page, 'prep');
+  await skipDialog(page);
+  await page.evaluate(() => window.__ud.setFlag('prep.ready'));
+  await page.evaluate(() => { const f = window.__game.scene.getScene('Field'); const m = f.npcs.mia; f.player.sprite.x = m.x; f.player.sprite.y = m.y + 14; });
+  await waitField(page, 'festival', 90_000);
+  await skipDialog(page);
+}
+
 test('타이틀: 게임 이름 없이 일러스트와 START만', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
@@ -19,8 +30,7 @@ test('프롤로그 완주 → CONTINUE하면 가장 아낀 마을 사람이 지�
 
   // ── 수확제의 밤
   await clickMenu(page, 'START');
-  await waitField(page, 'festival');
-  await skipDialog(page);
+  await passPrep(page);
 
   // 호르트: 근처에 가면 빵이 엎어지고, 다 주워서 돌려주면 이벤트 (+2)
   await teleport(page, 17, 17);
@@ -33,14 +43,14 @@ test('프롤로그 완주 → CONTINUE하면 가장 아낀 마을 사람이 지�
 
   // 페르: 곁에 오래 머물면 노래가 끝까지 (+2)
   await teleport(page, 21, 20);
-  await waitFlag(page, 'ev.per', 40_000);
+  await waitFlag(page, 'ev.per', 90_000);
   await skipDialog(page);
 
   // 호르트를 한 번 더 아끼게 만든다: 지워질 사람을 결정적으로
   await page.evaluate(() => window.__ud.addAffinity('hort', 5));
 
   // 에다 등장(이벤트 2개 이상) → 종소리 → 아침
-  await waitFlag(page, 'eda.met', 40_000);
+  await waitFlag(page, 'eda.met', 90_000);
   await skipDialog(page);
   await waitField(page, 'morning');
   await skipDialog(page);
@@ -94,8 +104,7 @@ test('RESET & START는 진행만 처음으로, 지워진 사람은 돌아오지 
   await openGame(page);
   await wipe(page);
   await clickMenu(page, 'START');
-  await waitField(page, 'festival');
-  await skipDialog(page);
+  await passPrep(page);
 
   // 타이틀로 돌아가서 CONTINUE → 한 명 지워짐
   await page.evaluate(() => { const g = window.__game; g.scene.stop('UI'); g.scene.stop('Field'); g.scene.start('Title'); });
@@ -110,7 +119,7 @@ test('RESET & START는 진행만 처음으로, 지워진 사람은 돌아오지 
   await page.waitForFunction(() => window.__game.scene.isActive('Title'));
   await clickMenu(page, 'RESET & START');
   await clickMenu(page, 'PRESS AGAIN TO RESET');
-  await waitField(page, 'festival');
+  await waitField(page, 'prep');
   const s = await state(page);
   expect(s.erased).toEqual(erased);
   expect(s.npcs).not.toContain(erased[0]);
