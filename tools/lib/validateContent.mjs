@@ -8,11 +8,23 @@ import { PROP_NAMES } from '../../content/art/props.js';
 import { OBJECTS, SHEETS, ANIMATED } from '../../content/art/pack.js';
 import { ScriptRunner } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
+import { CG, TINTS, PORTRAITS } from '../../content/cg.js';
 
 export function validateContent() {
   const stats = {};
   const errs = [];
   const err = (m) => errs.push(m);
+  // 이벤트 CG·인물 일러스트 파일 (content/cg.js)
+  const assetMissing = (file) => !existsSync(new URL(`../../public/assets/${file}`, import.meta.url));
+  for (const [id, cg] of Object.entries(CG)) {
+    if (cg.file && assetMissing(cg.file)) err(`CG ${id}: 파일 없음 ${cg.file}`);
+    if (!cg.file && !CG[cg.bg]?.file) err(`CG ${id}: 배경 없음 ${cg.bg}`);
+    if (cg.figure && !PORTRAITS[cg.figure]) err(`CG ${id}: 인물 그림 없음 ${cg.figure}`);
+  }
+  for (const [id, p] of Object.entries(PORTRAITS)) {
+    if (!characters[id]) err(`일러스트 ${id}: 인물 없음`);
+    for (const file of [p.file, ...Object.values(p.faces ?? {})]) if (assetMissing(file)) err(`일러스트 ${id}: 파일 없음 ${file}`);
+  }
   const solid = (x, y) => village.isSolidTile(x, y);
   const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
   const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkAway', 'despawn']);
@@ -68,6 +80,9 @@ export function validateContent() {
     for (const [label, nodes] of Object.entries(S)) nodes.forEach((n, i) => {
       const at = `${cid}:${label}[${i}]`;
       if (n.who && !characters[n.who]) err(`${at} 화자 없음 ${n.who}`);
+      if (n.cg && !CG[n.cg]) err(`${at} CG 없음 ${n.cg}`);
+      if (n.tint && !TINTS[n.tint]) err(`${at} 색조 없음 ${n.tint}`);
+      if (n.face && !PORTRAITS[n.who]?.faces?.[n.face]) err(`${at} 표정 없음 ${n.who}.${n.face}`);
       if (n.bubble && !characters[n.bubble.who]) err(`${at} 말풍선 화자 없음`);
       if (n.goto && !S[n.goto]) err(`${at} goto 없음 ${n.goto}`);
       if (n.phase && !ch.phases[n.phase]) err(`${at} 페이즈 없음 ${n.phase}`);

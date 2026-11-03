@@ -36,21 +36,26 @@ export class Cutscene {
         const who = node.who ? characters[node.who] : null;
         const text = this.field.speech(node.who, this.runner.format(node.say));
         if (this.walking) await this.field.walkLine(node.who, text, label);
-        else await ui.say(who?.name ?? '', who?.color ?? '#cfc9dd', text, node.who);
+        else await ui.say(who?.name ?? '', who?.color ?? '#cfc9dd', text, node.who, node.face);
       } else if (node.bubble) {
         this.field.bubble(node.bubble.who, node.bubble.text);
       } else if (node.fx) {
         await this.field.fx(node.fx);
+      } else if (node.cg !== undefined) {
+        // 이벤트 CG (content/cg.js). 걷는 대사 중에는 띄우지 않는다
+        if (!this.walking) await (node.cg ? ui.cg.show(node.cg, node.tint) : ui.cg.hide());
       } else if (node.act) {
         await this.field.act(node);
       } else if (node.phase) {
         ui.closeDialog();
+        ui.cg.hide();
         this.busy = false;
         this.walking = false;
         this.field.goPhase(node.phase);
         return;
       } else if (node.end) {
         ui.closeDialog();
+        ui.cg.hide();
         this.busy = false;
         this.walking = false;
         this.field.endChapter(node.next);
@@ -59,6 +64,7 @@ export class Cutscene {
     }
     if (this.field.cutscene !== this) return;
     ui.closeDialog();
+    await ui.cg.hide();
     this.busy = false;
     this.walking = false;
     this.field.setFrozen(false);

@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import { loadPackAssets, buildTextures, buildAnimations } from '../core/art/textures.js';
 import { Sound } from '../core/audio/Sound.js';
+import { CG, PORTRAITS } from '../../content/cg.js';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
@@ -10,6 +11,12 @@ export default class BootScene extends Phaser.Scene {
     const manifest = this.registry.get('manifest');
     loadPackAssets(this, manifest);
     Sound.preload(this, this.registry.get('audio'));
+    // 이벤트 CG와 인물 일러스트(표정 차분 포함). 파일이 없으면 그 그림만 빠지고 게임은 연다
+    for (const [id, cg] of Object.entries(CG)) if (cg.file) this.load.image(`cg.${id}`, `assets/${cg.file}`);
+    for (const [id, p] of Object.entries(PORTRAITS)) {
+      this.load.image(`portrait.${id}`, `assets/${p.file}`);
+      for (const [face, file] of Object.entries(p.faces ?? {})) this.load.image(`portrait.${id}.${face}`, `assets/${file}`);
+    }
     // 불러오기 실패는 콘솔에 남기되 게임은 계속 연다
     this.load.on('loaderror', (file) => console.error(`에셋을 불러오지 못함: ${file.key} (${file.src})`));
   }

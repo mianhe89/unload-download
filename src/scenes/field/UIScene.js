@@ -1,6 +1,7 @@
 // 필드 위에 겹쳐 도는 UI 씬. 카메라 배율과 무관하게 글자를 원래 크기로 그린다.
 import Phaser from 'phaser';
 import { DialogBox } from '../../ui/DialogBox.js';
+import { CgLayer } from '../../ui/CgLayer.js';
 import { SpeechBubbles } from '../../ui/SpeechBubbles.js';
 import { Hud } from '../../ui/Hud.js';
 import { Sound } from '../../core/audio/Sound.js';
@@ -13,6 +14,7 @@ export default class UIScene extends Phaser.Scene {
 
   create() {
     this.dialog = new DialogBox(this);
+    this.cg = new CgLayer(this);
     this.bubbles = new SpeechBubbles(this);
     this.hud = new Hud(this);
     this.status = new StatusPanel(this);
@@ -40,7 +42,7 @@ export default class UIScene extends Phaser.Scene {
 
   update() { this.bubbles.update(this.toScreen); this.touch?.update(); }
 
-  say(name, color, text, face) { return this.dialog.say(name, color, text, face); }
+  say(name, color, text, face, expr) { return this.dialog.say(name, color, text, face, expr); }
   closeDialog() { this.dialog.close(); }
   get talking() { return this.dialog.open; }
 }
