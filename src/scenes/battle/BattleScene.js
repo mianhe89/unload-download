@@ -315,6 +315,7 @@ export default class BattleScene extends Phaser.Scene {
     Sound.sfx(this, result === 'win' ? 'win' : 'lose');
     if (result === 'win') {
       if (from?.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss)}`);
+      if (this.data0.winFlag) WorldMemory.setFlag(this.data0.winFlag);
       this.say(this.data0.winLine ?? (this.data0.boss ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : '이겼다.'), COLOR.gold);
       this.time.delayedCall(1500, () => this.leave('win'));
       return;

@@ -20,7 +20,12 @@ export const POOLS = {
   ancientHall: [['skull', 'skull']],
 };
 
-// 보스 자리: 검은 성 바로 앞 길
+// 보스 자리. when: 나타나는 조건(대본 조건 문법), party: 같이 싸우는 사람, flag: 이기면 켜지는 플래그
 export const BOSSES = {
+  // 2장: 옆 마을로 가는 안개 길을 지키는 빈 갑옷. 루와 둘이서 싸운다
+  'surface:5,10': {
+    enemies: ['lostknight'], when: { ifFlag: 'ch2.started' }, party: ['me', 'lu'], flag: 'ch2.knight_beaten',
+    note: '안개 속에서 녹슨 갑옷이 일어선다. 투구 안이 텅 비어 있다.',
+  },
   'surface:8,2': { enemies: ['sweeper'], note: '빗자루를 든 거대한 그림자가 성문 앞을 쓸고 있다.' },
 };

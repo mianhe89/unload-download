@@ -31,6 +31,7 @@ import { Clues } from '../../field/systems/Clues.js';
 import { Clock } from '../../field/systems/Clock.js';
 import { Schedules } from '../../field/systems/Schedules.js';
 import { Raids } from '../../field/systems/Raids.js';
+import { FieldBattle } from '../../field/systems/FieldBattle.js';
 import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 
@@ -112,6 +113,7 @@ export default class FieldScene extends Phaser.Scene {
     this.cutscene = new Cutscene(this, this.chapter.script, this.ctx());
     this.quests = new Quests(this);
     this.clues = new Clues(this);
+    this.battle = new FieldBattle(this);
     this.raids = new Raids(this, this.mapDef);
 
     // UI 씬이 준비된 다음 프레임에 연결
@@ -392,6 +394,12 @@ export default class FieldScene extends Phaser.Scene {
         npc.sprite.setAlpha(0);
         this.tweens.add({ targets: npc.sprite, alpha: 1, duration: 400 });
         this.npcs[node.id] = npc;
+        return;
+      }
+      case 'battle': {
+        // 그 자리에서 사이드뷰 전투. 이기면 flag가 켜진다(뒤 노드는 ifFlag로 갈린다)
+        const r = await this.battle.fight(node);
+        if (r === 'win' && node.flag) WorldMemory.setFlag(node.flag);
         return;
       }
       case 'weatherLeak': {

@@ -27,6 +27,7 @@ import { Lighting } from '../../field/Lighting.js';
 import { Ambient } from '../../field/Ambient.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 import { fieldHubAt, visitPhase } from '../../world/visits.js';
+import { passes } from '../../core/script/ScriptRunner.js';
 
 const HOME = cellKey('surface', HUBS.home.at);
 const FACE = { n: 'down', s: 'up', w: 'right', e: 'left' };
@@ -91,7 +92,7 @@ export default class AreaScene extends Phaser.Scene {
     // 몬스터: 오늘 이 칸의 무리 (이긴 무리는 없다). 부딪히면 전투
     const flags0 = WorldMemory.run.flags;
     // (테스트용) dev.peace 플래그가 켜져 있으면 몬스터가 나오지 않는다
-    this.encounter = flags0['dev.peace'] ? null : encounterAt(this.key, { kind: area.kind, biome: area.biome }, new Date(), (k) => Boolean(flags0[`beat.${k}`]));
+    this.encounter = flags0['dev.peace'] ? null : encounterAt(this.key, { kind: area.kind, biome: area.biome }, new Date(), (k) => Boolean(flags0[`beat.${k}`]), (w) => passes(w, this.condCtx()));
     if (this.encounter) {
       const lead = MONSTERS[this.encounter.enemies[0]];
       const art = MONSTER_ART[lead.sprite];
@@ -272,6 +273,7 @@ export default class AreaScene extends Phaser.Scene {
     Sound.sfx(this, 'heavy');
     this.time.delayedCall(300, () => this.scene.start('Battle', {
       enemies: this.encounter.enemies, seed: this.encounter.seed, boss: this.encounter.boss, note: this.encounter.note,
+      party: this.encounter.party, winFlag: this.encounter.flag,
       from: { layer: this.layerId, at: this.at, key: this.key, back: this.back },
     }));
   }

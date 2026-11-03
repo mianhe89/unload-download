@@ -5,8 +5,8 @@ import { BODIES, bodyOf, applyBody } from '../../src/battle/body.js';
 import { PARTY, MONSTERS } from '../../content/battles/units.js';
 
 // 자동 플레이. smart: 예고를 읽고 대응한다 (쓸어내기 예고 → 전원 방어 기술, 먼지 털기 → 그 대상 방어)
-export function autoplay({ enemies, seed, body = 'normal', smart = false, maxTurns = 400 }) {
-  const b = createBattle({ enemies, seed, body });
+export function autoplay({ enemies, seed, body = 'normal', smart = false, maxTurns = 400, party }) {
+  const b = createBattle({ enemies, seed, body, ...(party ? { party } : {}) });
   let tell = null;
   for (let i = 0; i < maxTurns && !b.result; i += 1) {
     const u = b.next();
@@ -226,6 +226,19 @@ describe('보스: 정리자의 그림자', () => {
     expect(r.orc).toBeGreaterThanOrEqual(0.95);
     expect(r.torkNaive).toBeLessThan(0.4);
     expect(r.torkSmart).toBeGreaterThan(0.6);
+  });
+
+  it('길 잃은 기사(나·루 둘이서): 예고를 읽어야 이긴다', () => {
+    const rate = (smart) => { let w = 0; for (let s = 1; s <= 40; s += 1) if (autoplay({ enemies: ['lostknight'], party: ['me', 'lu'], seed: s, smart }).result === 'win') w += 1; return w / 40; };
+    const r = { naive: rate(false), smart: rate(true) };
+    expect(r.naive).toBeLessThan(0.4);
+    expect(r.smart).toBeGreaterThan(0.6);
+  });
+
+  it('견습 시험(나 혼자 레온과): 예고를 읽으면 붙는다', () => {
+    const rate = (smart) => { let w = 0; for (let s = 1; s <= 40; s += 1) if (autoplay({ enemies: ['leon'], party: ['me'], seed: s, smart }).result === 'win') w += 1; return w / 40; };
+    const r = { naive: rate(false), smart: rate(true) };
+    expect(r.smart).toBeGreaterThan(0.8);
   });
 
   it('게이지 상한', () => expect(GAUGE).toBe(100));

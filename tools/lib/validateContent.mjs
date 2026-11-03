@@ -12,6 +12,7 @@ import { EventDirector } from '../../src/field/EventDirector.js';
 import { CG, TINTS, PORTRAITS } from '../../content/cg.js';
 import { doorStep } from '../../src/field/systems/Schedules.js';
 import { RAIDS } from '../../content/raids.js';
+import { MONSTERS } from '../../content/battles/units.js';
 
 export function validateContent() {
   const stats = {};
@@ -30,7 +31,7 @@ export function validateContent() {
   }
   const solid = (x, y) => village.isSolidTile(x, y);
   const ERASABLE = Object.values(characters).filter((c) => c.erasable).map((c) => c.id);
-  const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn', 'weatherLeak']);
+  const KNOWN_ACTS = new Set(['spawnPickups', 'spawnNpc', 'walkTo', 'walkAway', 'despawn', 'weatherLeak', 'battle']);
 
   // 습격 (content/raids.js): 무리의 인물, 출발점·목표가 걸을 수 있는 칸인지, 시각 형식, 화자
   for (const r of RAIDS) {
@@ -147,6 +148,7 @@ export function validateContent() {
         if (n.expire?.run && !S[n.expire.run]) err(`${at} 만료 컷신 없음`);
       }
       if (n.act === 'spawnNpc' && !characters[n.id]) err(`${at} 인물 없음 ${n.id}`);
+      if (n.act === 'battle') for (const id of n.enemies ?? []) if (!MONSTERS[id]) err(`${at} 전투 상대 없음 ${id}`);
     });
     // 페이즈
     for (const [pid, ph] of Object.entries(ch.phases)) {

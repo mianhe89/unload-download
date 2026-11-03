@@ -9,8 +9,6 @@ import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { toMinute } from '../../../content/world/clock.js';
 import { findPath, simplify } from './Path.js';
 import { Npc } from '../Npc.js';
-import { Sound } from '../../core/audio/Sound.js';
-import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 
 const REACH = 26;   // E로 맞설 수 있는 거리(px)
 const BUMP = 12;    // 이만큼 붙으면 부딪힌 것
@@ -25,9 +23,6 @@ export class Raids {
     this.band = [];      // { npc, id, hp, state: 'wait'|'march'|'flee'|'gone'|'arrived', delay, from }
     this.busy = false;   // 경고·결과 장면을 보여 주는 중
     this.fighting = null; // 지금 전투 중인 오크
-    const onWake = (_sys, data) => this.afterBattle(data?.battle);
-    field.events.on('wake', onWake);
-    field.events.once('shutdown', () => field.events.off('wake', onWake));
     if (typeof window !== 'undefined' && window.__ud) window.__ud.raid = (id) => this.begin(RAIDS.find((r) => r.id === id));
   }
 
@@ -108,40 +103,23 @@ export class Raids {
     return ['me', ...HELPERS.filter((id) => !WorldMemory.isErased(id))];
   }
 
-  // 사이드뷰 전투로. 토르크는 곁의 오크 하나를 데리고 싸운다
-  engage(m) {
-    if (this.fighting || this.busy) return;
+  // 사이드뷰 전투로(systems/FieldBattle). 토르크는 곁의 오크 하나를 데리고 싸운다
+  async engage(m) {
+    if (this.fighting || this.busy || this.field.battle.busy) return;
     const f = this.field;
     this.fighting = m;
     this.say(m, pick(characters[m.id].barks));
-    f.cameras.main.shake(200, 0.006);
-    Sound.sfx(f, 'heavy');
     const tork = m.id === 'tork';
-    f.time.delayedCall(300, () => {
-      f.scene.launch('Battle', {
-        party: this.party(),
-        enemies: tork ? ['tork', 'orc'] : ['orc'],
-        seed: (this.raid.day * 100 + this.band.indexOf(m)) + WorldMemory.world.loads,
-        tough: tork,
-        note: tork ? '붉은 망토의 오크가 도끼를 고쳐 쥔다. 한쪽 엄니가 부러져 있다.' : '굶주린 오크가 몽둥이를 치켜든다.',
-        winLine: tork ? '토르크가 무릎을 꿇었다가, 이를 갈며 일어나 물러난다.' : '오크가 비틀거리며 물러난다.',
-        from: { field: true, layer: 'surface' },
-      });
-      f.scene.sleep();
+    const result = await f.battle.fight({
+      party: this.party(),
+      enemies: tork ? ['tork', 'orc'] : ['orc'],
+      seed: this.raid.day * 100 + this.band.indexOf(m),
+      tough: tork,
+      note: tork ? '붉은 망토의 오크가 도끼를 고쳐 쥔다. 한쪽 엄니가 부러져 있다.' : '굶주린 오크가 몽둥이를 치켜든다.',
+      winLine: tork ? '토르크가 무릎을 꿇었다가, 이를 갈며 일어나 물러난다.' : '오크가 비틀거리며 물러난다.',
     });
-  }
-
-  // 전투에서 돌아왔다
-  afterBattle(result) {
-    const f = this.field;
-    const m = this.fighting;
     this.fighting = null;
-    // 전투에서 되돌렸다면(로드) 누군가 지워졌다: 필드에서도 사라진다
-    for (const [id, npc] of Object.entries(f.npcs ?? {})) {
-      if (WorldMemory.isErased(id)) { npc.destroy(); delete f.npcs[id]; }
-    }
-    Sound.music(f, PHASE_MUSIC[f.phaseId] ?? null, { fade: 400 });
-    if (!m || !this.raid) return;
+    if (!this.raid) return;
     if (result === 'win') { this.flee(m); return; }
     // 물러났다: 놈은 가던 길을 간다. 잠깐은 다시 부딪히지 않는다
     m.cool = 4;

@@ -92,6 +92,28 @@ export const MONSTERS = {
       { id: 'roar', name: '잿빛 함성', power: 1.15, hits: 1, target: 'all', element: 'fire', status: 'burn', tell: '횃불을 치켜들고 숨을 들이켠다 — 다음 차례, 전원에게 불길' },
     ],
   },
+  // 견습 시험의 감독 레온(2장). 쓰러뜨리려는 게 아니라 시험한다: 큰 기술은 미리 알려 주고, 받아 내는지 본다
+  leon: {
+    name: '레온', char: 'leon', element: 'wind', maxHp: 160, atk: 17, def: 13, spd: 104, evade: 0.06,
+    pattern: ['jab', 'jab', 'thrust', 'feint'],
+    skills: [
+      { id: 'jab', name: '찌르기', power: 0.8, hits: 1, target: 'one', element: 'wind' },
+      { id: 'thrust', name: '정면 일격', power: 2.2, hits: 1, target: 'one', element: 'wind', tell: '검을 어깨 위로 당긴다 — 다음 차례, 정면으로 크게 (방어하면 절반)' },
+      { id: 'feint', name: '헛손질', power: 0.4, hits: 3, target: 'one', element: 'wind' },
+    ],
+  },
+  // 2장 보스: 길 잃은 기사. 안개 길을 지키는 빈 갑옷. 기사단 시절의 순서대로 싸운다:
+  // 베기 → 베기 → 빈 돌격(예고, 한 사람에게 큰 일격) → 구령(스스로 방어·게이지) → 안개 휘감기(예고, 전원에게 약하게 + 차례 늦추기)
+  lostknight: {
+    name: '길 잃은 기사', char: 'lostknight', boss: true, element: 'dark', maxHp: 480, atk: 28, def: 14, spd: 92, evade: 0,
+    pattern: ['slash', 'slash', 'charge', 'call', 'mist'],
+    skills: [
+      { id: 'slash', name: '녹슨 베기', power: 0.9, hits: 1, target: 'one', element: 'dark' },
+      { id: 'charge', name: '빈 돌격', power: 2.8, hits: 1, target: 'one', element: 'dark', tell: '녹슨 창끝을 낮춘다 — 다음 차례, 한 사람에게 돌격 (방어하면 절반)' },
+      { id: 'call', name: '기사단 구령', power: 0, hits: 0, target: 'self', effect: { guard: true, push: 30 } },
+      { id: 'mist', name: '안개 휘감기', power: 0.6, hits: 1, target: 'all', element: 'dark', effect: { slow: 35 }, tell: '갑옷 틈으로 안개가 새어 나온다 — 다음 차례, 전원의 차례가 밀린다' },
+    ],
+  },
   // 보스: 정리자의 그림자. 모든 큰 기술을 한 차례 먼저 예고한다(로스트아크식 패턴 예고).
   // 순서대로 돈다: 먼지 털기(다단 → 회피형 유리) → 쓸어내기(전체 강타 → 방어·통통 유리) → 치우기(게이지 깎기)
   sweeper: {
