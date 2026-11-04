@@ -61,7 +61,7 @@ export const OBJECTS = {
   house_tall: { sheet: 'house', rect: [464, 0, 64, 64], foot: [2, 30, 60, 34] },
   forge: { sheet: 'house', rect: [464, 64, 48, 64], foot: [4, 30, 40, 34] },
   // 종탑: 큰 목조 회관을 바탕으로 박공 창에 종을 그려 넣은 변형본 (npm run assets가 만든다)
-  belltower: { sheet: 'gen:belltower', rect: [0, 0, 64, 80], foot: [2, 40, 60, 40] },
+  belltower: { sheet: 'gen:belltower', rect: [0, 0, 48, 112], foot: [4, 96, 40, 16] }, // 팩 색으로 찍은 돌 종탑 (tools/build-assets.mjs)
   // 집 안 가구 (팩의 TilesetElement). flat: 바닥에 깔려 사람이 밟고 지나간다(언제나 사람 아래)
   bed: { sheet: 'gen:furniture', rect: [0, 0, 16, 28], foot: [1, 4, 14, 22] },   // 침대: 팩에 없어 팩 색으로 찍었다
   bookshelf: { sheet: 'element', rect: [48, 112, 16, 32], foot: [0, 20, 16, 12] },

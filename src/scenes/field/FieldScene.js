@@ -37,6 +37,7 @@ import { Crow } from '../../field/systems/Crow.js';
 import { Animals } from '../../field/systems/Animals.js';
 import { Signs } from '../../field/systems/Signs.js';
 import { Xray } from '../../field/systems/Xray.js';
+import { Garlands } from '../../field/systems/Garlands.js';
 import { resolveGoal, hubOfMap } from '../../field/goals.js';
 import { worldNow } from '../../core/util/worldTime.js';
 import { HUBS } from '../../../content/world/world.js';
@@ -113,10 +114,12 @@ export default class FieldScene extends Phaser.Scene {
     }
 
     this.pickups = new Pickups(this);
+    this.garlands = new Garlands(this);
     this.lighting = new Lighting(this, {
       time: this.phase.time, lights: this.roomId ? this.mapDef.lights : this.phase.lights, erasedCount: WorldMemory.world.erased.length,
       spots: this.mapDef.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
     });
+    for (const l of this.garlands.lamps) this.lighting.addLight(l.x, l.y, 16, l.c, true, 0.6); // 줄등 불빛
     this.lighting.setClock(this.clock.night);
     this.ambient = new Ambient(this, { time: this.phase.time, bonfire: this.phase.bonfire, map: this.mapDef, erasedCount: WorldMemory.world.erased.length });
 

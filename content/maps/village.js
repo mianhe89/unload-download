@@ -40,7 +40,7 @@ const O = (type, x, y, extra = {}) => ({ type, at: [x, y], ...extra });
 
 export const objects = [
   // 건물 (owner: 지워지면 바뀌는 집의 주인, residents: 그 집에 사는 사람 — 하루 일과의 home이 이 집 문으로 들어간다)
-  O('belltower', 22, 5, { name: '종탑' }),
+  O('belltower', 22, 3, { name: '종탑' }),
   O('bakery', 14, 12, { owner: 'hort', name: '호르트네 빵집', nameGone: '빈 가게', residents: ['hort'] }),
   O('house_stone', 35, 12, { name: '에다의 대장간', nameGone: '빈 대장간', residents: ['eda'] }),
   O('forge', 38, 11),
@@ -86,6 +86,9 @@ for (let y = 5; y < H - 6; y += 3) {
 objects.push(...ring);
 
 // 움직이는 장식 (지나갈 수 있음)
+// 줄등: 광장 둘레의 깃대 사이와 모닥불 쪽으로 (축제 날에만, field/systems/Garlands)
+export const garlands = [[18, 13, 22, 13], [22, 13, 26, 13], [26, 13, 30, 13], [18, 13, 24, 17], [30, 13, 24, 17], [18, 21, 30, 21]];
+
 // 축제 깃발(festive): 축제 날에만 걸린다 (수확제 전날·수확제·첫눈 축제)
 export const animated = [
   { type: 'flag_red', at: [18, 13], festive: true }, { type: 'flag_yellow', at: [22, 13], festive: true },

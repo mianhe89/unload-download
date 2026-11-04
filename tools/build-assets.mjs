@@ -130,25 +130,57 @@ function buildFurniture() {
   return img;
 }
 
+// 종탑 (48×112): 팩에 종탑이 없어 팩의 색·외곽선으로 찍는다. 아래부터 돌 기단과 아치 문, 벽돌 탑신과 좁은 창,
+// 꼭대기의 아치 종루(금빛 종이 걸려 있다), 뾰족한 주황 지붕과 꼭대기 장식
 function buildBellTower() {
-  const house = readPng(join(SRC, SHEETS.house));
-  const img = crop(house, 400, 224, 64, 80);
-  const cx = 32, top = 14;
-  // 종루 창 (외곽선 + 어두운 안쪽)
-  for (let y = top - 1; y <= top + 11; y += 1) for (let x = cx - 7; x <= cx + 6; x += 1) setPx(img, x, y, '141b1b');
-  for (let y = top; y <= top + 10; y += 1) for (let x = cx - 6; x <= cx + 5; x += 1) setPx(img, x, y, '2b212a');
-  // 아치 모서리
-  [[cx - 6, top], [cx + 5, top]].forEach(([x, y]) => setPx(img, x, y, '141b1b'));
-  // 종: 위가 좁고 아래가 넓은 금색 종 + 추
-  const bell = [
-    [0, -2, 2], [1, -3, 3], [2, -3, 3], [3, -4, 4], [4, -4, 4], [5, -4, 4], [6, -5, 5],
-  ];
-  for (const [dy, x0, x1] of bell) for (let x = x0; x < x1; x += 1) setPx(img, cx + x, top + 2 + dy, x < 0 ? 'e8b84a' : 'c8902a');
-  for (let x = -5; x < 5; x += 1) setPx(img, cx + x, top + 8, '8a5a1e');
-  setPx(img, cx - 1, top + 9, 'c8902a'); setPx(img, cx, top + 9, 'c8902a');
-  setPx(img, cx - 2, top + 3, 'fff2a0'); // 반짝임
-  // 종을 거는 들보
-  for (let x = -6; x <= 5; x += 1) setPx(img, cx + x, top + 1, '5a3a24');
+  const W = 48, H = 112;
+  const img = { width: W, height: H, data: Buffer.alloc(W * H * 4) };
+  const P = { o: '141b1b', s1: 'd8c8a8', s2: 'b8a888', s3: '968670', s4: '74665a', w1: '8a5a34', w2: '6a4226', d: '2a2026',
+    r1: 'f08a46', r2: 'd06a2e', r3: 'a84e22', g1: 'f8d870', g2: 'd8a040', g3: 'a87428', b: '5a3a24' };
+  const px = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) setPx(img, x, y, P[c] ?? c); };
+  const rect = (x, y, w, h, c) => { for (let j = y; j < y + h; j += 1) for (let i = x; i < x + w; i += 1) px(i, j, c); };
+  // 기단 (넓은 돌, y 96~111)
+  rect(2, 96, 44, 16, 's2');
+  for (let y = 98; y < 111; y += 4) for (let x = 3 + ((y / 4) % 2) * 4; x < 45; x += 8) rect(x, y, Math.min(6, 46 - x), 3, 's1');
+  rect(2, 110, 44, 2, 's3');
+  // 아치 문 (가운데, 12×14)
+  rect(18, 98, 12, 14, 'w2'); rect(19, 99, 10, 13, 'w1');
+  rect(20, 97, 8, 1, 'w2'); px(23, 104, 'g2'); px(24, 104, 'g2');
+  for (let y = 99; y < 112; y += 1) px(24, y, 'w2');
+  // 탑신 (벽돌, y 50~95, 폭 36)
+  rect(6, 50, 36, 46, 's2');
+  for (let y = 50; y < 96; y += 3) for (let x = 6 + ((y / 3) % 2) * 3; x < 42; x += 6) { rect(x, y, Math.min(5, 42 - x), 2, (x + y) % 4 ? 's1' : 's2'); }
+  rect(6, 50, 3, 46, 's3'); rect(39, 50, 3, 46, 's4');
+  // 좁은 창 두 개
+  rect(22, 60, 4, 9, 'd'); rect(22, 76, 4, 9, 'd'); px(23, 60, 's3'); px(24, 76, 's3');
+  // 띠돌 (종루 아래)
+  rect(4, 46, 40, 4, 's1'); rect(4, 49, 40, 1, 's3');
+  // 종루 (y 24~45): 양옆 돌기둥, 가운데 아치 구멍, 금빛 종
+  rect(6, 24, 36, 22, 's2');
+  rect(6, 24, 6, 22, 's1'); rect(36, 24, 6, 22, 's3');
+  rect(13, 28, 22, 18, 'd');                 // 아치 안쪽 어둠
+  rect(15, 26, 18, 2, 'd'); rect(17, 25, 14, 1, 'd');
+  rect(13, 29, 22, 1, 'b');                  // 종을 거는 들보
+  // 종: 위는 좁고 아래로 넓게
+  const bell = [[0, 22, 26], [1, 21, 27], [2, 20, 28], [3, 20, 28], [4, 19, 29], [5, 19, 29], [6, 18, 30], [7, 18, 30], [8, 17, 31], [9, 17, 31]];
+  for (const [dy, x0, x1] of bell) for (let x = x0; x < x1; x += 1) px(x, 31 + dy, x < 22 ? 'g1' : x < 27 ? 'g2' : 'g3');
+  rect(17, 41, 14, 1, 'g3'); px(23, 42, 'g3'); px(24, 42, 'g3'); px(20, 33, 'ffffff');
+  // 처마
+  rect(2, 22, 44, 3, 'b'); rect(2, 24, 44, 1, '3a2618');
+  // 지붕 (뾰족, y 4~21)
+  for (let y = 4; y < 22; y += 1) {
+    const half = Math.round(((y - 4) / 17) * 23) + 1;
+    for (let x = 24 - half; x < 24 + half; x += 1) px(x, y, x < 24 - half / 3 ? 'r1' : x < 24 + half / 3 ? 'r2' : 'r3');
+    if (y % 3 === 0) for (let x = 24 - half + 1; x < 24 + half - 1; x += 2) px(x, y, 'r3');
+  }
+  // 꼭대기 장식 (까마귀가 앉는 자리)
+  rect(23, 0, 2, 5, 'b'); rect(21, 1, 6, 1, 'b');
+  // 외곽선: 불투명한 칸 둘레를 어둡게
+  const a = (x, y) => x >= 0 && y >= 0 && x < W && y < H && img.data[(y * W + x) * 4 + 3] > 0;
+  const edge = [];
+  for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) if (!a(x, y) && (a(x - 1, y) || a(x + 1, y) || a(x, y - 1) || a(x, y + 1))) edge.push([x, y]);
+  // 그림 안쪽 가장자리를 외곽선으로 (그림 크기 안에서)
+  for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) if (a(x, y) && (!a(x - 1, y) || !a(x + 1, y) || !a(x, y - 1) || !a(x, y + 1))) px(x, y, 'o');
   return img;
 }
 

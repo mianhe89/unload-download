@@ -27,6 +27,7 @@ export const phases = {
   prep: {
     festive: true, // 광장의 축제 깃발
     sleepTo: 'prep.sleep', // 침대에서 자면 저녁(수확제 날)로
+    garlandsWhen: { ifFlag: 'prep.ready' }, // 미아가 줄등을 다 걸고 부른 뒤부터
     place: '수확제 전날',
     time: 'day',
     bonfire: 'out',

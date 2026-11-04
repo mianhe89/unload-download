@@ -51,17 +51,13 @@ describe('에셋 빌드', () => {
     }
   });
 
-  it('종탑은 회관 그림에 종을 그려 넣은 변형본이다', () => {
+  it('종탑은 돌 탑에 종루와 금빛 종이 있는 그림이다 (48×112)', () => {
     const tower = readPng(join(GEN, manifest.sheets['gen:belltower']));
-    expect([tower.width, tower.height]).toEqual([64, 80]);
-    const house = readPng(join(SRC, SHEETS.house));
-    // 같은 자리 원본과 비교해 종 부분이 달라야 한다
-    let changed = 0;
-    for (let y = 12; y < 26; y += 1) for (let x = 25; x < 39; x += 1) {
-      const a = (y * 64 + x) * 4, b = ((224 + y) * house.width + 400 + x) * 4;
-      if (tower.data[a] !== house.data[b]) changed += 1;
-    }
-    expect(changed).toBeGreaterThan(60);
+    expect([tower.width, tower.height]).toEqual([48, 112]);
+    // 종루(y 31~41)에 금빛 종 픽셀이 있다
+    let gold = 0;
+    for (let y = 31; y < 42; y += 1) for (let x = 17; x < 31; x += 1) { const i = (y * 48 + x) * 4; if (tower.data[i] > 160 && tower.data[i + 1] > 110 && tower.data[i + 2] < 120) gold += 1; }
+    expect(gold).toBeGreaterThan(40);
   });
 
   it('원본 폴더에 라이선스 기록이 있다', async () => {

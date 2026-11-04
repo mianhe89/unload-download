@@ -4,7 +4,7 @@
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { TILE } from '../../../content/maps/village.js';
 
-const PERCH = { x: 22 * TILE + 34, y: 5 * TILE + 10 }; // 종탑 지붕 꼭대기 (belltower: at [22, 5], 64×80)
+const PERCH = { x: 22 * TILE + 24, y: 3 * TILE + 2 }; // 종탑 꼭대기 장식 (belltower: at [22, 3], 48×112)
 const FRAME = { down: 0, up: 1, left: 2, right: 3 };     // 팩의 걷는 몬스터 시트: 열이 방향
 
 export class Crow {
