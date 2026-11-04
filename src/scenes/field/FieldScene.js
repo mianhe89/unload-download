@@ -47,15 +47,19 @@ export default class FieldScene extends Phaser.Scene {
 
   // entry: 마을 밖 길에서 돌아올 때 들어오는 쪽 ('n' 등). 없으면 페이즈의 시작 자리
   // back: 다른 마을(옆 마을 등)에 들렀을 때, 길로 나가 다시 고향으로 돌아갈 { chapter, phase, time }
-  init({ chapter, phase, entry, back }) {
+  // room: 건물 안(content/maps의 room 맵, 예: 우리 집). 같은 페이즈·같은 시각 그대로, 사람과 이벤트는 바깥에 두고 들어간다
+  // spawn: 이 칸에서 시작 (집에서 나올 때 문 앞)
+  init({ chapter, phase, entry, back, room, spawn }) {
     this.entry = entry ?? null;
+    this.roomId = room ?? null;
+    this.spawn = spawn ?? null;
     // 고향(우리 마을)에서 나갈 땐 돌아올 페이즈를 세이브에 남긴다 → 다른 마을에서 이어하기를 해도 고향으로 돌아갈 수 있다
     this.back = back ?? WorldMemory.run.home ?? null;
     this.chapterId = chapter;
     this.chapter = chapters[chapter];
     this.phaseId = phase ?? this.chapter.firstPhase;
     this.phase = this.chapter.phases[this.phaseId];
-    this.mapDef = mapOf(this.phase); // 페이즈의 map (기본 우리 마을)
+    this.mapDef = this.roomId ? MAPS[this.roomId] : mapOf(this.phase); // 페이즈의 map (기본 우리 마을), 건물 안이면 그 방
     this.home = this.mapDef === MAPS.village;
     this.elapsed = 0;
     this.leaving = false;
@@ -72,18 +76,18 @@ export default class FieldScene extends Phaser.Scene {
     this.ui = this.scene.get('UI');
 
     // 맵
-    this.openExits = this.phase.exits ?? this.mapDef.openExits ?? [];
+    this.openExits = (this.roomId ? null : this.phase.exits) ?? this.mapDef.openExits ?? [];
     this.map = new MapRenderer(this, this.mapDef, { open: this.openExits });
     this.add.image(0, 0, this.map.renderGround()).setOrigin(0).setDepth(-1000);
     this.map.placeObjects();
 
     // 인물
     const p = this.phase.player;
-    const at = this.entry ? this.mapDef.entry(this.entry) : p.at;
-    this.player = new Player(this, at[0], at[1], this.entry ? { n: 'down', s: 'up', w: 'right', e: 'left' }[this.entry] : p.face);
+    const at = this.spawn ?? (this.entry ? this.mapDef.entry(this.entry) : p.at);
+    this.player = new Player(this, at[0], at[1], this.spawn ? 'down' : this.entry ? { n: 'down', s: 'up', w: 'right', e: 'left' }[this.entry] : p.face);
     this.npcs = {};
     this.props = [];
-    for (const [id, cfg] of Object.entries(this.phase.npcs ?? {})) {
+    for (const [id, cfg] of Object.entries(this.roomId ? {} : this.phase.npcs ?? {})) {
       if (cfg.when && !passes(cfg.when, this.ctx())) continue;
       if (WorldMemory.isErased(id)) this.placeRemnant(id, cfg.at);
       else this.npcs[id] = new Npc(this, id, cfg);
@@ -93,16 +97,17 @@ export default class FieldScene extends Phaser.Scene {
     this.schedules.place();
     // 생활 자리: 빵집 진열대·집·우물·허수아비에서 E (밤엔 잠만)
     // 생활 자리는 우리 마을에만 있다
-    this.lifeSpots = LIFE_SPOTS.filter((l) => this.home && !(l.needs && WorldMemory.isErased(l.needs)) && (!l.when || passes(l.when, this.ctx())) && (!(this.clock.running ? this.clock.isNight : this.phase.time === 'night') || l.action === 'sleep'))
+    const spots = this.roomId ? this.mapDef.life ?? [] : this.home ? LIFE_SPOTS : [];
+    this.lifeSpots = spots.filter((l) => !(l.needs && WorldMemory.isErased(l.needs)) && (!l.when || passes(l.when, this.ctx())) && (!(this.clock.running ? this.clock.isNight : this.phase.time === 'night') || l.action === 'sleep'))
       .map((l) => ({ ...l, x: l.at[0] * TILE + TILE / 2, y: l.at[1] * TILE + TILE / 2 }));
-    for (const prop of this.phase.props ?? []) {
+    for (const prop of (this.roomId ? this.mapDef.props : this.phase.props) ?? []) {
       if (prop.when && !passes(prop.when, this.ctx())) continue;
       this.addProp(prop.prop, prop.at, prop.text);
     }
 
     this.pickups = new Pickups(this);
     this.lighting = new Lighting(this, {
-      time: this.phase.time, lights: this.phase.lights, erasedCount: WorldMemory.world.erased.length,
+      time: this.phase.time, lights: this.roomId ? this.mapDef.lights : this.phase.lights, erasedCount: WorldMemory.world.erased.length,
       spots: this.mapDef.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
     });
     this.lighting.setClock(this.clock.night);
@@ -110,12 +115,15 @@ export default class FieldScene extends Phaser.Scene {
 
     // 카메라
     const cam = this.cameras.main;
-    cam.setZoom(ZOOM).setBounds(0, 0, this.map.width, this.map.height).startFollow(this.player.sprite, true, 0.15, 0.15);
+    // 화면보다 작은 맵(집 안)은 가운데에 둔다
+    const viewW = cam.width / ZOOM, viewH = cam.height / ZOOM;
+    const bx = Math.min(0, (this.map.width - viewW) / 2), by = Math.min(0, (this.map.height - viewH) / 2);
+    cam.setZoom(ZOOM).setBounds(bx, by, Math.max(this.map.width, viewW), Math.max(this.map.height, viewH)).startFollow(this.player.sprite, true, 0.15, 0.15);
     cam.setRoundPixels(true);
     cam.fadeIn(700, 0, 0, 0);
 
     // 이벤트와 컷신
-    this.director = new EventDirector(this.phase.events ?? []);
+    this.director = new EventDirector(this.roomId ? [] : this.phase.events ?? []);
     this.cutscene = new Cutscene(this, this.chapter.script, this.ctx());
     this.quests = new Quests(this);
     this.clues = new Clues(this);
@@ -126,10 +134,10 @@ export default class FieldScene extends Phaser.Scene {
     // UI 씬이 준비된 다음 프레임에 연결
     this.time.delayedCall(0, () => {
       this.ui.toScreen = (x, y) => this.worldToScreen(x, y);
-      this.ui.hud.setPlace(this.phase.place);
+      this.ui.hud.setPlace(this.roomId ? this.mapDef.name : this.phase.place);
       this.refreshObjective();
       this.ui.bubbles.clear();
-      if (this.phase.onEnter && !WorldMemory.run.flags[`entered.${this.chapterId}.${this.phaseId}`]) {
+      if (!this.roomId && this.phase.onEnter && !WorldMemory.run.flags[`entered.${this.chapterId}.${this.phaseId}`]) {
         WorldMemory.setFlag(`entered.${this.chapterId}.${this.phaseId}`);
         this.cutscene.play(this.phase.onEnter);
       }
@@ -191,6 +199,7 @@ export default class FieldScene extends Phaser.Scene {
       this.updateAmbient(dt);
       this.watchCount(dt);
       this.checkExit();
+      this.checkDoor();
     } else {
       this.ui.hud.showPrompt(null);
     }
@@ -562,6 +571,8 @@ export default class FieldScene extends Phaser.Scene {
   // prop: 코드로 그린 소품(prop.<이름>) 또는 팩 물체(OBJECTS의 이름)
   addProp(prop, at, text) {
     const def = OBJECTS[prop];
+    // dust: 준 사람이 지워진 물건의 자리 — 먼지 자국만 남는다
+    if (prop === 'dust') { const sprite = this.add.ellipse(px(at[0]), px(at[1]) + 2, 11, 5, 0x6a5a4a, 0.35).setDepth(px(at[1]) - 4); this.props.push({ sprite, text }); return; }
     const sprite = def
       ? this.add.image(px(at[0]), px(at[1]) + TILE / 2, `sheet.${def.sheet}`, prop).setOrigin(0.5, 1).setDepth(px(at[1]) + TILE / 2)
       : this.add.image(px(at[0]), px(at[1]), `prop.${prop}`).setDepth(px(at[1]) - 4);
@@ -581,6 +592,7 @@ export default class FieldScene extends Phaser.Scene {
     const atEdge = { n: ty <= 1, s: ty >= H - 2, w: tx <= 1, e: tx >= W - 2 };
     const e = this.mapDef.exits.find((x) => this.openExits.includes(x.dir) && atEdge[x.dir]);
     if (!e) return;
+    if (e.back) { this.leaveRoom(); return; }
     this.leaving = true;
     this.cameras.main.fadeOut(350, 0, 0, 0);
     this.time.delayedCall(380, () => this.scene.start('Area', {
@@ -588,6 +600,27 @@ export default class FieldScene extends Phaser.Scene {
       // 고향이 아니면, 길에서 고향으로 돌아갈 때 쓸 페이즈를 그대로 들고 나간다
       back: this.leaveBack(),
     }));
+  }
+
+  // 문(맵 doors)으로 몸을 들이밀면 들어간다. 따로 키를 누르지 않는다(기획서 '지도')
+  checkDoor() {
+    if (this.leaving || this.roomId || !this.mapDef.doors || this.cutscene.busy) return;
+    const tx = Math.floor(this.player.x / TILE), ty = Math.floor(this.player.y / TILE);
+    const d = this.mapDef.doors.find((o) => o.at[0] === tx && o.at[1] === ty);
+    if (!d || !this.player.pressed('up')) return;
+    this.leaving = true;
+    this.clock.save();
+    Sound.sfx(this, 'step');
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    this.time.delayedCall(320, () => this.scene.restart({ chapter: this.chapterId, phase: this.phaseId, room: d.room, entry: 's', back: this.back }));
+  }
+
+  leaveRoom() {
+    this.leaving = true;
+    this.clock.save();
+    const door = (mapOf(this.phase).doors ?? []).find((o) => o.room === this.roomId);
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    this.time.delayedCall(320, () => this.scene.restart({ chapter: this.chapterId, phase: this.phaseId, spawn: door ? [door.at[0], door.at[1] + 1] : null, back: this.back }));
   }
 
   leaveBack() {

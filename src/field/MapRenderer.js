@@ -120,7 +120,7 @@ export class MapRenderer {
       for (let px = 0; px < this.width; px += B) {
         const f = this.fogAt(px + B / 2, py + B / 2);
         if (f <= 0) continue;
-        ctx.fillStyle = `rgba(214,218,230,${f.toFixed(3)})`;
+        ctx.fillStyle = `rgba(${this.map.fogColor ?? '214,218,230'},${f.toFixed(3)})`; // 집 안은 어두운 벽 그늘
         ctx.fillRect(px, py, B, B);
       }
     }

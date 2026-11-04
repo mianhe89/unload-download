@@ -103,6 +103,9 @@ export const exits = [
 ];
 export const entry = (dir) => ({ n: [34, FOG + 1] })[dir];
 
+// 건물 문: 문 앞 칸에서 위로 몸을 들이밀면 그 방(content/maps)으로 들어간다
+export const doors = [{ at: [16, 27], room: 'myhome' }];
+
 const EDGE = FOG + 1;
 const inGap = (tx, ty, open) => exits.some((e) => open.includes(e.dir) && e.dir === 'n' && ty < EDGE && tx >= e.from && tx < e.to2);
 export function isSolidPx(px, py, open = []) {

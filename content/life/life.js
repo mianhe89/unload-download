@@ -29,10 +29,9 @@ export const MINDS = {
 };
 
 // 마을에서 행동하는 자리 (칸 좌표, content/maps/village.js 기준). when: 그 조건일 때만 (대본 조건 문법)
+// 잠자리와 집밥은 집 안에 있다(content/maps/myhome.js의 life)
 export const LIFE_SPOTS = [
   { action: 'honeyBread', at: [15, 16], needs: 'hort' },   // 빵집 진열대 (호르트가 지워지면 없다)
-  { action: 'homeMeal', at: [16, 28] },                   // 우리 집 앞
-  { action: 'sleep', at: [17, 28] },
   { action: 'water', at: [8, 26] },                       // 우물 (루가 서는 자리를 피해 위쪽)
   { action: 'drill', at: [11, 24] },                      // 허수아비 (아침 꼬마 자리를 피해 왼쪽 아래)
   { action: 'chestnut', at: [26, 16], when: { ifFlag: 'ch3.started' } }, // 겨울 장, 북쪽 상인의 좌판 앞 (3장)

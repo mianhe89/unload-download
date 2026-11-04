@@ -39,6 +39,7 @@ export const THEMES = {
   cave: { offset: [0, 7], decor: false, tint: 'rgb(150,130,150)' },        // 갱도: 어두운 흙
   lava: { offset: [0, 7], decor: false, tint: 'rgb(255,120,70)' },          // 불의 산·용암 지대: 달궈진 땅
   void: { offset: [-11, 7], decor: false, tint: 'rgb(120,90,200)' },        // 은하: 보랏빛 바닥
+  room: { offset: [0, 7], decor: false, tint: 'rgb(240,196,150)' },        // 집 안: 다져진 흙바닥에 등불 빛
   // water: 땅(g) 자리에 물을 깐다. 길(d)은 모래 자동 타일 = 물 위의 모래섬
   sea: { offset: [-11, -7], decor: false, water: { plain: [1, 1], variants: [[11, 1]] } },
 };

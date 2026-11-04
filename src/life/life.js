@@ -89,6 +89,6 @@ export function statusLines(base, life) {
     `체형 ${b.name} — 체력 ${st.maxHp} · 공격 ${st.atk} · 방어 ${st.def} · 속도 ${st.spd} · 회피 ${Math.round(st.evade * 100)}%`,
     `마음가짐 ${m.name} — ${m.desc}`,
     `여유 ${life.mind.relaxed} · 부지런함 ${life.mind.diligent} · 단단함 ${life.mind.firm}`,
-    life.fatigue >= 70 ? '지쳐 있다: 공격·속도 -10%. 쉬어야 한다.' : '',
+    life.fatigue >= 70 ? '지쳐 있다: 공격·속도 -10%. 집에 가서 한숨 자야겠다.' : life.fatigue >= 40 ? '조금 피곤하다. 집 짚 침대가 생각난다.' : '',
   ].filter(Boolean);
 }
