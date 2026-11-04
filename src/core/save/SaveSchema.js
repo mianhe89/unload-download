@@ -28,7 +28,7 @@ import { freshFarm } from '../../farm/farm.js';
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 9;
+export const VERSION = 10;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -76,6 +76,14 @@ const MIGRATIONS = {
   7: (s) => ({ ...s, version: 8, run: s.run ? { ...s.run, home: null } : null }),
   // v8 → v9: 가방. 기존 진행은 빈 가방으로
   8: (s) => ({ ...s, version: 9, run: s.run ? { ...s.run, bag: freshBag() } : null }),
+  // v9 → v10: 장비 칸이 늘었다(투구·신발·장갑·악세사리 1·2·목걸이·배낭·보조장비·무기 2). 예전 '장신구' 칸의 것은 제자리로
+  9: (s) => {
+    if (!s.run?.equip) return { ...s, version: 10 };
+    const { trinket, ...rest } = s.run.equip;
+    const equip = { ...rest };
+    if (trinket === 'mirrorBuckler') equip.offhand = trinket; else if (trinket) equip.acc1 = trinket;
+    return { ...s, version: 10, run: { ...s.run, equip } };
+  },
 };
 
 export function migrate(raw) {

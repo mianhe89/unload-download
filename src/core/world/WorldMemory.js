@@ -39,7 +39,7 @@ export const WorldMemory = {
     SaveRepository.update((d) => { d.run.where = where; });
   },
 
-  // 장비 { weapon, armor, trinket } — 바꾸면 주인공 도트와 액션 전투 스킬이 바뀐다
+  // 장비 { head, armor, boots, gloves, acc1, acc2, necklace, backpack, offhand, weapon, weapon2 } — 바꾸면 주인공 도트와 액션 전투 스킬이 바뀐다
   setEquip(equip) {
     SaveRepository.update((d) => { d.run.equip = equip; });
   },

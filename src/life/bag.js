@@ -1,5 +1,6 @@
 // 가방 규칙(순수): 넣기·꺼내기, 보이는 목록, 선물 결과. 가방 자체는 세이브 run.bag { items: { id: n }, gifted: { 인물: 날짜 } }.
 // 재료(목재·돌)는 행동 파밍(run.farm.items)에 있는 걸 그대로 보여 준다.
+import { SLOT_FITS } from '../../content/action/action.js';
 import { ITEMS, GIFT_LINES, GIFT_AGAIN } from '../../content/items.js';
 
 export const MAX_STACK = 9;
@@ -20,7 +21,7 @@ export function takeItem(bag, id) {
 }
 
 // 가방에 보이는 목록: [{ id, def, count, worn }] — 먹을 것, 전투, 장비, 재료, 소중한 것 순
-// gear: 가진 장비 { id: n } (run.gear), equip: 입은 장비 { weapon, armor, trinket }
+// gear: 가진 장비 { id: n } (run.gear), equip: 입은 장비 (content/action/action.js의 EQUIP_SLOTS)
 export function listBag(bag, { farmItems = {}, flags = {}, gear = {}, equip = {} } = {}) {
   const out = [];
   const worn = new Set(Object.values(equip).filter(Boolean));
@@ -56,6 +57,19 @@ export function toggleEquip(equip, id, defaults) {
   const def = ITEMS[id];
   if (!def || def.kind !== 'gear') return equip;
   const e = { ...defaults, ...(equip ?? {}) };
-  e[def.slot] = e[def.slot] === id ? defaults[def.slot] : id;
+  const fits = SLOT_FITS[def.slot] ?? [def.slot];
+  const at = fits.find((k) => e[k] === id);
+  if (at) { e[at] = defaults[at] === id ? null : defaults[at] ?? null; return e; } // 입고 있으면 벗는다
+  // 빈 칸(또는 기본 장비 칸)부터, 없으면 첫 칸을 바꾼다
+  const slot = fits.find((k) => !e[k] || e[k] === defaults[k]) ?? fits[0];
+  e[slot] = id;
+  return e;
+}
+
+// 무기 1·2 바꿔 들기
+export function swapWeapons(equip, defaults) {
+  const e = { ...defaults, ...(equip ?? {}) };
+  if (!e.weapon2) return e;
+  [e.weapon, e.weapon2] = [e.weapon2, e.weapon];
   return e;
 }

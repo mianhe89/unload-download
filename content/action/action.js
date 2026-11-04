@@ -44,7 +44,8 @@ export const QUICK_DEFAULT = ['bandage', 'herb', 'potion', 'antidote', 'ointment
 export const STARTER_KIT = { bandage: 5, herb: 3, potion: 1, antidote: 2, ointment: 1 };
 
 // ── 장비 ────────────────────────────────────────────────────
-//   slot: weapon | armor | trinket
+//   slot(장비의 종류): head 투구 | armor 갑옷 | boots 신발 | gloves 장갑 | accessory 악세사리(1·2칸) | necklace 목걸이
+//                     | backpack 배낭 | offhand 보조장비 | weapon 무기(1·2칸, 2는 예비 — 바꿔 들 수 있다)
 //   mods: 스킬을 바꾼다 — { skill, ...덮어쓸 값 } (form: 이름·모양까지 바꾸는 변형)
 //   set: 세트 이름
 //   look: 주인공 도트에 입힐 색 (장비 외형) — body: [밝은 색, 어두운 색] 옷 두 톤을 바꾼다, blade: 칼날 색(액션 전투에서 보인다)
@@ -58,12 +59,12 @@ export const EQUIPMENT = {
   },
   knightPlate: { name: '기사단 흉갑', slot: 'armor', rarity: 'rare', def: 0.1, set: 'knight', desc: '받는 피해 -10%.', look: { body: ['c8d0e0', '6a7488'] } },
   mirrorBuckler: {
-    name: '거울 방패', slot: 'trinket', rarity: 'epic', unique: true,
+    name: '거울 방패', slot: 'offhand', rarity: 'epic', unique: true,
     mods: [{ skill: 'e', blocksShots: true, reflect: true }],
     desc: '막기가 탄환·원거리 공격도 막고 되받아친다.',
   },
   wanderCoat:  { name: '나그네 외투', slot: 'armor', rarity: 'uncommon', def: 0.05, desc: '받는 피해 -5%. 눈길에서 얻은 두꺼운 외투.', look: { body: ['b89a6a', '6a5236'] } },
-  emberCharm:  { name: '불씨 부적', slot: 'trinket', rarity: 'uncommon', mods: [{ skill: 'atk', status: { id: 'burn', chance: 0.2 } }], desc: '기본 공격이 20% 확률로 화상을 입힌다.' },
+  emberCharm:  { name: '불씨 부적', slot: 'accessory', rarity: 'uncommon', mods: [{ skill: 'atk', status: { id: 'burn', chance: 0.2 } }], desc: '기본 공격이 20% 확률로 화상을 입힌다.' },
 };
 export const SETS = {
   knight: {
@@ -71,7 +72,14 @@ export const SETS = {
     bonus: { 2: { desc: '휘두르기 출혈 확정, 돌진 재사용 -1초', mods: [{ skill: 'w', status: { id: 'bleed', chance: 1 } }, { skill: 'r', cdAdd: -1 }] } },
   },
 };
-export const EQUIP_DEFAULT = { weapon: 'woodSword', armor: null, trinket: null };
+// 장비 칸: 장비 종류 → 들어갈 수 있는 칸
+export const EQUIP_SLOTS = ['head', 'armor', 'boots', 'gloves', 'acc1', 'acc2', 'necklace', 'backpack', 'offhand', 'weapon', 'weapon2'];
+export const SLOT_FITS = {
+  head: ['head'], armor: ['armor'], boots: ['boots'], gloves: ['gloves'], accessory: ['acc1', 'acc2'],
+  necklace: ['necklace'], backpack: ['backpack'], offhand: ['offhand'], weapon: ['weapon', 'weapon2'],
+};
+export const ACTIVE_SLOTS = EQUIP_SLOTS.filter((k) => k !== 'weapon2'); // 무기 2는 예비: 바꿔 들기 전엔 효과가 없다
+export const EQUIP_DEFAULT = { weapon: 'woodSword', weapon2: null, armor: null, head: null, boots: null, gloves: null, acc1: null, acc2: null, necklace: null, backpack: null, offhand: null };
 
 // ── 보스 2단계 ──────────────────────────────────────────────
 //   attacks: 차례로 돈다. tell = 예고 시간(바닥에 빨간 표시), 그 뒤에 판정

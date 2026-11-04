@@ -14,7 +14,8 @@ const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI;
 // 장비 → 실제로 쓸 스킬 (유니크·세트 효과로 모양까지 바뀐다)
 export function skillsFor(equip = {}) {
   const sk = structuredClone(BASE_SKILLS);
-  const ids = Object.values(equip).filter(Boolean);
+  // 무기 2(예비)는 들고 있지 않으니 효과가 없다
+  const ids = Object.entries(equip).filter(([k, v]) => v && k !== 'weapon2').map(([, v]) => v);
   const mods = ids.flatMap((id) => EQUIPMENT[id]?.mods ?? []);
   for (const set of Object.values(SETS)) {
     const n = set.pieces.filter((p) => ids.includes(p)).length;

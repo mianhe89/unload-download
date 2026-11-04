@@ -68,8 +68,8 @@ describe('장비가 스킬을 바꾼다', () => {
   });
   it('거울 방패: 막기가 탄환을 막고 되받아친다', () => {
     expect(skillsFor({}).skills.e.blocksShots).toBe(false);
-    expect(skillsFor({ trinket: 'mirrorBuckler' }).skills.e).toMatchObject({ blocksShots: true, reflect: true });
-    const a = createAction({ seed: 1, equip: { trinket: 'mirrorBuckler' } });
+    expect(skillsFor({ offhand: 'mirrorBuckler' }).skills.e).toMatchObject({ blocksShots: true, reflect: true });
+    const a = createAction({ seed: 1, equip: { offhand: 'mirrorBuckler' } });
     const s = a.state;
     s.b.timer = 99; // 보스는 가만히
     s.shots.push({ x: s.p.x, y: s.p.y - 30, vx: 0, vy: 80, r: 4, dmg: 9, from: 'boss', life: 3 });
