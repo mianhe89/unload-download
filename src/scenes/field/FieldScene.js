@@ -189,6 +189,7 @@ export default class FieldScene extends Phaser.Scene {
       for (const r of runs) { WorldMemory.setFlag(`done.${r.id}`); this.cutscene.play(r.run); }
       this.updateInteraction();
       this.updateAmbient(dt);
+      this.watchCount(dt);
       this.checkExit();
     } else {
       this.ui.hud.showPrompt(null);
@@ -257,6 +258,9 @@ export default class FieldScene extends Phaser.Scene {
   talkTo(npc) {
     npc.faceToward(this.player.x, this.player.y);
     if (this.quests.onTalk(npc.id)) return; // 퀘스트 단계의 대화, 또는 그 사람이 주는 퀘스트
+    // 그 사람에게 걸린 이벤트가 아직 남아 있으면 말을 거는 순간 그걸로 (다가가며 놓친 일도 이어진다)
+    const ev = this.director.pendingFor(npc.id, this.world());
+    if (ev) { WorldMemory.setFlag(`done.${ev.id}`); this.cutscene.play(ev.run); return; }
     const label = `talk.${this.phaseId}.${npc.id}`;
     const seen = `talked.${this.chapterId}.${this.phaseId}.${npc.id}`;
     if (this.cutscene.has(label) && !WorldMemory.run.flags[seen]) {
@@ -512,7 +516,28 @@ export default class FieldScene extends Phaser.Scene {
     // 습격 중이면 지킬 곳이 먼저다
     if (this.raids?.raid?.kind === 'raid' && !this.raids.busy) { this.ui.hud.setObjective(`${this.raids.raid.targetName}을(를) 지켜라`); return; }
     const step = this.quests?.tracked()?.step;
-    this.ui.hud.setObjective(objectiveText(step ? step.text : this.phase.objective, this.absence()));
+    this.ui.hud.setObjective(objectiveText(step ? this.stepText(step) : this.phase.objective, this.absence()));
+  }
+
+  watchCount(dt) {
+    this.countTimer = (this.countTimer ?? 0) - dt;
+    if (this.countTimer > 0) return;
+    this.countTimer = 0.5;
+    const step = this.quests?.tracked()?.step;
+    if (!step?.count) return;
+    const before = this.countDone;
+    this.stepText(step);
+    if (before !== this.countDone) this.refreshObjective();
+  }
+
+  // 단계에 count({ of: { 인물: 플래그 }, n })가 있으면: 도울 수 있는 사람(지워지지 않은)과 몇 명 도왔나
+  stepText(step) {
+    if (!step.count) return step.text;
+    const left = Object.entries(step.count.of).filter(([id]) => !WorldMemory.isErased(id));
+    const done = left.filter(([, f]) => WorldMemory.run.flags[f]).length;
+    const names = left.filter(([, f]) => !WorldMemory.run.flags[f]).map(([id]) => characters[id]?.name ?? id);
+    this.countDone = done;
+    return `${step.text} (${done}/${step.count.n})${names.length ? ` — ${names.join(' · ')}` : ''}`;
   }
 
   // 잠자리에 든다: 다음 날 아침 6시, 같은 하루(또는 phase.next)를 새로 시작한다

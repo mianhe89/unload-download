@@ -18,6 +18,16 @@ export class EventDirector {
   }
 
   // 이번 프레임에 실행할 { run, id } 목록과 띄울 말풍선 목록
+  // 그 사람에게 걸린, 지금 일어날 수 있는 이벤트(가까이 가기·곁에 머물기·가만히 서 있기). 말을 걸면(E) 바로 일으킨다.
+  // 다가가기만 하면 저절로 일어나는 일을 놓치고 지나쳐도, 그 사람에게 말을 걸면 이어진다.
+  pendingFor(id, world) {
+    const ev = this.events.find((e) => !e.fired && !world.flag(`done.${e.id}`) && (!e.when || world.passes(e.when))
+      && [e.trigger.near, e.trigger.dwell].includes(id) && !e.trigger.running && !e.trigger.pickedAll && !e.trigger.afterFlag);
+    if (!ev) return null;
+    ev.fired = true;
+    return { id: ev.id, run: ev.run };
+  }
+
   update(dt, world, busy) {
     const runs = [];
     const bubbles = [];

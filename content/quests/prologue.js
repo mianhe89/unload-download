@@ -5,7 +5,10 @@ export const quests = [
     id: 'q.prologue', title: '수확제 다음 날', kind: 'main',
     start: { auto: true, when: { unlessFlag: 'done.keeper' } },
     steps: [
-      { text: '마을을 돌며 축제 준비를 돕는다 (세 군데 이상)', done: { flag: 'prep.ready' } },
+      {
+        text: '마을 사람 셋의 축제 준비를 돕는다 (곁에 가서 E)', done: { flag: 'prep.ready' },
+        count: { n: 3, of: { eda: 'ev.prep.eda', hort: 'ev.prep.hort', rine: 'ev.prep.rine', per: 'ev.prep.per', tom: 'ev.prep.tom', selena: 'ev.prep.selena' } },
+      },
       { text: '광장의 미아에게 간다', done: { flag: 'done.prep.end' } },
       { text: '수확제의 밤을 즐긴다 (광장 사람들을 돕거나, 미아 곁에 있어 보자)', done: { flag: 'eda.met' } },
       { text: '자정의 종소리를 듣는다', done: { flag: 'done.bells' } },
