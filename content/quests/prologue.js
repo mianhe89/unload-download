@@ -6,7 +6,7 @@ export const quests = [
     start: { auto: true, when: { unlessFlag: 'done.keeper' } },
     steps: [
       {
-        text: '마을 사람 셋의 축제 준비를 돕는다 (곁에 가서 E)', done: { flag: 'prep.ready' },
+        text: '마을 사람 셋의 축제 준비를 돕는다', done: { flag: 'prep.ready' },
         count: { n: 3, of: { eda: 'ev.prep.eda', hort: 'ev.prep.hort', rine: 'ev.prep.rine', per: 'ev.prep.per', tom: 'ev.prep.tom', selena: 'ev.prep.selena' } },
       },
       { text: '광장의 미아에게 간다', done: { flag: 'done.prep.end' } },

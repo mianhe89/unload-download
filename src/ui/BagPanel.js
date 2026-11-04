@@ -97,7 +97,7 @@ export class BagPanel {
       box.add(text(sc, rx, y0 + 44 * s, it.def.name, { size: 14, bold: true, color: r.glow }));
       box.add(text(sc, x0 + W - 36 * s, y0 + 47 * s, it.def.kind === 'gear' ? `${r.name} · ${SLOT[it.def.slot]}` : r.name, { size: 10, color: r.glow }).setOrigin(1, 0));
       box.add(text(sc, rx, y0 + 72 * s, it.def.desc, { size: 12, color: COLORS.text, lineSpacing: 6 * s, wordWrap: { width: x0 + W - 36 * s - rx, useAdvancedWrap: true } }));
-      if (it.def.kind === 'food') box.add(text(sc, rx, y0 + H - 54 * s, '곁에 있는 사람에게 Enter로 건넨다', { size: 10, color: COLORS.sub }));
+      if (it.def.kind === 'food') box.add(text(sc, rx, y0 + H - 54 * s, '곁에 있는 사람에게 건넬 수 있다', { size: 10, color: COLORS.sub }));
       if (it.def.kind === 'gear') box.add(text(sc, rx, y0 + H - 54 * s, it.worn ? 'Enter로 벗는다' : 'Enter로 입는다 (보스 2단계의 스킬이 바뀐다)', { size: 10, color: COLORS.sub }));
       if (it.def.kind === 'battle') box.add(text(sc, rx, y0 + H - 54 * s, '보스 2단계에서 1~8로 쓴다', { size: 10, color: COLORS.sub }));
     }
