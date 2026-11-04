@@ -4,6 +4,8 @@
 // 처음 듣는 대화는 호감도가 1 오른다 (aff로 바꿀 수 있다).
 // 이야기 진행용 대화(talk.<페이즈>.<인물> 컷신)가 있으면 그게 먼저 한 번 나온다.
 
+import { TALK_ROADS } from './roads.js';
+
 export const TALK = {
   // ── 히로인 ───────────────────────────────────────────────
   mia: {
@@ -185,6 +187,9 @@ export const TALK = {
     ],
   },
 };
+
+// 2~4장·길 위의 마을들의 대화(content/talk/roads.js)를 인물·페이즈별로 합친다
+for (const [id, byPhase] of Object.entries(TALK_ROADS)) TALK[id] = { ...TALK[id], ...byPhase };
 
 // 처음 들을 때 오르는 호감도 (인물별로 바꾸고 싶으면 여기)
 export const TALK_AFF = 1;
