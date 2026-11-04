@@ -253,6 +253,8 @@ export default class FieldScene extends Phaser.Scene {
 
   // E: 가장 가까운 인물/물건에 말 걸기·살펴보기
   updateInteraction() {
+    // 창(메뉴·가방·수첩)이 열려 주인공이 멈춰 있는 동안엔 E가 사람에게 가지 않는다
+    if (this.player.frozen) { this.ui.hud.showPrompt(null); return; }
     const target = this.nearestInteractable();
     this.ui.hud.showPrompt(target ? this.worldToScreen(target.x, target.y - 20) : null);
     // 습격 중이면 E는 먼저 곁의 몬스터에 맞서는 데 쓴다

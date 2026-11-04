@@ -8,6 +8,7 @@ import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
 import { BagPanel } from '../../ui/BagPanel.js';
 import { ChoiceBox } from '../../ui/ChoiceBox.js';
+import { PauseMenu } from '../../ui/PauseMenu.js';
 import { Minimap } from '../../ui/Minimap.js';
 import { SignPlate } from '../../ui/SignPlate.js';
 import { NameTags } from '../../ui/NameTags.js';
@@ -20,6 +21,14 @@ export default class UIScene extends Phaser.Scene {
   constructor() { super('UI'); }
 
   create() {
+    // ESC: 다른 창(가방·수첩·상태·선택지)이 열려 있거나 대화 중이면 그쪽이 닫히고, 아니면 메뉴(PauseMenu).
+    // 이 판단을 가장 먼저 등록해서, 창들이 스스로 닫히기 전의 상태를 본다
+    this.input.keyboard.on('keydown-ESC', () => {
+      if (this.pause?.open) { this.pause.back(); return; }
+      if (this.bag?.open || this.notebook?.open || this.status?.open || this.dialog?.open || this.choice?.open) return;
+      if (!['Field', 'Area'].some((k) => this.scene.isActive(k))) return;
+      this.pause.show();
+    });
     this.dialog = new DialogBox(this);
     this.cg = new CgLayer(this);
     this.bubbles = new SpeechBubbles(this);
@@ -31,6 +40,7 @@ export default class UIScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-J', () => this.notebook.toggle());
     this.bag = new BagPanel(this);
     this.choice = new ChoiceBox(this);
+    this.pause = new PauseMenu(this);
     this.minimap = new Minimap(this);
     this.sign = new SignPlate(this);
     this.names = new NameTags(this);
