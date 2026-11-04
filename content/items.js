@@ -39,7 +39,7 @@ export const ITEMS = {
 
 // 전투 소모품(행동 파밍처럼 run.farm.items에 쌓인다)과 장비(run.gear)도 가방에 보인다
 for (const [id, c] of Object.entries(CONSUMABLES)) ITEMS[id] = { name: c.name, kind: 'battle', rarity: c.rarity, desc: c.desc, farm: true };
-for (const [id, e] of Object.entries(EQUIPMENT)) ITEMS[id] = { name: e.name, kind: 'gear', rarity: e.rarity, desc: e.desc, slot: e.slot };
+for (const [id, e] of Object.entries(EQUIPMENT)) ITEMS[id] = { name: e.name, kind: 'gear', rarity: e.rarity, desc: e.desc, slot: e.slot, atk: e.atk ?? 0, def: e.def ?? 0 };
 
 // 받았을 때 반가움 정도별 기본 말
 export const GIFT_LINES = {

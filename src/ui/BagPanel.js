@@ -5,7 +5,7 @@
 import Phaser from 'phaser';
 import { COLORS, frame, text, scaleOf, titleBand } from './kit.js';
 import { WorldMemory } from '../core/world/WorldMemory.js';
-import { listBag, toggleEquip, swapWeapons } from '../life/bag.js';
+import { listBag, toggleEquip, swapWeapons, toggleLook } from '../life/bag.js';
 import { RARITY } from '../../content/items/items.js';
 import { EQUIP_DEFAULT, ACTIVE_SLOTS } from '../../content/action/action.js';
 import { ITEMS } from '../../content/items.js';
@@ -44,6 +44,7 @@ export class BagPanel {
     on('E', () => this.setTab(this.tab + 1));
     on('ENTER', () => this.use());
     on('X', () => this.swap());
+    on('V', () => this.dress());
     on('ESC', () => this.close());
   }
 
@@ -87,6 +88,14 @@ export class BagPanel {
 
   wear(id) { this.setEquip(toggleEquip(WorldMemory.run.equip, id, EQUIP_DEFAULT)); }
 
+  // V: 의장 — 고른 갑옷을 겉모습으로만 입는다 (성능은 입은 장비대로)
+  dress() {
+    const it = this.list()[this.pick];
+    if (!it || it.def.kind !== 'gear') return;
+    WorldMemory.setLook(toggleLook(WorldMemory.run.look, it.id));
+    this.setEquip(WorldMemory.run.equip ?? EQUIP_DEFAULT);
+  }
+
   setEquip(equip) {
     WorldMemory.setEquip(equip);
     const f = this.field();
@@ -106,6 +115,7 @@ export class BagPanel {
     if (sc.textures.exists(`icon.${it.id}`)) box.add(sc.add.image(x + size / 2, y + size / 2, `icon.${it.id}`).setScale((size * 0.72) / 16));
     if (it.def.kind !== 'key' && it.def.kind !== 'gear' && it.count > 1) box.add(text(sc, x + size - 3 * s, y + size - 2 * s, `${it.count}`, { size: 9, bold: true, color: '#fbf8f2' }).setOrigin(1, 1).setStroke('#1a1418', 3 * s));
     if (it.worn) box.add(text(sc, x + 3 * s, y + 2 * s, 'E', { size: 8, bold: true, color: COLORS.accent }).setStroke('#1a1418', 3 * s));
+    if (WorldMemory.run?.look?.armor === it.id) box.add(text(sc, x + size - 3 * s, y + 2 * s, 'V', { size: 8, bold: true, color: '#9ad0ff' }).setOrigin(1, 0).setStroke('#1a1418', 3 * s));
     return g;
   }
 
@@ -179,9 +189,12 @@ export class BagPanel {
       const kind = { food: '먹을 것', battle: '전투에 쓰는 것', gear: `장비 · ${KIND_SLOT[it.def.slot] ?? ''}`, material: '재료', key: '소중한 것' }[it.def.kind];
       box.add(text(sc, rx + rw - 12 * s, dy + 14 * s, `${r.name} · ${kind}`, { size: 10, color: r.glow }).setOrigin(1, 0));
       box.add(text(sc, rx + 12 * s, dy + 34 * s, it.def.desc ?? '', { size: 11, color: COLORS.text, lineSpacing: 4 * s, wordWrap: { width: rw - 24 * s, useAdvancedWrap: true } }));
-      const hint = { food: '곁에 있는 사람에게 건넬 수 있다', gear: it.worn ? '입고 있다' : '입을 수 있다', battle: '보스와 맞설 때 꺼내 쓴다' }[it.def.kind];
+      const dressed = WorldMemory.run?.look?.armor === it.id;
+      const canDress = it.def.kind === 'gear' && toggleLook({}, it.id).armor === it.id;
+      const gearHint = `${it.worn ? '입고 있다' : '입을 수 있다'}${canDress ? (dressed ? ' · 의장으로 보인다 (V 벗기)' : ' · V 의장으로') : ''}`;
+      const hint = { food: '곁에 있는 사람에게 건넬 수 있다', gear: gearHint, battle: '보스와 맞설 때 꺼내 쓴다' }[it.def.kind];
       if (hint) box.add(text(sc, rx + rw - 12 * s, y0 + H - 46 * s, hint, { size: 10, color: COLORS.sub }).setOrigin(1, 0.5));
     }
-    box.add(text(sc, x0 + W - 24 * s, y0 + H - 16 * s, 'Q·E 탭   방향키 고르기   Enter 건네기·입기   X 무기 바꿔 들기   I 닫기', { size: 10, color: COLORS.dim }).setOrigin(1, 0.5));
+    box.add(text(sc, x0 + W - 24 * s, y0 + H - 16 * s, 'Q·E 탭   방향키 고르기   Enter 건네기·입기   V 의장   X 무기 바꿔 들기   I 닫기', { size: 10, color: COLORS.dim }).setOrigin(1, 0.5));
   }
 }

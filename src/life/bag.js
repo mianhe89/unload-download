@@ -2,6 +2,10 @@
 // 재료(목재·돌)는 행동 파밍(run.farm.items)에 있는 걸 그대로 보여 준다.
 import { SLOT_FITS } from '../../content/action/action.js';
 import { ITEMS, GIFT_LINES, GIFT_AGAIN } from '../../content/items.js';
+import { EQUIPMENT } from '../../content/action/action.js';
+
+// 겉모습(옷 색)이 있는 장비
+const LOOKS = new Set(Object.entries(EQUIPMENT).filter(([, e]) => e.look?.body).map(([id]) => id));
 
 export const MAX_STACK = 9;
 export const freshBag = () => ({ items: {}, gifted: {} });
@@ -72,4 +76,13 @@ export function swapWeapons(equip, defaults) {
   if (!e.weapon2) return e;
   [e.weapon, e.weapon2] = [e.weapon2, e.weapon];
   return e;
+}
+
+// 의장 입기·벗기 (순수): 겉모습이 있는 장비(갑옷)만. 같은 걸 다시 고르면 의장을 벗는다(입은 장비대로 보인다)
+export function toggleLook(look, id) {
+  const def = ITEMS[id];
+  if (!def || def.kind !== 'gear' || !LOOKS.has(id)) return look ?? {};
+  const l = { ...(look ?? {}) };
+  if (l.armor === id) delete l.armor; else l.armor = id;
+  return l;
 }

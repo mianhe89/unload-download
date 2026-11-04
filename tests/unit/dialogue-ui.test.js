@@ -165,3 +165,29 @@ describe('감정 말풍선', async () => {
     expect(plain('[emote=love]고마워!')).toBe('고마워!');
   });
 });
+
+describe('의장: 성능과 따로 겉모습만', async () => {
+  const { toggleLook } = await import('../../src/life/bag.js');
+  const { shownArmor, equipPalette, SHIRT } = await import('../../src/art/equipLook.js');
+  it('의장을 입으면 입은 갑옷 대신 그 옷 색으로 보인다', () => {
+    const equip = { armor: 'knightPlate' };
+    const look = toggleLook({}, 'wanderCoat');
+    expect(shownArmor(equip, look)).toBe('wanderCoat');
+    expect(equipPalette(equip, look)[SHIRT[0]]).toBe('b89a6a');
+    expect(shownArmor(equip, toggleLook(look, 'wanderCoat'))).toBe('knightPlate');
+  });
+  it('겉모습이 없는 장비(무기 등)는 의장이 안 된다', () => {
+    expect(toggleLook({}, 'twinEdge')).toEqual({});
+  });
+});
+
+describe('가방의 장비 수치', async () => {
+  const { ITEMS } = await import('../../content/items.js');
+  const { EQUIPMENT } = await import('../../content/action/action.js');
+  it('가방에 보이는 장비의 공격·방어가 장비 표와 같다 (가방 아래 합계가 맞게)', () => {
+    for (const [id, e] of Object.entries(EQUIPMENT)) {
+      expect(ITEMS[id].atk, id).toBe(e.atk ?? 0);
+      expect(ITEMS[id].def, id).toBe(e.def ?? 0);
+    }
+  });
+});

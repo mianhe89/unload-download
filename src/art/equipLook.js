@@ -3,14 +3,22 @@
 import { EQUIPMENT } from '../../content/action/action.js';
 import { characters } from '../../content/characters/index.js';
 import { CHAR } from '../../content/art/pack.js';
+import { WorldMemory } from '../core/world/WorldMemory.js';
+
+// 지금 진행의 의장 (없으면 빈칸)
+const WorldMemoryLook = () => WorldMemory.run?.look ?? {};
 
 // 주인공 옷 색 (content/characters/me.js의 재채색 결과: 밝은 셔츠, 어두운 셔츠)
 const ME = characters.me.sprite.recolor;
 export const SHIRT = [ME.e3f1f5, ME['548789']];
 
 // 순수: 장비 → { 원래색: 바꿀색 } (없으면 null)
-export function equipPalette(equip = {}) {
-  const armor = equip.armor && EQUIPMENT[equip.armor]?.look?.body;
+// 의장(look): 성능과 따로 겉모습만 정하는 칸. look.armor가 있으면 입은 갑옷 대신 그 옷 색으로 보인다
+export const shownArmor = (equip = {}, look = {}) => look?.armor ?? equip?.armor ?? null;
+
+export function equipPalette(equip = {}, look = {}) {
+  const shown = shownArmor(equip, look);
+  const armor = shown && EQUIPMENT[shown]?.look?.body;
   if (!armor) return null;
   return { [SHIRT[0]]: armor[0], [SHIRT[1]]: armor[1] };
 }
@@ -18,10 +26,10 @@ export function equipPalette(equip = {}) {
 export const bladeColor = (equip = {}) => EQUIPMENT[equip.weapon]?.look?.blade ?? 'b08a5a'; // 목검은 나무색
 
 // 실행 중: base 스킨에 장비 색을 입힌 텍스처·걷기 애니메이션을 만들고 그 키(char.<id>의 id)를 돌려준다
-export function equipSkin(scene, baseSkin, equip) {
-  const pal = equipPalette(equip);
+export function equipSkin(scene, baseSkin, equip, look = WorldMemoryLook()) {
+  const pal = equipPalette(equip, look);
   if (!pal) return baseSkin;
-  const id = `${baseSkin}+${equip.armor}`;
+  const id = `${baseSkin}+${shownArmor(equip, look)}`;
   const key = `char.${id}`;
   if (!scene.textures.exists(key)) {
     const src = scene.textures.get(`char.${baseSkin}`).getSourceImage();

@@ -28,7 +28,7 @@ import { freshFarm } from '../../farm/farm.js';
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 10;
+export const VERSION = 11;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -46,6 +46,7 @@ export const freshRun = (chapter = 'prologue', phase = 'prep') => ({
   life: freshLife(),
   farm: freshFarm(),
   bag: freshBag(),
+  look: {},
   flags: {},
   quests: {},
   clues: [],
@@ -84,6 +85,8 @@ const MIGRATIONS = {
     if (trinket === 'mirrorBuckler') equip.offhand = trinket; else if (trinket) equip.acc1 = trinket;
     return { ...s, version: 10, run: { ...s.run, equip } };
   },
+  // v11: 의장(겉모습만 정하는 칸)
+  10: (s) => ({ ...s, version: 11, run: s.run ? { ...s.run, look: s.run.look ?? {} } : null }),
 };
 
 export function migrate(raw) {

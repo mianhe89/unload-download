@@ -45,6 +45,11 @@ export const WorldMemory = {
   },
 
   // 가진 장비 { id: 개수 }
+  // 의장 { armor } — 성능과 따로 겉모습만 (가방에서 V)
+  setLook(look) {
+    SaveRepository.update((d) => { d.run.look = look; });
+  },
+
   setGear(gear) {
     SaveRepository.update((d) => { d.run.gear = gear; });
   },
