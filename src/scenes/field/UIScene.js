@@ -8,6 +8,7 @@ import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
 import { BagPanel } from '../../ui/BagPanel.js';
 import { ChoiceBox } from '../../ui/ChoiceBox.js';
+import { Minimap } from '../../ui/Minimap.js';
 import { NotebookPanel } from '../../ui/NotebookPanel.js';
 import { COLORS, text, scaleOf, frame } from '../../ui/kit.js';
 import { TouchControls } from '../../ui/TouchControls.js';
@@ -28,6 +29,7 @@ export default class UIScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-J', () => this.notebook.toggle());
     this.bag = new BagPanel(this);
     this.choice = new ChoiceBox(this);
+    this.minimap = new Minimap(this);
     this.input.keyboard.on('keydown-I', () => this.bag.toggle());
     this.toasts = [];
     // 휴대폰: 조이스틱과 E·C 버튼. E는 대화가 떠 있으면 넘기고, 아니면 살펴보기
@@ -51,7 +53,7 @@ export default class UIScene extends Phaser.Scene {
     ['E', 'SPACE', 'ENTER'].forEach((k) => this.input.keyboard.on(`keydown-${k}`, advance));
   }
 
-  update() { this.bubbles.update(this.toScreen); this.touch?.update(); }
+  update(_, deltaMs) { this.bubbles.update(this.toScreen); this.touch?.update(); this.minimap.update(deltaMs / 1000); }
 
   say(name, color, text, face, expr) { return this.dialog.say(name, color, text, face, expr); }
   closeDialog() { this.dialog.close(); }

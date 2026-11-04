@@ -312,6 +312,15 @@ export default class AreaScene extends Phaser.Scene {
     });
   }
 
+  // 작은 지도(ui/Minimap)에 넘길 것: 이 칸의 맵, 나, 떠돌이(흰 점)와 몬스터(붉은 점)
+  minimapInfo() {
+    if (!this.player?.sprite?.active) return null;
+    const people = [];
+    if (this.traveler) people.push({ x: this.traveler.x / 16, y: this.traveler.y / 16 });
+    if (this.monster?.active) people.push({ x: this.monster.x / 16, y: this.monster.y / 16, foe: true });
+    return { key: this.key, map: this.area, name: this.area.name, player: { x: this.player.x / 16, y: this.player.y / 16 }, people };
+  }
+
   // 대본 조건(when)을 길 맵에서 볼 때 쓰는 최소한의 상태
   condCtx() {
     return {

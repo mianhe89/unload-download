@@ -602,6 +602,19 @@ export default class FieldScene extends Phaser.Scene {
     }));
   }
 
+  // 작은 지도(ui/Minimap)에 넘길 것: 맵, 나, 사람들(할 일이 남은 사람은 task)
+  minimapInfo() {
+    if (!this.player?.sprite?.active) return null;
+    const w = this.world();
+    const step = this.quests?.tracked()?.step;
+    const want = new Set([step?.done?.talk, ...Object.keys(step?.count?.of ?? {}).filter((id) => !WorldMemory.run.flags[step.count.of[id]])].filter(Boolean));
+    return {
+      key: this.roomId ?? this.mapDef.id ?? 'village', map: this.mapDef, name: this.roomId ? this.mapDef.name : this.phase.place,
+      player: { x: this.player.x / TILE, y: this.player.y / TILE },
+      people: Object.values(this.npcs).map((n) => ({ x: n.x / TILE, y: n.y / TILE, task: want.has(n.id) || this.director.hasPendingFor(n.id, w) })),
+    };
+  }
+
   // 문(맵 doors)으로 몸을 들이밀면 들어간다. 따로 키를 누르지 않는다(기획서 '지도')
   checkDoor() {
     if (this.leaving || this.roomId || !this.mapDef.doors || this.cutscene.busy) return;

@@ -5,7 +5,7 @@
 import { COLORS, frame, text } from './kit.js';
 import { Sound } from '../core/audio/Sound.js';
 
-const KEYS = [['WASD', '이동'], ['E', '살펴보기'], ['I', '가방'], ['J', '수첩'], ['C', '상태'], ['M', '소리']];
+const KEYS = [['WASD', '이동'], ['E', '살펴보기'], ['I', '가방'], ['J', '수첩'], ['C', '상태'], ['+−', '지도'], ['M', '소리']];
 
 // 키캡 하나: 밝은 윗면 + 어두운 아랫단(눌리는 키처럼)
 function keycap(scene, g, x, y, label, s) {

@@ -28,6 +28,12 @@ export class EventDirector {
     return { id: ev.id, run: ev.run };
   }
 
+  // 그 사람에게 지금 일어날 수 있는 이벤트가 남았나 (일으키지는 않는다 — 작은 지도의 노란 점)
+  hasPendingFor(id, world) {
+    return this.events.some((e) => !e.fired && !world.flag(`done.${e.id}`) && (!e.when || world.passes(e.when))
+      && [e.trigger.near, e.trigger.dwell].includes(id) && !e.trigger.running);
+  }
+
   update(dt, world, busy) {
     const runs = [];
     const bubbles = [];
