@@ -21,6 +21,7 @@ test('우물에서 E → 체중·근육이 변하고, 스테이터스 창에 보
   await page.waitForTimeout(600);
   await page.keyboard.press('c');
   await page.waitForFunction(() => window.__game.scene.getScene('UI').status.open);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/status.png` });
   const text = await page.evaluate(() => window.__game.scene.getScene('UI').status.body.text);
   expect(text).toContain('체중');
   expect(text).toContain('마음가짐');
