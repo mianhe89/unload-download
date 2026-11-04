@@ -6,11 +6,13 @@
 //   b.next()                     → 다음 행동할 유닛 (게이지를 진행시킨다)
 //   b.use(unitId, skillId, target) → 이벤트 목록 (아군 차례)
 //   b.enemyTurn(unitId)          → 이벤트 목록 (적 차례: 예고 또는 실행)
+//   b.useItem(unitId, itemId, target) → 이벤트 목록 (아군 차례에 소모품. 차례 하나를 쓴다)
 //   b.result                     → 'win' | 'lose' | null
 import { PARTY, MONSTERS } from '../../content/battles/units.js';
 import { applyBody } from './body.js';
 import { battleStats } from '../life/life.js';
 import { applySkills } from '../farm/farm.js';
+import { CONSUMABLES } from '../../content/action/action.js';
 
 export const GAUGE = 100;
 export const BURST = { max: 100, deal: 9, take: 6 }; // 궁극기 게이지: 맞힌 타마다 +9, 맞은 타마다 +6
@@ -123,6 +125,26 @@ export function createBattle({ party = ['me', 'selena', 'lu'], enemies, seed = 1
       const s = skillOf(u, sid);
       if (!u || !s || u.cooldowns[sid] > 0) throw new Error(`쓸 수 없는 스킬: ${uid}.${sid}`);
       return this.perform(u, s, targetUid);
+    },
+
+    // 소모품이 그 대상에게 쓸모가 있나 (체력이 닳았거나 풀 상태가 있거나)
+    itemHelps(itemId, targetUid) {
+      const c = CONSUMABLES[itemId]?.turn, t = byId(targetUid);
+      if (!c || !t || t.hp <= 0) return false;
+      return Boolean((c.heal && t.hp < t.maxHp) || (c.cures ?? []).some((k) => t.status[k] > 0));
+    },
+
+    // 아군 차례에 소모품 하나: 쓰는 사람의 차례가 끝난다
+    useItem(uid, itemId, targetUid) {
+      const u = byId(uid), c = CONSUMABLES[itemId]?.turn;
+      if (!u || !c) throw new Error(`쓸 수 없는 소모품: ${itemId}`);
+      const t = alive(u.side).find((x) => x.uid === targetUid) ?? u;
+      const ev = [{ type: 'item', from: u.uid, to: t.uid, id: itemId, name: CONSUMABLES[itemId].name }];
+      if (c.heal && t.hp < t.maxHp) { const n = Math.min(c.heal, t.maxHp - t.hp); t.hp += n; ev.push({ type: 'heal', to: t.uid, amount: n }); }
+      for (const k of c.cures ?? []) if (t.status[k] > 0) { delete t.status[k]; ev.push({ type: 'cure', to: t.uid, status: k }); }
+      ev.push(...this.endTurn(u));
+      this.log.push(...ev);
+      return ev;
     },
 
     // 적 차례: 예고(tell) 있는 기술은 한 차례 먼저 알리고 다음 차례에 쓴다

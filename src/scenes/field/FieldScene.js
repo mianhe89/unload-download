@@ -645,6 +645,7 @@ export default class FieldScene extends Phaser.Scene {
   }
 
   worldToScreen(x, y) {
+    if (!this.cameras?.main) return { x: -9999, y: -9999 }; // 장면이 다시 시작되는 사이엔 카메라가 없다
     const cam = this.cameras.main;
     return { x: (x - cam.worldView.x) * cam.zoom, y: (y - cam.worldView.y) * cam.zoom };
   }

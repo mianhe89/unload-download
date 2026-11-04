@@ -1,7 +1,7 @@
 // 사이드뷰 전투 씬. 규칙은 전부 src/battle/engine.js(순수 로직)에 있고, 여기선 그리고 입력만 받는다.
 //   위:   차례 순서(속도 게이지 미리보기), 보스 예고
 //   가운데: 왼쪽 아군 / 오른쪽 적, 머리 위 체력 막대
-//   아래:   지금 차례인 아군의 스킬 1·2·3, ←→ 대상, Enter/Space/E 실행
+//   아래:   지금 차례인 아군의 스킬 Q·W·E, 궁극기 R, 그 위 퀵슬롯 1~8(소모품 — 아군을 ←→로 골라 쓴다, 차례 하나), Enter/Space 실행
 // 지면: 되돌리기(로드 = 누군가 지워진다) 또는 물러나기. 이기면 길 맵으로 돌아간다.
 import Phaser from 'phaser';
 import { FONT } from '../../config/game.js';
@@ -12,7 +12,7 @@ import { freshFarm } from '../../farm/farm.js';
 import { BODIES } from '../../battle/body.js';
 import { ELEMENTS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
-import { ACTION_BOSSES } from '../../../content/action/action.js';
+import { ACTION_BOSSES, QUICK_DEFAULT, CONSUMABLES } from '../../../content/action/action.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { characters } from '../../../content/characters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
@@ -33,7 +33,7 @@ export default class BattleScene extends Phaser.Scene {
     this.data0 = data;
     this.busy = false;
     this.leaving = false;
-    this.cursor = { skill: 0, target: 0 };
+    this.cursor = { skill: 0, target: 0, item: null };
     this.sprites = {};
   }
 
@@ -73,8 +73,20 @@ export default class BattleScene extends Phaser.Scene {
     this.who = this.add.text(28 * this.s, H - 108 * this.s, '', { fontFamily: FONT, fontSize: `${13 * this.s}px`, color: COLOR.gold });
     this.skillTexts = [0, 1, 2, 3].map((i) => this.add.text(28 * this.s + i * 228 * this.s, H - 84 * this.s, '', { fontFamily: FONT, fontSize: `${12 * this.s}px`, color: COLOR.text, wordWrap: { width: 218 * this.s } })
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.cursor.skill = i; this.confirm(); }));
-    this.hint = this.add.text(W - 28 * this.s, H - 108 * this.s, 'Q·W·E 스킬  R 궁극기  ←→ 대상  Enter 실행', { fontFamily: FONT, fontSize: `${11 * this.s}px`, color: COLOR.dim }).setOrigin(1, 0);
-    this.panel.add([this.panelBg, this.who, ...this.skillTexts, this.hint]);
+    this.hint = this.add.text(W - 28 * this.s, H - 108 * this.s, 'Q·W·E 스킬  R 궁극기  1~8 아이템  ←→ 대상  Enter 실행', { fontFamily: FONT, fontSize: `${11 * this.s}px`, color: COLOR.dim }).setOrigin(1, 0);
+    // 퀵슬롯 1~8: 명령 창 아랫줄
+    this.quick = WorldMemory.run?.quick ?? QUICK_DEFAULT;
+    this.quickG = this.add.graphics();
+    const QS = 28 * this.s, qx0 = 28 * this.s, qy = H - 46 * this.s;
+    this.quickCells = [...Array(8)].map((_, i) => {
+      const x = qx0 + i * (QS + 6 * this.s);
+      const icon = this.add.image(x + QS / 2, qy + QS / 2, '__DEFAULT').setVisible(false);
+      const key = this.add.text(x + 3 * this.s, qy + 1 * this.s, `${i + 1}`, { fontFamily: FONT, fontSize: `${9 * this.s}px`, color: COLOR.gold }).setShadow(1, 1, '#000', 0);
+      const count = this.add.text(x + QS - 3 * this.s, qy + QS - 1 * this.s, '', { fontFamily: FONT, fontSize: `${10 * this.s}px`, color: COLOR.text }).setOrigin(1, 1).setShadow(1, 1, '#000', 0);
+      const hit = this.add.zone(x, qy, QS, QS).setOrigin(0, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.pickItem(i));
+      return { x, y: qy, size: QS, icon, key, count, hit };
+    });
+    this.panel.add([this.panelBg, this.who, ...this.skillTexts, this.hint, this.quickG, ...this.quickCells.flatMap((c) => [c.icon, c.key, c.count, c.hit])]);
     this.panel.setVisible(false);
     this.targetMark = this.add.text(0, 0, '▼', { fontFamily: FONT, fontSize: `${16 * this.s}px`, color: COLOR.gold }).setOrigin(0.5, 1).setVisible(false);
     this.tweens.add({ targets: this.targetMark, y: '+=4', duration: 400, yoyo: true, repeat: -1 });
@@ -83,6 +95,11 @@ export default class BattleScene extends Phaser.Scene {
     const kb = this.input.keyboard;
     // 스킬 Q W E, 궁극기 R (같은 키를 두 번 누르면 바로 실행)
     ['Q', 'W', 'E', 'R'].forEach((k, i) => kb.on(`keydown-${k}`, () => this.pickSkill(i)));
+    // 퀵슬롯 1~8 (같은 숫자를 두 번 누르면 바로 쓴다)
+    ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT'].forEach((k, i) => {
+      kb.on(`keydown-${k}`, () => this.pickItem(i));
+      kb.on(`keydown-NUMPAD_${k}`, () => this.pickItem(i));
+    });
     kb.on('keydown-LEFT', () => this.moveTarget(-1));
     kb.on('keydown-RIGHT', () => this.moveTarget(1));
     kb.on('keydown-A', () => this.moveTarget(-1));
@@ -188,14 +205,32 @@ export default class BattleScene extends Phaser.Scene {
       this.skillTexts[i].setText(`${'QWE'[i]}. ${s.name}${tag}\n${usable.has(s.id) ? desc : `쉬는 중 (${cd})`}`).setColor(usable.has(s.id) ? COLOR.text : COLOR.dim);
     });
     this.cursor.skill = [0, 1, 2].find((i) => usable.has(u.skills[i].id)) ?? 0;
+    this.cursor.item = null;
     this.cursor.target = Math.min(this.cursor.target, this.targets().length - 1);
     this.panel.setVisible(true);
     this.highlight();
   }
 
-  // 지금 고른 칸의 스킬 (4번째 = 궁극기)
+  bag() { return WorldMemory.run?.farm?.items ?? {}; }
+
+  // 퀵슬롯 칸: 그림·개수·고른 칸 테두리. 다 떨어졌거나 빈 칸은 흐리게
+  drawQuick() {
+    const g = this.quickG.clear(), s = this.s, bag = this.bag();
+    this.quickCells.forEach((c, i) => {
+      const id = this.quick[i], n = id ? bag[id] ?? 0 : 0, on = this.cursor.item === i;
+      g.fillStyle(0x000000, 0.5).fillRoundedRect(c.x, c.y, c.size, c.size, 4 * s);
+      g.lineStyle((on ? 2 : 1) * s, on ? 0xffd27a : 0x8a6038, 1).strokeRoundedRect(c.x, c.y, c.size, c.size, 4 * s);
+      const has = id && this.textures.exists(`icon.${id}`);
+      c.icon.setVisible(Boolean(has));
+      if (has) c.icon.setTexture(`icon.${id}`).setScale((c.size * 0.66) / 16).setAlpha(n > 0 ? 1 : 0.3);
+      c.count.setText(id ? `${n}` : '').setColor(n > 0 ? COLOR.text : COLOR.dim);
+    });
+  }
+
+  // 지금 고른 칸의 스킬 (4번째 = 궁극기). 아이템을 골랐으면 아군 하나를 대상으로 하는 것으로 본다
   chosen() {
     const u = this.current;
+    if (this.cursor.item !== null) return { target: 'ally', item: this.quick[this.cursor.item] };
     return this.cursor.skill === 3 ? u?.ultimate : u?.skills[this.cursor.skill];
   }
 
@@ -214,7 +249,8 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   highlight() {
-    this.skillTexts.forEach((t, i) => t.setBackgroundColor(i === this.cursor.skill ? '#5a4030' : null));
+    this.skillTexts.forEach((t, i) => t.setBackgroundColor(this.cursor.item === null && i === this.cursor.skill ? '#5a4030' : null));
+    this.drawQuick();
     const ts = this.targets();
     const t = ts[this.cursor.target % Math.max(1, ts.length)];
     if (t) { const v = this.sprites[t.uid]; this.targetMark.setPosition(v.x, v.top - 30 * this.s).setVisible(true); } else this.targetMark.setVisible(false);
@@ -224,8 +260,27 @@ export default class BattleScene extends Phaser.Scene {
     if (this.busy || !this.panel.visible) return;
     Sound.sfx(this, 'ui', { volume: 0.2 });
     if (!this.canUse(i)) return;
-    if (this.cursor.skill === i) { this.confirm(); return; } // 같은 숫자 두 번 = 바로 실행
-    this.cursor.skill = i; this.cursor.target = 0; this.highlight();
+    if (this.cursor.item === null && this.cursor.skill === i) { this.confirm(); return; } // 같은 키 두 번 = 바로 실행
+    this.cursor.skill = i; this.cursor.item = null; this.cursor.target = 0; this.highlight();
+  }
+
+  // 퀵슬롯: 고르면 대상은 아군(가장 다친 사람부터). 같은 숫자 두 번 = 바로 쓴다
+  pickItem(i) {
+    if (this.busy || !this.panel.visible) return;
+    const id = this.quick[i];
+    if (!id) return;
+    Sound.sfx(this, 'ui', { volume: 0.2 });
+    if (!(this.bag()[id] > 0)) { this.say(`${ITEMS[id]?.name ?? id}이(가) 다 떨어졌다.`, COLOR.dim); return; }
+    if (this.cursor.item === i) { this.confirm(); return; }
+    this.cursor.item = i;
+    const allies = this.targets();
+    const worst = allies.reduce((a, b, k) => (b.hp / b.maxHp < allies[a].hp / allies[a].maxHp ? k : a), 0);
+    this.cursor.target = worst;
+    const c = CONSUMABLES[id]?.turn ?? {};
+    const STATUS = { burn: '화상', poison: '중독', weak: '약화' };
+    const what = [c.heal && `체력 ${c.heal} 회복`, c.cures?.length && `${c.cures.map((k) => STATUS[k] ?? k).join('·')}을 푼다`].filter(Boolean).join(', ');
+    this.say(`${ITEMS[id]?.name ?? id} — ${what}`, COLOR.dim);
+    this.highlight();
   }
 
   moveTarget(d) {
@@ -237,6 +292,7 @@ export default class BattleScene extends Phaser.Scene {
   confirm() {
     if (this.busy || !this.panel.visible) return;
     const u = this.current;
+    if (this.cursor.item !== null) { this.useItem(); return; }
     if (!this.canUse(this.cursor.skill)) return;
     const s = this.chosen();
     const t = this.targets()[this.cursor.target];
@@ -244,6 +300,20 @@ export default class BattleScene extends Phaser.Scene {
     this.panel.setVisible(false);
     this.targetMark.setVisible(false);
     this.play(this.battle.use(u.uid, s.id, t?.uid), u);
+  }
+
+  // 소모품 쓰기: 가방에서 하나 덜고, 쓰는 사람의 차례가 끝난다
+  useItem() {
+    const u = this.current, id = this.quick[this.cursor.item];
+    const t = this.targets()[this.cursor.target];
+    if (!id || !t || !(this.bag()[id] > 0)) return;
+    if (!this.battle.itemHelps(id, t.uid)) { this.say(`지금 ${t.name}에게는 쓸 데가 없다.`, COLOR.dim); return; }
+    const farm = WorldMemory.run.farm ?? freshFarm();
+    WorldMemory.setFarm({ ...farm, items: { ...farm.items, [id]: farm.items[id] - 1 } });
+    this.busy = true;
+    this.panel.setVisible(false);
+    this.targetMark.setVisible(false);
+    this.play(this.battle.useItem(u.uid, id, t.uid), u);
   }
 
   // 이벤트 연출: 한 줄씩 짧게
@@ -285,6 +355,13 @@ export default class BattleScene extends Phaser.Scene {
       this.tweens.add({ targets: t, y: t.y - 28 * this.s, alpha: 0, duration: 900, onComplete: () => t.destroy() });
       if (e.type === 'cancel') { this.say(`${name(e.to)}의 예고가 지워졌다`, COLOR.gold); Sound.sfx(this, 'spirit'); }
       if (e.type === 'burn') Sound.sfx(this, 'hit', { volume: 0.2, rate: 0.7 });
+      this.refresh();
+    }
+    if (e.type === 'item') { this.say(`${name(e.from)} — ${e.name}${e.to !== e.from ? ` → ${name(e.to)}` : ''}`); Sound.sfx(this, 'pickup'); }
+    if (e.type === 'heal' || e.type === 'cure') {
+      const v = this.sprites[e.to];
+      const t = this.add.text(v.x, v.top - 8 * this.s, e.type === 'heal' ? `+${e.amount}` : '화상이 가라앉았다', { fontFamily: FONT, fontSize: `${(e.type === 'heal' ? 15 : 12) * this.s}px`, color: '#8ae09a' }).setOrigin(0.5).setShadow(2, 2, '#000', 0);
+      this.tweens.add({ targets: t, y: t.y - 28 * this.s, alpha: 0, duration: 900, onComplete: () => t.destroy() });
       this.refresh();
     }
     if (e.type === 'heal') Sound.sfx(this, 'heal');

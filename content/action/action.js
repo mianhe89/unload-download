@@ -32,12 +32,13 @@ export const STATUS = {
 
 // ── 소모품 (퀵슬롯) ─────────────────────────────────────────
 //   regen: 맞지 않는 동안 over초에 걸쳐 heal만큼 (맞으면 끊긴다). 포션만 즉시 회복 — 그래서 귀하다
+//   turn: 사이드뷰 턴제에서 쓸 때 (1~8). 쓰는 사람의 차례 하나를 쓴다 — heal 바로 회복, cures 푸는 상태
 export const CONSUMABLES = {
-  bandage:  { name: '붕대', rarity: 'common', regen: { heal: 40, over: 8 }, desc: '맞지 않는 동안 8초에 걸쳐 40 회복. 맞으면 끊긴다. 출혈을 멈춘다', cures: ['bleed'] },
-  herb:     { name: '약초', rarity: 'uncommon', regen: { heal: 30, over: 5 }, desc: '맞지 않는 동안 5초에 걸쳐 30 회복. 맞으면 끊긴다. 중독을 푼다', cures: ['poison'] },
-  potion:   { name: '회복 물약', rarity: 'epic', heal: 70, desc: '바로 70 회복. 마을에서도 구하기 어렵다' },
-  antidote: { name: '해독초', rarity: 'common', cures: ['poison', 'weak'], desc: '중독·약화를 푼다' },
-  ointment: { name: '화상 연고', rarity: 'uncommon', cures: ['burn', 'freeze'], desc: '화상·빙결을 푼다' },
+  bandage:  { name: '붕대', rarity: 'common', regen: { heal: 40, over: 8 }, desc: '맞지 않는 동안 8초에 걸쳐 40 회복. 맞으면 끊긴다. 출혈을 멈춘다', cures: ['bleed'], turn: { heal: 35 } },
+  herb:     { name: '약초', rarity: 'uncommon', regen: { heal: 30, over: 5 }, desc: '맞지 않는 동안 5초에 걸쳐 30 회복. 맞으면 끊긴다. 중독을 푼다', cures: ['poison'], turn: { heal: 25 } },
+  potion:   { name: '회복 물약', rarity: 'epic', heal: 70, desc: '바로 70 회복. 마을에서도 구하기 어렵다', turn: { heal: 90 } },
+  antidote: { name: '해독초', rarity: 'common', cures: ['poison', 'weak'], desc: '중독·약화를 푼다', turn: { cures: ['poison', 'weak'] } },
+  ointment: { name: '화상 연고', rarity: 'uncommon', cures: ['burn', 'freeze'], desc: '화상·빙결을 푼다', turn: { cures: ['burn'], heal: 10 } },
 };
 export const QUICK_CD = 0.8; // 소모품끼리 공유하는 재사용 대기
 export const QUICK_DEFAULT = ['bandage', 'herb', 'potion', 'antidote', 'ointment', null, null, null];

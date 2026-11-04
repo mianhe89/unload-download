@@ -363,3 +363,22 @@ describe('궁극기와 상태이상', async () => {
     expect(burned.high).toBeGreaterThan(60);
   });
 });
+
+describe('퀵슬롯 소모품 (턴제)', () => {
+  it('쓰는 사람의 차례를 쓰고, 다친 아군을 회복하고, 화상을 푼다', () => {
+    const b = createBattle({ party: ['me', 'selena'], enemies: ['slime'], seed: 3 });
+    const me = b.units.find((u) => u.uid === 'me'), selena = b.units.find((u) => u.uid === 'selena');
+    selena.hp = 50; selena.status.burn = 2;
+    me.gauge = GAUGE;
+    expect(b.itemHelps('antidote', 'selena')).toBe(false);   // 중독도 약화도 없다
+    expect(b.itemHelps('ointment', 'selena')).toBe(true);
+    const ev = b.useItem('me', 'ointment', 'selena');
+    expect(selena.status.burn).toBeUndefined();
+    expect(selena.hp).toBe(60);
+    expect(ev.map((e) => e.type)).toEqual(['item', 'heal', 'cure']);
+    expect(me.gauge).toBe(0); // 차례가 끝났다
+    b.useItem('me', 'potion', 'selena');
+    expect(selena.hp).toBe(150);
+    expect(b.itemHelps('bandage', 'selena')).toBe(false);    // 다 찼다
+  });
+});

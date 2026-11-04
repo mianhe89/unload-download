@@ -73,3 +73,20 @@ test('궁극기: 게이지가 차면 4번 두 번 → 컷인 후 발동, 싸움�
   expect(await page.evaluate(() => window.__ud.run.life.fatigue)).toBeGreaterThan(fatigue0);
   expect(errors).toEqual([]);
 });
+
+test('퀵슬롯: 3번(회복 물약)을 두 번 누르면 가장 다친 아군에게 쓰고 차례가 넘어간다', async ({ page }) => {
+  const errors = await openGame(page);
+  await wipe(page);
+  await start(page, ['slime']);
+  await page.waitForFunction(() => window.__game.scene.getScene('Battle').panel?.visible);
+  await page.evaluate(() => window.__ud.setFarm({ counts: {}, items: { potion: 1, bandage: 2 }, skills: [], felled: {}, forestChops: 0 }));
+  const who = await page.evaluate(() => { const s = window.__game.scene.getScene('Battle'); const u = s.battle.units.find((x) => x.uid === 'selena'); u.hp = 40; s.refresh(); return s.current.uid; });
+  await page.keyboard.press('3');
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/battle-quick.png` });
+  await page.keyboard.press('3');
+  await page.waitForFunction(() => window.__ud.run.farm.items.potion === 0);
+  const after = await page.evaluate(() => { const s = window.__game.scene.getScene('Battle'); return { hp: s.battle.units.find((x) => x.uid === 'selena').hp, gauge: s.battle.units.find((x) => x.uid === s.current?.uid)?.uid }; });
+  expect(after.hp).toBe(130);
+  expect(who).toBeTruthy();
+  expect(errors).toEqual([]);
+});

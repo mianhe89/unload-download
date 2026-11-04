@@ -243,7 +243,7 @@ export class Minimap {
       bg.fillStyle(0xfbf8f2, 1).fillCircle(x, y, R);
       img.setPosition(x, y).setVisible(true);
     }
-    for (let i = used; i < this.badges.length; i += 1) this.badges[i].setVisible(false);
+    for (const b of (this.badges ?? []).slice(used)) b.setVisible(false);
     for (const p of info.people) {
       const [x, y] = at(p);
       if (!inside([x, y])) continue;
