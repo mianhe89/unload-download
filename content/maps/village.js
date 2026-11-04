@@ -40,16 +40,19 @@ const O = (type, x, y, extra = {}) => ({ type, at: [x, y], ...extra });
 
 export const objects = [
   // 건물 (owner: 지워지면 바뀌는 집의 주인, residents: 그 집에 사는 사람 — 하루 일과의 home이 이 집 문으로 들어간다)
-  O('belltower', 22, 5),
-  O('bakery', 14, 12, { owner: 'hort', residents: ['hort'] }),
-  O('house_stone', 35, 12, { name: '에다의 대장간', residents: ['eda'] }),
+  O('belltower', 22, 5, { name: '종탑' }),
+  O('bakery', 14, 12, { owner: 'hort', name: '호르트네 빵집', nameGone: '빈 가게', residents: ['hort'] }),
+  O('house_stone', 35, 12, { name: '에다의 대장간', nameGone: '빈 대장간', residents: ['eda'] }),
   O('forge', 38, 11),
-  O('house_tall', 34, 23, { owner: 'tom', name: '기사단 초소', residents: ['tom', 'selena', 'leon'] }),
+  O('house_tall', 34, 23, { owner: 'selena', name: '기사단 초소', residents: ['tom', 'selena', 'leon'] }),
   O('house_orange', 14, 24, { name: '우리 집', residents: ['me'] }),
-  O('house_plain', 12, 4, { name: '페르의 하숙방', residents: ['per'] }),
-  O('house_red', 29, 4, { name: '리네의 꽃집', residents: ['rine'] }),
+  O('house_plain', 12, 4, { name: '페르의 하숙방', nameGone: '빈 하숙방', residents: ['per'] }),
+  O('house_red', 29, 4, { name: '리네의 꽃집', nameGone: '빈 꽃가게', residents: ['rine'] }),
   O('house_wood', 27, 24, { name: '미아네 집', residents: ['mia'] }),
-  O('shop', 4, 11),
+  O('shop', 4, 11, { name: '잡화점' }),
+  // 가게 앞 진열 (팩 TilesetHouse): 빵집 앞 빵 상자, 꽃집 앞 화분
+  O('crate_bread', 13, 16), O('crate_loaves', 17, 16),
+  O('plant_pot', 28, 8),
 
   // 광장과 생활 소품
   O('cart', 10, 13),

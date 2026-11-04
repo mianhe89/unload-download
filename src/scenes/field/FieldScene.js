@@ -35,6 +35,7 @@ import { Raids } from '../../field/systems/Raids.js';
 import { FieldBattle } from '../../field/systems/FieldBattle.js';
 import { Crow } from '../../field/systems/Crow.js';
 import { Animals } from '../../field/systems/Animals.js';
+import { Signs } from '../../field/systems/Signs.js';
 import { addItem, takeItem, giftResult, markGifted } from '../../life/bag.js';
 import { TALK, TALK_AFF } from '../../../content/talk/talk.js';
 import { HEROINES } from '../../../content/portraits/portraits.js';
@@ -131,6 +132,8 @@ export default class FieldScene extends Phaser.Scene {
     this.battle = new FieldBattle(this);
     this.crow = new Crow(this);
     this.animals = new Animals(this);
+    this.signs = new Signs(this);
+    this.ui.sign?.hide();
     this.raids = new Raids(this, this.mapDef);
 
     // UI 씬이 준비된 다음 프레임에 연결
@@ -194,6 +197,7 @@ export default class FieldScene extends Phaser.Scene {
     if (!busy) this.raids.update(dt);
     this.crow.update(dt);
     this.animals.update(dt, busy);
+    this.signs.update(dt);
     if (!busy) {
       const { runs, bubbles } = this.director.update(dt, this.world(), busy);
       bubbles.forEach((b) => this.bubble(b.who, b.text));

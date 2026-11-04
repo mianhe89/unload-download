@@ -70,6 +70,14 @@ export const OBJECTS = {
   table_small: { sheet: 'element', rect: [48, 145, 16, 15], foot: [1, 6, 14, 9] },
   plant_pot: { sheet: 'element', rect: [0, 120, 15, 24], foot: [2, 16, 11, 8] },
   rug: { sheet: 'element', rect: [209, 64, 47, 45], flat: true },
+  // 가게 진열 (팩의 TilesetHouse): 빵 상자, 채소·생선·사과 바구니, 밀가루 자루
+  crate_bread: { sheet: 'house', rect: [320, 224, 16, 16], foot: [1, 6, 14, 10] },
+  crate_loaves: { sheet: 'house', rect: [320, 240, 16, 16], foot: [1, 6, 14, 10] },
+  crate_radish: { sheet: 'house', rect: [304, 224, 16, 16], foot: [1, 6, 14, 10] },
+  basket_fish: { sheet: 'house', rect: [256, 208, 16, 16], foot: [1, 6, 14, 10] },
+  basket_greens: { sheet: 'house', rect: [272, 208, 16, 16], foot: [1, 6, 14, 10] },
+  basket_apples: { sheet: 'house', rect: [288, 208, 16, 16], foot: [1, 6, 14, 10] },
+  flour_sack: { sheet: 'house', rect: [256, 176, 32, 32], foot: [2, 16, 28, 14] },
 
   // ── 나무 (nature 시트). 줄기 한 칸만 막고 수관 아래로는 가려진다
   tree_round: { sheet: 'nature', rect: [256, 0, 32, 32], foot: [10, 24, 12, 8] },
