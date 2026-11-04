@@ -11,11 +11,12 @@ describe('지워진 이름', () => {
   it('깨진 글자는 길이가 같고, 같은 이름은 늘 같은 모양', () => {
     expect(corrupt('호르트')).toHaveLength(3);
     expect(corrupt('호르트')).toBe(corrupt('호르트'));
-    expect(corrupt('호르트')).toMatch(/^[▒■░▓]+$/);
+    expect(corrupt('호르트')).toBe('ㅎㄹㅌ');
+    expect(corrupt('에다')).toBe('ㅇㄷ');
   });
 
   it('마을 사람 입에서는 깨진다', () => {
-    expect(maskNames('에다? 처음 듣는 이름인데.', 'hort', ['에다'])).toBe(`${corrupt('에다')}? 처음 듣는 이름인데.`);
+    expect(maskNames('에다? 처음 듣는 이름인데.', 'hort', ['에다'])).toBe(`[g][shake]${corrupt('에다')}[/shake][/g]? 처음 듣는 이름인데.`);
   });
 
   it('주인공과 내레이션은 이름을 온전히 말한다', () => {

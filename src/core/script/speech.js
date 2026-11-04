@@ -1,23 +1,29 @@
 // 대사 처리 (순수 함수 — 테스트 가능).
-// 1) 지워진 이름: 마을 사람 입에서 지워진 사람의 이름은 깨진 글자로 나온다.
+// 1) 지워진 이름: 마을 사람 입에서 지워진 사람의 이름은 첫 자음만 남아 흐리게 떨린다(에다 → ㅇㄷ).
 //    내레이션과 주인공('me')만 이름을 온전히 말할 수 있다. 세상에서 그 이름을 기억하는 건 나 하나뿐이니까.
 // 2) 걸으며 듣는 대사: 말풍선이 저절로 넘어가고, 화자에게서 멀면 들리지 않는다(놓친다).
 
-const GLYPHS = ['▒', '■', '░', '▓'];
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
 
-// 같은 이름은 늘 같은 모양으로 깨진다 (글자마다 정해진 깨진 글자, 길이는 그대로)
+// 지워진 이름은 끝까지 발음되지 않는다: 글자마다 첫 자음만 남는다(에다 → ㅇㄷ, 호르트 → ㅎㄹㅌ). 같은 이름은 늘 같은 모양
 export function corrupt(name) {
   let out = '';
-  for (let i = 0; i < name.length; i += 1) out += GLYPHS[(name.charCodeAt(i) + i * 7) % GLYPHS.length];
+  for (const ch of name) {
+    const c = ch.charCodeAt(0) - 0xac00;
+    out += c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : '·';
+  }
   return out;
 }
+
+// 깨진 이름은 흐린 색으로 떨리며 나온다(글꼴이 깨진 게 아니라 이름이 깨진 것으로 보이게, ui/rich.js 꾸밈)
+const glitch = (name) => `[g][shake]${corrupt(name)}[/shake][/g]`;
 
 // speaker: 화자 id (없으면 내레이션). goneNames: 지워진 사람들의 이름
 export function maskNames(text, speaker, goneNames) {
   if (!speaker || speaker === 'me' || !goneNames.length) return text;
   let out = text;
   // 긴 이름부터 (한 이름이 다른 이름에 포함될 때 대비)
-  for (const n of [...goneNames].sort((a, b) => b.length - a.length)) if (n) out = out.replaceAll(n, corrupt(n));
+  for (const n of [...goneNames].sort((a, b) => b.length - a.length)) if (n) out = out.replaceAll(n, glitch(n));
   return out;
 }
 
