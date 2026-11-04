@@ -10,7 +10,7 @@ export const quests = [
         count: { n: 3, of: { eda: 'ev.prep.eda', hort: 'ev.prep.hort', rine: 'ev.prep.rine', per: 'ev.prep.per', tom: 'ev.prep.tom', selena: 'ev.prep.selena' } },
       },
       { text: '광장의 미아에게 간다', done: { flag: 'done.prep.end' }, goal: { npc: 'mia' } },
-      { text: '수확제의 밤 — 광장의 호르트·리네·페르·톰을 돕거나, 미아 곁에 가만히 서 있는다', done: { flag: 'eda.met' }, goal: { spot: 'plaza' } },
+      { text: '수확제의 밤을 함께 보낸다 — 광장 사람들을 돕거나, 미아 곁에 가만히 서 있는다', done: { flag: 'eda.met' }, goal: { spot: 'plaza' }, count: { n: 2, of: { hort: 'ev.hort', rine: 'ev.rine', per: 'ev.per', tom: 'ev.tom', mia: 'ev.mia' } } },
       { text: '광장에서 자정의 종소리를 기다린다', done: { flag: 'done.bells' }, goal: { spot: 'plaza' } },
       { text: '약속대로 에다의 대장간에 간다', done: { flag: 'smithy.seen' }, goal: { zone: 'smithy' } },
       { text: '에다를 아는 사람을 찾는다 — 미아, 그리고 초소의 셀레나', done: { flag: 'selena.done' }, goal: [{ npc: 'mia', unlessFlag: 'mia.talked' }, { zone: 'post' }] },

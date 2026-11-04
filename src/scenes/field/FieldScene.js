@@ -563,7 +563,9 @@ export default class FieldScene extends Phaser.Scene {
     // 습격 중이면 지킬 곳이 먼저다
     if (this.raids?.raid?.kind === 'raid' && !this.raids.busy) { this.ui.hud.setObjective(`${this.raids.raid.targetName}을(를) 지켜라`); return; }
     const step = this.quests?.tracked()?.step;
-    this.ui.hud.setObjective(objectiveText(step ? this.stepText(step) : this.phase.objective, this.absence()));
+    // 빈자리 찾기는 1장부터 (프롤로그엔 아직 아무도 사라지지 않은 이야기다)
+    const abs = this.chapterId === 'prologue' ? { total: 0, found: 0 } : this.absence();
+    this.ui.hud.setObjective(objectiveText(step ? this.stepText(step) : this.phase.objective, abs));
   }
 
   watchCount(dt) {

@@ -121,7 +121,7 @@ export const phases = {
 
       { id: 'mia.quiet', trigger: { idle: 8, near: 'mia', r: 2, minTime: 25 }, run: 'festival.mia_quiet' },
 
-      { id: 'eda.count', when: { unlessFlag: 'eda.met' }, trigger: { count: FEST_DONE, n: 2 }, run: 'festival.eda' },
+      { id: 'eda.count', when: { unlessFlag: 'eda.met' }, trigger: { count: FEST_DONE, people: ['hort', 'tom', 'rine', 'per', 'mia'], n: 2 }, run: 'festival.eda' },
       { id: 'eda.timer', when: { unlessFlag: 'eda.met' }, trigger: { timer: 150 }, run: 'festival.eda' },
       { id: 'bells', trigger: { afterFlag: 'eda.met', delay: 18 }, run: 'festival.bells' },
     ],
