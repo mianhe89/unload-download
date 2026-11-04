@@ -24,6 +24,8 @@ export const HUBS = {
   frost:     { at: [7, 6],  name: '서리 마을',   kind: 'village', note: '겨울이 끝나지 않는 산기슭', field: 'frost' },
   mill:      { at: [9, 8],  name: '물레방아 마을', kind: 'village', note: '소집 가는 길의 첫 마을. 지친 사람들이 빗자루 든 그림자를 섬긴다', field: 'mill' },
   lordtown:  { at: [13, 7], name: '영주의 성 아랫마을', kind: 'village', note: '우리 영지의 영주가 사는 성. 초상화 자리가 비어 있다', field: 'lordtown' },
+  ledger:    { at: [14, 4], name: '기록하는 마을', kind: 'village', note: '잊지 않으려고 모두가 매일 서로의 이름을 적는 마을', field: 'ledger' },
+  icecastle: { at: [5, 4],  name: '얼음성',     kind: 'village', note: '성째로 얼어붙은 성. 그 안에서는 아무것도 늙지도, 사라지지도 않는다', field: 'icecastle' },
   neighbor:  { at: [4, 9],  name: '옆 마을',     kind: 'village', note: '같은 영주의 땅. 무녀가 가이아의 사당을 지킨다', field: 'neighbor' },
   castle:    { at: [8, 1],  name: '검은 성',     kind: 'castle',  note: '해가 들지 않는 북쪽 끝. 이야기 속 이야기의 마왕' },
   elf:       { at: [2, 12], name: '엘프 마을',   kind: 'elf',     note: '깊은 숲 속. 숲을 지나치게 베면 마을이 보이지 않게 된다', field: 'elf' },
@@ -48,6 +50,9 @@ export const ROUTES = {
   // 2부 소집 길: 우리 마을 → 물레방아 마을 → 영주의 성
   'home-mill':      { path: [[7, 11], [7, 10], [7, 9], [7, 8], [8, 8], [9, 8]] },
   'mill-lordtown':  { path: [[9, 8], [10, 8], [11, 8], [12, 8], [13, 8], [13, 7]] },
+  'lordtown-ledger': { path: [[13, 7], [13, 6], [14, 6], [14, 5], [14, 4]] },
+  'ledger-dwarf':   { path: [[14, 4], [13, 4], [12, 4], [11, 4], [11, 5]] },
+  'frost-icecastle': { path: [[7, 6], [7, 5], [6, 5], [6, 4], [5, 4]] },
   'home-neighbor':  { path: [[7, 11], [7, 10], [6, 10], [5, 10], [5, 9], [4, 9]] },
   'frost-castle':   { path: [[7, 6], [7, 5], [8, 5], [8, 4], [8, 3], [8, 2], [8, 1]] },
   'home-elf':       { path: [[7, 11], [6, 11], [5, 11], [4, 11], [4, 12], [3, 12], [2, 12]] },

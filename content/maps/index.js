@@ -10,6 +10,8 @@ import elf from './elf.js';
 import mill from './mill.js';
 import lordtown from './lordtown.js';
 import myhome from './myhome.js';
+import ledger from './ledger.js';
+import icecastle from './icecastle.js';
 
-export const MAPS = { village, neighbor, ruin, frost, harbor, dwarf, elf, mill, lordtown, myhome };
+export const MAPS = { village, neighbor, ruin, frost, harbor, dwarf, elf, mill, lordtown, myhome, ledger, icecastle };
 export const mapOf = (phase) => MAPS[phase?.map ?? 'village'];

@@ -10,6 +10,12 @@ export const quests = [
       { text: '제단 앞에 다시 선다', done: { flag: 'ch4.keeper_day' } },
       { text: '동쪽 영주의 성 아랫마을로 간다', done: { flag: 'ch4.lord_arrived' } },
       { text: '성에 들어가 영주에게 인사한다', done: { flag: 'rank.regent' } },
+      { text: '영주의 성 북쪽, 기록하는 마을로 간다', done: { flag: 'visited.surface:14,4' } },
+      { text: '광장의 명부 판을 본다', done: { flag: 'ledger.board' } },
+      { text: '서쪽 드워프 마을로 간다', done: { flag: 'duel.offered' } },
+      { text: '레온의 결투', done: { flag: 'ch4.duel_done' } },
+      { text: '서리 마을 북서쪽, 얼음성에 들른다', done: { flag: 'ice.offered' } },
+      { text: '얼음성을 나선다', done: { flag: 'noel.refused' } },
     ],
   },
 ];

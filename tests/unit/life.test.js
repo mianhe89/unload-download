@@ -84,6 +84,7 @@ describe('마을의 생활 자리', () => {
   it('생활 자리는 어느 페이즈의 사람과도 겹치지 않는다 (E가 사람에게 가지 않게) — 빵집 주인은 예외', async () => {
     const { chapters } = await import('../../content/chapters/index.js');
     for (const ch of Object.values(chapters)) for (const [pid, ph] of Object.entries(ch.phases)) {
+      if (ph.map && ph.map !== 'village') continue; // 생활 자리는 우리 마을에만 있다
       for (const [id, n] of Object.entries(ph.npcs ?? {})) {
         for (const l of LIFE_SPOTS) {
           if (l.needs === id) continue;

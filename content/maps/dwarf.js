@@ -23,5 +23,5 @@ export default makeTown({
   ],
   entry: { s: [19, 23], w: [4, 14], e: [33, 14], n: [19, 4] },
   spots: { plaza: { x: 19, y: 14 }, forgeDoor: { x: 10, y: 10 }, hall: { x: 28, y: 23 }, mineRoad: { x: 19, y: 6 } },
-  zones: { forge: { x: 8, y: 9, w: 6, h: 3 } },
+  zones: { forge: { x: 8, y: 9, w: 6, h: 3 }, plaza: { x: 17, y: 12, w: 5, h: 4 } },
 });

@@ -201,10 +201,10 @@ describe('논리 플레이스루 (모든 지워짐 조합)', () => {
     for (const f of ['route.mia.hands', 'route.selena.made_up', 'route.lu.back']) expect(r.flags[f], f).toBe(true);
   });
 
-  it.each([[[]], [['hort', 'tom']]])('4장 「소집 가는 길」: 옆 마을 → 물레방아 마을 → 영주의 성까지 — 지워짐: %j', (erased) => {
+  it.each([[[]], [['hort', 'tom']]])('4장 「소집 가는 길」: 옆 마을 → 물레방아 → 영주의 성 → 기록하는 마을 → 결투 → 얼음성 — 지워짐: %j', (erased) => {
     const r = playChapter('chapter4', erased, { flags: { ...PART1, 'rank.squire': true, 'ch2.done': true, 'part1.done': true }, maxSeconds: 6000 });
     expect(r.stuck, r.log.join('\n')).toBeUndefined();
-    for (const f of ['ch4.sei_joined', 'ch4.keeper_day', 'rank.regent']) expect(r.flags[f], f).toBe(true);
+    for (const f of ['ch4.sei_joined', 'ch4.keeper_day', 'rank.regent', 'ch4.ledger_done', 'ch4.duel_done', 'noel.refused']) expect(r.flags[f], f).toBe(true);
   });
 
   it('1장 도입도 끝까지 간다 (1명 이상 지워진 상태)', () => {

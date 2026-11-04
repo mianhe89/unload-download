@@ -113,6 +113,17 @@ export const MONSTERS = {
       { id: 'feint', name: '헛손질', power: 0.4, hits: 3, target: 'one', element: 'wind' },
     ],
   },
+  // 2부 4장: 레온과의 결투. 시험이 아니다 — 이번엔 이기려고 든다. 큰 기술은 여전히 예고한다(기사의 예의)
+  leon_duel: {
+    name: '레온', char: 'leon', boss: true, element: 'wind', maxHp: 170, atk: 17, def: 14, spd: 108, evade: 0.08,
+    pattern: ['jab', 'jab', 'thrust', 'parry', 'jab', 'storm'],
+    skills: [
+      { id: 'jab', name: '찌르기', power: 0.9, hits: 1, target: 'one', element: 'wind' },
+      { id: 'thrust', name: '정면 일격', power: 2.4, hits: 1, target: 'one', element: 'wind', tell: '검을 어깨 위로 당긴다 — 다음 차례, 정면으로 크게 (방어하면 절반)' },
+      { id: 'parry', name: '받아넘기기', power: 0, hits: 0, target: 'self', effect: { guard: true, push: 30 } },
+      { id: 'storm', name: '바람 베기', power: 0.45, hits: 4, target: 'one', element: 'wind', tell: '발을 낮게 벌린다 — 다음 차례, 네 번 연달아 (피할수록 덜 맞는다)' },
+    ],
+  },
   // 2장 보스: 길 잃은 기사. 안개 길을 지키는 빈 갑옷. 기사단 시절의 순서대로 싸운다:
   // 베기 → 베기 → 빈 돌격(예고, 한 사람에게 큰 일격) → 구령(스스로 방어·게이지) → 안개 휘감기(예고, 전원에게 약하게 + 차례 늦추기)
   lostknight: {

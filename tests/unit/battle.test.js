@@ -241,6 +241,13 @@ describe('보스: 정리자의 그림자', () => {
     expect(r.smart).toBeGreaterThan(0.8);
   });
 
+  it('레온과의 결투(나 혼자): 쉽지 않지만 예고를 읽으면 이긴다', () => {
+    const rate = (smart) => { let w = 0; for (let s = 1; s <= 40; s += 1) if (autoplay({ enemies: ['leon_duel'], party: ['me'], seed: s, smart }).result === 'win') w += 1; return w / 40; };
+    const r = { naive: rate(false), smart: rate(true) };
+    expect(r.smart).toBeGreaterThan(0.5);
+    expect(r.naive).toBeLessThan(0.7);
+  });
+
   it('게이지 상한', () => expect(GAUGE).toBe(100));
 });
 
