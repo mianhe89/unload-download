@@ -64,10 +64,10 @@ export const phases = {
         },
       },
       { id: 'prep.per', when: { unlessErased: 'per' }, trigger: { near: 'per', r: 3 }, run: 'prep.per' },
-      { id: 'prep.selena', trigger: { zone: 'post' }, run: 'prep.selena' },
+      { id: 'prep.selena', trigger: { near: 'selena', r: 3 }, run: 'prep.selena' },
 
       // 세 군데 이상 도왔으면(또는 시간이 꽤 지나면) 미아가 부른다 → 광장의 미아에게 가면 저녁
-      { id: 'prep.ready', when: { unlessFlag: 'prep.ready' }, trigger: { count: PREP_DONE, n: 3 }, run: 'prep.ready' },
+      { id: 'prep.ready', when: { unlessFlag: 'prep.ready' }, trigger: { count: PREP_DONE, people: ['eda', 'hort', 'tom', 'rine', 'per', 'selena'], n: 3 }, run: 'prep.ready' },
       { id: 'prep.ready_timer', when: { unlessFlag: 'prep.ready' }, trigger: { timer: 300 }, run: 'prep.ready' },
       { id: 'prep.end', when: { ifFlag: 'prep.ready' }, trigger: { near: 'mia', r: 3 }, run: 'prep.evening' },
     ],

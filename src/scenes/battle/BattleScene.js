@@ -19,6 +19,7 @@ import { Sound } from '../../core/audio/Sound.js';
 import { act, freshLife, skinOf } from '../../life/life.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 import { frame } from '../../ui/kit.js';
+import { worldDate, worldNow } from '../../core/util/worldTime.js';
 
 const SKY = { surface: [0x8fb7d8, 0xd9e6c8], under: [0x1c1620, 0x3a2c2a], sky: [0x0a0820, 0x2a1e5a] };
 const GROUND = { surface: 0x6c8a3c, under: 0x4a3a30, sky: 0x3a2a6a };
@@ -329,7 +330,7 @@ export default class BattleScene extends Phaser.Scene {
 
   finish(result) {
     // 싸움의 대가: 칼로리를 쓰고 피로가 쌓인다 (생활 → 체형)
-    if (WorldMemory.run) WorldMemory.setLife(act(WorldMemory.run.life ?? freshLife(), 'battle'));
+    if (WorldMemory.run) WorldMemory.setLife(act(WorldMemory.run.life ?? freshLife(), 'battle', worldNow(WorldMemory.run)));
     this.panel.setVisible(false);
     this.targetMark.setVisible(false);
     const { width: W, height: H } = this.scale;
@@ -337,7 +338,7 @@ export default class BattleScene extends Phaser.Scene {
     Sound.music(this, null, { fade: 300 });
     Sound.sfx(this, result === 'win' ? 'win' : 'lose');
     if (result === 'win') {
-      if (from?.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss)}`);
+      if (from?.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss, worldDate(WorldMemory.run))}`);
       if (this.data0.winFlag) WorldMemory.setFlag(this.data0.winFlag);
       this.say(this.data0.winLine ?? (this.data0.boss ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : '이겼다.'), COLOR.gold);
       const drops = this.loot();

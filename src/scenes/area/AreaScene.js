@@ -30,6 +30,7 @@ import { softFlash } from '../../core/fx/softFlash.js';
 import { fieldHubAt, visitPhase } from '../../world/visits.js';
 import { passes } from '../../core/script/ScriptRunner.js';
 import { resolveGoal, trackedStep } from '../../field/goals.js';
+import { worldDate } from '../../core/util/worldTime.js';
 
 const HOME = cellKey('surface', HUBS.home.at);
 const FACE = { n: 'down', s: 'up', w: 'right', e: 'left' };
@@ -59,7 +60,7 @@ export default class AreaScene extends Phaser.Scene {
     this.ui = this.scene.get('UI');
     WorldMemory.setWhere({ layer: this.layerId, at: this.at });
     const farm0 = WorldMemory.run.farm ?? freshFarm();
-    const area = (this.area = buildArea(this.layerId, this.at, { season: season(new Date()), lowTide: lowTide(new Date()), felled: farm0.felled[cellKey(this.layerId, this.at)] ?? [], elfGone: elfVillageGone(farm0) }));
+    const area = (this.area = buildArea(this.layerId, this.at, { season: season(worldDate(WorldMemory.run)), lowTide: lowTide(worldDate(WorldMemory.run)), felled: farm0.felled[cellKey(this.layerId, this.at)] ?? [], elfGone: elfVillageGone(farm0) }));
     this.key = area.key;
 
     this.map = new MapRenderer(this, area, { open: area.exits.map((e) => e.dir) });
@@ -80,7 +81,7 @@ export default class AreaScene extends Phaser.Scene {
 
     // 떠돌이: 오늘 이 칸에 누가 있나 (같은 날 같은 칸이면 같은 사람)
     // 엘프 마을에선, 숲에서 한 그루도 안 벤 사람만 엘프를 만난다
-    const who = area.id === 'elf' ? (meetsElf(farm0) ? 'elf' : null) : travelerAt(this.key, { kind: area.kind, biome: area.biome }, new Date());
+    const who = area.id === 'elf' ? (meetsElf(farm0) ? 'elf' : null) : travelerAt(this.key, { kind: area.kind, biome: area.biome }, worldDate(WorldMemory.run));
     if (who) {
       const c = area.spots.center;
       this.traveler = new Npc(this, who, { at: [c.x + 2, c.y + 1], mode: 'wander', radius: 2, face: 'down' });
@@ -94,7 +95,7 @@ export default class AreaScene extends Phaser.Scene {
     // 몬스터: 오늘 이 칸의 무리 (이긴 무리는 없다). 부딪히면 전투
     const flags0 = WorldMemory.run.flags;
     // (테스트용) dev.peace 플래그가 켜져 있으면 몬스터가 나오지 않는다
-    this.encounter = flags0['dev.peace'] ? null : encounterAt(this.key, { kind: area.kind, biome: area.biome }, new Date(), (k) => Boolean(flags0[`beat.${k}`]), (w) => passes(w, this.condCtx()));
+    this.encounter = flags0['dev.peace'] ? null : encounterAt(this.key, { kind: area.kind, biome: area.biome }, worldDate(WorldMemory.run), (k) => Boolean(flags0[`beat.${k}`]), (w) => passes(w, this.condCtx()));
     if (this.encounter) {
       const lead = MONSTERS[this.encounter.enemies[0]];
       const c = area.spots.center;
@@ -248,7 +249,7 @@ export default class AreaScene extends Phaser.Scene {
 
   // 종 걸린 절벽: 열세 번 (밤에, 빈자리를 다 찾은 사람만)
   ring(f) {
-    const r = ringBell(this.rings, { hour: new Date().getHours(), foundAll: Boolean(WorldMemory.run.flags['found.all']) });
+    const r = ringBell(this.rings, { hour: worldDate(WorldMemory.run).getHours(), foundAll: Boolean(WorldMemory.run.flags['found.all']) });
     this.rings = r.rings;
     this.cooldown = 0.35;
     this.cameras.main.shake(140, 0.003);

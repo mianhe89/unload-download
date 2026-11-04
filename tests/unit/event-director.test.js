@@ -178,3 +178,13 @@ describe('running 계기', () => {
     expect(d2.update(0.1, w(true), false).runs.length).toBe(1);
   });
 });
+
+describe('count 계기와 지워진 사람', () => {
+  it('지워진 사람 몫은 빼고, 남은 사람이 n보다 적으면 남은 사람 모두로 (수확제 전날이 막히던 버그)', () => {
+    const d = new EventDirector([{ id: 'ready', trigger: { count: ['a', 'b', 'c', 'd'], people: ['p1', 'p2', 'p3', 'p4'], n: 3 }, run: 'x' }]);
+    const erased = new Set(['p2', 'p3']);
+    const flags = { a: true, d: true };
+    const w = { time: 1, player: { x: 0, y: 0, idleTime: 0 }, pos: () => null, inZone: () => false, pickedAll: () => false, flag: (f) => flags[f], passes: (c) => !erased.has(c.unlessErased) };
+    expect(d.update(0.1, w, false).runs.map((r) => r.id)).toEqual(['ready']);
+  });
+});

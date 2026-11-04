@@ -13,6 +13,9 @@ export default class BootScene extends Phaser.Scene {
     Sound.preload(this, this.registry.get('audio'));
     // 이벤트 CG와 인물 일러스트(표정 차분 포함). 파일이 없으면 그 그림만 빠지고 게임은 연다
     for (const [id, cg] of Object.entries(CG)) if (cg.file) this.load.image(`cg.${id}`, `assets/${cg.file}`);
+    // 타이틀 일러스트 (계절: 겨울은 따로)
+    this.load.image('titleart.base', 'assets/title/village.jpg');
+    this.load.image('titleart.winter', 'assets/title/winter.jpg');
     for (const [id, p] of Object.entries(PORTRAITS)) {
       this.load.image(`portrait.${id}`, `assets/${p.file}`);
       for (const [face, file] of Object.entries(p.faces ?? {})) this.load.image(`portrait.${id}.${face}`, `assets/${file}`);

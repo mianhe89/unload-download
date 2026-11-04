@@ -1,5 +1,6 @@
 // 타이틀. 게임 이름은 보여주지 않는다 — 처음 실행하면 무슨 게임인지 알게 된다.
-// 화면은 '지금 이 순간의 마을': 실제 시각의 빛, 오늘의 날씨, 지금까지의 진행(지워진 사람의 흔적)이 그대로 보인다.
+// 화면은 계절의 마을 일러스트(TitleArt): 실제 시각의 빛, 지워진 사람만큼 빠진 색. 흔들림·번쩍임은 없다.
+// 일러스트가 없으면 예전처럼 지금 이 순간의 마을(필드 맵)을 그린다.
 //   CONTINUE       → 로드. 이 순간 누군가 지워진다
 //   RESET & START  → 진행을 처음부터. 지워진 사람은 돌아오지 않는다(두 번 눌러 확인)
 import Phaser from 'phaser';
@@ -13,6 +14,9 @@ import { MapRenderer } from '../../field/MapRenderer.js';
 import { Lighting } from '../../field/Lighting.js';
 import { Ambient } from '../../field/Ambient.js';
 import { titleSetup } from './titleSetup.js';
+import { drawTitleArt } from './TitleArt.js';
+import { worldDate } from '../../core/util/worldTime.js';
+import { platform } from '../../platform/index.js';
 import { chapters } from '../../../content/chapters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { skinOf } from '../../life/life.js';
@@ -28,8 +32,17 @@ export default class TitleScene extends Phaser.Scene {
     const setup = (this.setup = titleSetup({
       started: Boolean(run), chapter: run?.chapter, phase: run?.phase,
       erased: world.erased.map((e) => e.id), loads: world.loads,
-    }));
+    }, worldDate(run)));
     this.confirming = false;
+
+    // 일러스트가 있으면 그것으로
+    if (drawTitleArt(this, { erased: world.erased.map((e) => e.id), date: worldDate(run) })) {
+      this.cameras.main.fadeIn(900, 0, 0, 0);
+      this.buildMenu();
+      Sound.music(this, 'title');
+      Sound.ambient(this, null);
+      return;
+    }
 
     // 마을
     const map = new MapRenderer(this, village);
@@ -90,8 +103,10 @@ export default class TitleScene extends Phaser.Scene {
     const s = width / 960;
     const ui = [];
 
-    const d = new Date();
-    ui.push(this.add.text(width - 16 * s, 14 * s, `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`, {
+    // 세계의 날짜: 다운로드 전엔 게임 안 날(n일째), 다운로드 후엔 현실의 날짜
+    const d = worldDate(WorldMemory.run);
+    const label = platform.isDesktop ? `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` : WorldMemory.run ? `${WorldMemory.run.time?.day ?? 1}일째` : '';
+    ui.push(this.add.text(width - 16 * s, 14 * s, label, {
       fontFamily: FONT, fontSize: `${11 * s}px`, color: '#ffffff',
     }).setOrigin(1, 0).setAlpha(0.7).setShadow(1, 1, '#000', 0));
 
@@ -123,9 +138,7 @@ export default class TitleScene extends Phaser.Scene {
 
   update(_, deltaMs) {
     const dt = deltaMs / 1000;
-    this.lighting.update(dt);
-    // 로드한 만큼 화면이 이따금 아주 살짝 어긋난다(번쩍임 없이, 눈에 부담 없게)
-    if (this.setup.glitch && Math.random() < this.setup.glitch * dt) this.cameras.main.shake(70, 0.0012);
+    this.lighting?.update(dt);
   }
 
   continue() {

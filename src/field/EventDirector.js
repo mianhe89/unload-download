@@ -68,7 +68,11 @@ export class EventDirector {
       const at = world.flagTime(t.afterFlag);
       return at != null && world.time - at >= (t.delay ?? 0);
     }
-    if (t.count) return t.count.filter((f) => world.flag(f)).length >= t.n;
+    // people: count의 플래그마다 그 사람. 지워진 사람 몫은 빼고 센다(남은 사람이 n보다 적으면 남은 사람 모두)
+    if (t.count) {
+      const live = t.people ? t.count.filter((_, i) => world.passes({ unlessErased: t.people[i] })) : t.count;
+      return live.filter((f) => world.flag(f)).length >= Math.min(t.n, live.length);
+    }
     if (t.pickedAll) return world.pickedAll(t.pickedAll) && (!t.near || near(t.near, t.r ?? 2));
     if (t.idle) return near(t.near, t.r) && world.player.idleTime >= t.idle;
     if (t.dwell) {

@@ -36,7 +36,9 @@ import { FieldBattle } from '../../field/systems/FieldBattle.js';
 import { Crow } from '../../field/systems/Crow.js';
 import { Animals } from '../../field/systems/Animals.js';
 import { Signs } from '../../field/systems/Signs.js';
+import { Xray } from '../../field/systems/Xray.js';
 import { resolveGoal, hubOfMap } from '../../field/goals.js';
+import { worldNow } from '../../core/util/worldTime.js';
 import { HUBS } from '../../../content/world/world.js';
 import { addItem, takeItem, giftResult, markGifted } from '../../life/bag.js';
 import { TALK, TALK_AFF } from '../../../content/talk/talk.js';
@@ -83,7 +85,7 @@ export default class FieldScene extends Phaser.Scene {
     this.openExits = (this.roomId ? null : this.phase.exits) ?? this.mapDef.openExits ?? [];
     this.map = new MapRenderer(this, this.mapDef, { open: this.openExits });
     this.add.image(0, 0, this.map.renderGround()).setOrigin(0).setDepth(-1000);
-    this.map.placeObjects();
+    this.placed = this.map.placeObjects();
 
     // 인물
     const p = this.phase.player;
@@ -135,6 +137,7 @@ export default class FieldScene extends Phaser.Scene {
     this.crow = new Crow(this);
     this.animals = new Animals(this);
     this.signs = new Signs(this);
+    this.xray = new Xray(this, this.placed);
     this.ui.sign?.hide();
     this.raids = new Raids(this, this.mapDef);
 
@@ -200,6 +203,7 @@ export default class FieldScene extends Phaser.Scene {
     this.crow.update(dt);
     this.animals.update(dt, busy);
     this.signs.update(dt);
+    this.xray.update(dt);
     if (!busy) {
       const { runs, bubbles } = this.director.update(dt, this.world(), busy);
       bubbles.forEach((b) => this.bubble(b.who, b.text));
@@ -209,6 +213,11 @@ export default class FieldScene extends Phaser.Scene {
       this.watchCount(dt);
       this.checkExit();
       this.checkDoor();
+    } else if (this.cutscene.walking) {
+      this.checkDoor(); // 걸으며 듣는 대사 중에도 집에는 들어갈 수 있다
+      // 걸으며 듣는 대사 중에도 살펴볼 수 있는 표시는 그대로 둔다 (E는 그동안 대사를 넘긴다)
+      const target = this.nearestInteractable();
+      this.ui.hud.showPrompt(target ? this.worldToScreen(target.x, target.y - 20) : null);
     } else {
       this.ui.hud.showPrompt(null);
     }
@@ -337,13 +346,18 @@ export default class FieldScene extends Phaser.Scene {
     const life = WorldMemory.run.life ?? freshLife();
     const a = ACTIONS[spot.action];
     this.cooldown = 0.5;
-    // 시계가 도는 날의 밤(20시~4시)에 잠자리에 들면 다음 날 아침 6시로
-    if (spot.action === 'sleep' && this.clock.running && (this.clock.minute >= 20 * 60 || this.clock.minute < 4 * 60)) { this.sleep(); return; }
-    if (!canDo(life, spot.action)) {
-      this.ui.bubbles.narrate(this.player, `(${a.name}은 조금 이따가 — ${minutesLeft(life, spot.action)}분)`, 1800);
+    // 시계가 도는 날엔 잠자리에 들면 언제든 다음 날 아침 6시로 (피로도 풀린다)
+    const now = worldNow(WorldMemory.run);
+    if (spot.action === 'sleep' && this.clock.running) {
+      WorldMemory.setLife({ ...act(life, 'sleep', now), fatigue: 0 });
+      this.sleep();
       return;
     }
-    let n = act(life, spot.action);
+    if (!canDo(life, spot.action, now)) {
+      this.ui.bubbles.narrate(this.player, `(${a.name}은 조금 이따가 — ${minutesLeft(life, spot.action, now)}분)`, 1800);
+      return;
+    }
+    let n = act(life, spot.action, now);
     // 잠: 횟수가 쌓이면 '낮잠 고수', 있으면 피로가 더 풀린다
     if (spot.action === 'sleep') {
       const { farm, unlocked } = countAction(WorldMemory.run.farm ?? freshFarm(), 'sleep');
@@ -567,7 +581,8 @@ export default class FieldScene extends Phaser.Scene {
     const done = left.filter(([, f]) => WorldMemory.run.flags[f]).length;
     const names = left.filter(([, f]) => !WorldMemory.run.flags[f]).map(([id]) => characters[id]?.name ?? id);
     this.countDone = done;
-    return `${step.text} (${done}/${step.count.n})${names.length ? ` — ${names.join(' · ')}` : ''}`;
+    const need = Math.min(step.count.n, left.length); // 지워진 사람이 많으면 남은 사람만큼
+    return `${step.text} (${done}/${need})${names.length && done < need ? ` — ${names.join(' · ')}` : ''}`;
   }
 
   // 잠자리에 든다: 다음 날 아침 6시, 같은 하루(또는 phase.next)를 새로 시작한다
@@ -650,9 +665,10 @@ export default class FieldScene extends Phaser.Scene {
 
   // 문(맵 doors)으로 몸을 들이밀면 들어간다. 따로 키를 누르지 않는다(기획서 '지도')
   checkDoor() {
-    if (this.leaving || this.roomId || !this.mapDef.doors || this.cutscene.busy) return;
+    if (this.leaving || this.roomId || !this.mapDef.doors || (this.cutscene.busy && !this.cutscene.walking)) return;
     const tx = Math.floor(this.player.x / TILE), ty = Math.floor(this.player.y / TILE);
-    const d = this.mapDef.doors.find((o) => o.at[0] === tx && o.at[1] === ty);
+    // 문은 두 칸 너비(그림의 문간이 칸 경계에 걸쳐 있다), 문 앞 한 칸 위아래까지
+    const d = this.mapDef.doors.find((o) => (tx === o.at[0] || tx === o.at[0] - 1) && (ty === o.at[1] || ty === o.at[1] - 1));
     if (!d || !this.player.pressed('up')) return;
     this.leaving = true;
     this.clock.save();

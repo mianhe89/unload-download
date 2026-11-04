@@ -52,9 +52,7 @@ export class Minimap {
     const g = (this.frameG = scene.add.graphics());
     this.img = scene.add.image(this.x0, this.y0, '__DEFAULT').setOrigin(0, 0).setVisible(false);
     this.dots = scene.add.graphics().setDepth(46); // 컨테이너 밖에 둔다 (마스크 낀 이미지 옆에 두면 그려지지 않았다)
-    this.maskShape = scene.make.graphics({}, false).fillRect(this.x0, this.y0, this.size, this.size);
-    const mask = this.maskShape.createGeometryMask();
-    this.img.setMask(mask); // 점은 마스크 대신 테두리 안에 있을 때만 찍는다(Graphics에 마스크가 먹지 않는다)
+    // 지도 그림은 마스크 대신 보이는 칸만 잘라 쓴다(setCrop) — 이 판본의 Phaser에선 마스크가 먹지 않아 테두리 밖으로 넘쳤다
     // 지도 아래쪽 안의 얇은 띠: 이름과 넓게·좁게 단추
     const stripY = this.y0 + this.size - 7 * s;
     this.strip = scene.add.rectangle(this.x0, stripY - 7 * s, this.size, 14 * s, 0x15151c, 0.62).setOrigin(0, 0);
@@ -167,6 +165,8 @@ export class Minimap {
     const cx = Math.max(n / 2, Math.min(W - n / 2, info.player.x)), cy = Math.max(n / 2, Math.min(H - n / 2, info.player.y));
     const ox = W <= n ? (n - W) / 2 : n / 2 - cx, oy = H <= n ? (n - H) / 2 : n / 2 - cy;
     this.img.setScale(k).setPosition(this.x0 + ox * k, this.y0 + oy * k);
+    const kx = Math.max(0, -ox), ky = Math.max(0, -oy);
+    this.img.setCrop(kx, ky, Math.min(n, W - kx), Math.min(n, H - ky));
     const g = this.dots.clear();
     const at = (p) => [this.x0 + (ox + p.x) * k, this.y0 + (oy + p.y) * k];
     const inside = ([x, y]) => x >= this.x0 + 2 && x <= this.x0 + this.size - 2 && y >= this.y0 + 2 && y <= this.y0 + this.size - 2;
