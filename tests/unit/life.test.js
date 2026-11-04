@@ -114,8 +114,12 @@ describe('체형이 도트에 보인다', async () => {
     expect(skinOf(null)).toBe('me');
   });
 
-  it('통통하면 앞모습 몸통이 넓어지고, 마르면 좁아진다', () => {
-    const me = readPng(join(import.meta.dirname, '../../public/assets/gen/char/me.png'));
+  it('통통하면 앞모습 몸통이 넓어지고, 마르면 좁아진다', async () => {
+    const path = join(import.meta.dirname, '../../public/assets/gen/char/me.png');
+    // 에셋을 아직 안 만든 곳(CI의 단위 테스트 단계)에서는 먼저 만든다
+    const { existsSync } = await import('node:fs');
+    if (!existsSync(path)) (await import('../../tools/build-assets.mjs')).buildAssets({ quiet: true });
+    const me = readPng(path);
     const width = (img, row) => { let L = -1, R = -1; for (let x = 0; x < 16; x += 1) if (img.data[(row * img.width + x) * 4 + 3]) { if (L < 0) L = x; R = x; } return R - L; };
     const fat = bodyVariant(me, 'chubby'), thin = bodyVariant(me, 'thin');
     expect(width(fat, 12)).toBeGreaterThan(width(me, 12));
