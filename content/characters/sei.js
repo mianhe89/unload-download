@@ -18,6 +18,8 @@ export default {
   silhouette: '검은 긴 머리에 붉은·흰 머리띠. 흰 저고리, 붉은 치마.',
   bubbles: {},
   // 아침엔 사당을 쓸고, 낮엔 마을을 돌며 사람들의 이야기를 듣고, 해 질 녘 다시 사당에 등불을 건다
+  // 4장: 순례로 소집 길에 합류하면 옆 마을에 없다
+  away: { ifFlag: 'ch4.sei_joined' },
   schedule: [
     { from: '06:00', at: 'shrine', face: 'up', say: ['가이아께서 오늘도 맡아 주시기를.'] },
     { from: '11:00', at: 'plaza', mode: 'wander', radius: 3, say: ['오늘은 바람이 조용하네요.'] },

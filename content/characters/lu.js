@@ -18,7 +18,8 @@ export default {
   // 하루 일과. 집이 없는 떠돌이라 낮엔 우물가, 해 질 녘엔 마을 끝에서 숲 너머를 보고, 밤엔 종탑 앞에서 비질 소리에 귀를 기울인다.
   // 셀레나와 이야기한 뒤(프롤로그 3일 아침)부터 마을에 있다
   // 3장(25~27일): 사흘 동안 가장자리를 보러 떠난다(docs/스토리.md '연락이 끊긴 이유')
-  away: { minDay: 25, maxDay: 27 },
+  // 2부: 소집 길에 제멋대로 따라붙는다
+  away: { anyOf: [{ minDay: 25, maxDay: 27 }, { ifFlag: 'ch4.departed' }] },
   schedule: [
     { from: '09:00', at: 'well', mode: 'wander', radius: 2, say: ['숲 너머가 흐릿하네. 원래 저랬나?'], when: { ifFlag: 'selena.done' } },
     { from: '17:00', at: [6, 27], face: 'left', say: ['해 질 녘엔 안개가 더 잘 보여.'], when: { ifFlag: 'selena.done' } },

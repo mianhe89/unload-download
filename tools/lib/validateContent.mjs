@@ -153,6 +153,8 @@ export function validateContent() {
         if (n.expire?.run && !S[n.expire.run]) err(`${at} 만료 컷신 없음`);
       }
       if (n.act === 'spawnNpc' && !characters[n.id]) err(`${at} 인물 없음 ${n.id}`);
+      if (n.ask && !(Array.isArray(n.options) && n.options.length >= 2 && n.options.length <= 4)) err(`${at} 질문의 선택지는 2~4개`);
+      if (n.ask && nodes[0]?.mode === 'walk') err(`${at} 질문은 걷는 대사(WALK)에 둘 수 없다`);
       if (n.act === 'battle') for (const id of n.enemies ?? []) if (!MONSTERS[id]) err(`${at} 전투 상대 없음 ${id}`);
     });
     // 페이즈
@@ -183,7 +185,8 @@ export function validateContent() {
       }
       // 진행 경로: 이 페이즈에서 다음 페이즈/끝으로 가는 컷신이 하나라도 있는가
       const exits = (ph.events ?? []).filter((e) => (S[e.run] ?? []).some((n) => n.phase || n.end));
-      if (!exits.length && !ph.visit) err(`${at} 다음으로 넘어가는 이벤트가 없음`); // visit: 들렀다 길로 나가는 페이즈
+      // visit: 들렀다 길로 나가는 페이즈, onRoad: 이야기가 길 위의 마을(visit 페이즈)에서 이어지는 고향 페이즈
+      if (!exits.length && !ph.visit && !ph.onRoad) err(`${at} 다음으로 넘어가는 이벤트가 없음`);
     }
   }
 

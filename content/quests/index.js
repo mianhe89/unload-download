@@ -7,5 +7,6 @@ import { quests as prologue } from './prologue.js';
 import { quests as chapter1 } from './chapter1.js';
 import { quests as chapter2 } from './chapter2.js';
 import { quests as chapter3 } from './chapter3.js';
+import { quests as chapter4 } from './chapter4.js';
 
-export const QUESTS = Object.fromEntries([...prologue, ...chapter1, ...chapter2, ...chapter3].map((q) => [q.id, q]));
+export const QUESTS = Object.fromEntries([...prologue, ...chapter1, ...chapter2, ...chapter3, ...chapter4].map((q) => [q.id, q]));

@@ -7,6 +7,7 @@ import { Hud } from '../../ui/Hud.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
 import { BagPanel } from '../../ui/BagPanel.js';
+import { ChoiceBox } from '../../ui/ChoiceBox.js';
 import { NotebookPanel } from '../../ui/NotebookPanel.js';
 import { COLORS, text, scaleOf, frame } from '../../ui/kit.js';
 import { TouchControls } from '../../ui/TouchControls.js';
@@ -26,12 +27,13 @@ export default class UIScene extends Phaser.Scene {
     this.notebook = new NotebookPanel(this);
     this.input.keyboard.on('keydown-J', () => this.notebook.toggle());
     this.bag = new BagPanel(this);
+    this.choice = new ChoiceBox(this);
     this.input.keyboard.on('keydown-I', () => this.bag.toggle());
     this.toasts = [];
     // 휴대폰: 조이스틱과 E·C 버튼. E는 대화가 떠 있으면 넘기고, 아니면 살펴보기
     if (wantsTouch(this.game)) {
       this.touch = new TouchControls(this, {
-        onAct: () => { if (this.dialog.advance()) return; this.events.emit('skip'); Touch.actQueued = true; },
+        onAct: () => { if (this.choice.confirm()) return; if (this.dialog.advance()) return; this.events.emit('skip'); Touch.actQueued = true; },
         onStatus: () => this.status.toggle(),
         onNotebook: () => this.notebook.toggle(),
       });
@@ -40,7 +42,7 @@ export default class UIScene extends Phaser.Scene {
     this.toScreen = (x, y) => ({ x, y });
 
     // 대화창이 떠 있으면 다음 문장, 아니면 걷는 대사(말풍선)를 넘긴다
-    const advance = () => { if (this.dialog.advance()) Sound.sfx(this, 'ui', { volume: 0.12 }); else this.events.emit('skip'); };
+    const advance = () => { if (this.choice.confirm()) { Sound.sfx(this, 'ui', { volume: 0.2 }); return; } if (this.dialog.advance()) Sound.sfx(this, 'ui', { volume: 0.12 }); else this.events.emit('skip'); };
     // 화면 탭: 대화 넘기기. 터치 조작이 있으면 대화창이 떠 있을 때만 (조이스틱을 만져도 대사가 넘어가지 않게)
     this.input.on('pointerdown', (_p, over) => {
       if (this.touch) { if (!over.length && this.dialog.open) advance(); return; }

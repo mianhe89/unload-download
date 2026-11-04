@@ -13,6 +13,8 @@ import * as chapter2 from './chapter2/phases.js';
 import { script as chapter2Script } from './chapter2/script.js';
 import * as chapter3 from './chapter3/phases.js';
 import { script as chapter3Script } from './chapter3/script.js';
+import * as chapter4 from './chapter4/phases.js';
+import { script as chapter4Script } from './chapter4/script.js';
 
 const PLACES = [ruin, frost, harbor, dwarf, elfPlace];
 const withPlaces = (c) => ({
@@ -26,4 +28,5 @@ export const chapters = {
   chapter1: withPlaces({ title: '지워진 이름들', phases: chapter1.phases, firstPhase: chapter1.firstPhase, script: chapter1Script }),
   chapter2: withPlaces({ title: '안개 너머', phases: chapter2.phases, firstPhase: chapter2.firstPhase, script: chapter2Script }),
   chapter3: withPlaces({ title: '겨울 준비', phases: chapter3.phases, firstPhase: chapter3.firstPhase, script: chapter3Script }),
+  chapter4: withPlaces({ title: '소집 가는 길', phases: chapter4.phases, firstPhase: chapter4.firstPhase, script: chapter4Script }),
 };

@@ -38,8 +38,12 @@ import nell from './nell.js';
 import brok from './brok.js';
 import helga from './helga.js';
 import sylwen from './sylwen.js';
+import alma from './alma.js';
+import tobin from './tobin.js';
+import oswin from './oswin.js';
+import mara from './mara.js';
 
-export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, leon, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant, elf, orc, tork, sei, elder, lostknight, brenna, gord, yuna, marlo, nell, brok, helga, sylwen };
+export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, leon, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant, elf, orc, tork, sei, elder, lostknight, brenna, gord, yuna, marlo, nell, brok, helga, sylwen, alma, tobin, oswin, mara };
 
 // 로드 시 지워질 수 있는 사람(동점일 때 이 순서)
 export const ERASE_ORDER = ['hort', 'tom', 'rine', 'per', 'elder'];

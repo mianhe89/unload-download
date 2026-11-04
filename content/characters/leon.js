@@ -19,6 +19,8 @@ export default {
   bubbles: { aftermath: ['명부의 빈 줄이라…', '이 마을은 조용하군. 지나치게.', '(검집을 고쳐 찬다)'] },
   // 하루 일과. 6일에 도착(leon.arrived)한 뒤 초소에 산다. 아침 점호, 오전 순찰, 오후엔 마을 사람들에게 명부의 빈 줄을 묻고 다닌다.
   // 밤이면 초소 옆에서 혼자 검을 휘두른다(이름 대신 쓸모를 증명해야 하는 서자)
+  // 2부: 소집으로 왕도에 가는 길에 함께 떠난다
+  away: { ifFlag: 'ch4.departed' },
   schedule: [
     { from: '06:30', at: 'post', face: 'down', say: ['점호다. …아직 아무도 안 나왔군.'], when: { ifFlag: 'leon.arrived' } },
     { from: '10:00', at: 'plaza', mode: 'wander', radius: 3, say: ['순찰 중이다. 길을 비켜라.'], when: { ifFlag: 'leon.arrived' } },

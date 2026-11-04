@@ -164,6 +164,6 @@ export const script = {
     T('mia', '…가 아니라. 꼭 돌아와.'),
     N('1부 「지워진 이름들」 끝.'),
     { flag: 'part1.done' },
-    { end: 'title', next: { chapter: 'chapter3', phase: 'winter' } },
+    { end: 'title', next: { chapter: 'chapter4', phase: 'muster' } },
   ],
 };

@@ -16,6 +16,8 @@ export default {
   // 페이즈별로 근처에 가면 머리 위에 뜨는 혼잣말
   bubbles: {"morning": ["용건은 짧게."], "aftermath": ["명부의 빈 줄이 늘었다."]},
   // 하루 일과. 초소 근무가 거의 전부다. 오후에 한 번 광장을 돌고, 밤늦게 명부를 덮고 초소 안 숙소로 들어간다
+  // 2부: 소집으로 왕도에 가는 길에 함께 떠난다
+  away: { ifFlag: 'ch4.departed' },
   schedule: [
     { from: '06:00', at: 'post', face: 'up', say: ['정렬. …아, 너 혼자구나.'] },
     { from: '14:00', at: 'plaza', mode: 'wander', radius: 2, say: ['오후 순찰이다.'] },

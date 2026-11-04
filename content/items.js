@@ -34,6 +34,7 @@ export const ITEMS = {
   stone: { name: '돌', kind: 'material', rarity: 'common', desc: '바위 무더기에서 캐냈다.', farm: true },
   ring: { name: '거친 쇠반지', kind: 'key', rarity: 'legendary', has: 'has.ring', desc: '에다가 손바닥에 올려 준 반지. 테두리가 아직 거칠다. 이 테두리로 종탑 벽에 이름을 새겼다.' },
   crown: { name: '리네의 화관', kind: 'key', rarity: 'epic', has: 'has.crown', desc: '수확제 밤, 리네가 짜 준 화관. 꽃은 조금 시들었다.' },
+  ribbon: { name: '해바라기 끈', kind: 'key', rarity: 'epic', has: 'has.ribbon', desc: '소집 떠나는 아침, 미아가 가방 끈에 묶어 준 노란 끈. 미아 머리 장식과 같은 색이다. "이거 보면 돌아올 데 생각나라고."' },
 };
 
 // 전투 소모품(행동 파밍처럼 run.farm.items에 쌓인다)과 장비(run.gear)도 가방에 보인다

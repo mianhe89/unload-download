@@ -46,6 +46,8 @@ export const phases = {
           ],
         },
       },
+      // 9일: 바깥을 향한 질문 1 — 우물가의 루가 하늘을 보다가 묻는다
+      { id: 'ask.lu', when: { minDay: 9, afterTime: '10:00', beforeTime: '18:00' }, trigger: { near: 'lu', r: 3 }, run: 'ch1.ask_lu' },
       // 10일: 우물가의 루에게 가면 안개 길로 떠난다(1장의 끝)
       { id: 'ch1.depart', when: { ifQuest: 'q.ch1.step5', minDay: 10 }, trigger: { near: 'lu', r: 3 }, run: 'ch1.end' },
     ],

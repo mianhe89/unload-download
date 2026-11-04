@@ -3,6 +3,7 @@
 //   walk        — 플레이어는 계속 걷는다. 말은 화자 머리 위 말풍선으로 저절로 넘어가고,
 //                 화자에게서 멀어지면 들리지 않는다(놓친 대사: missed.<라벨> 플래그).
 // 동작(act)은 필드에 맡긴다.
+import { WorldMemory } from '../core/world/WorldMemory.js';
 import { ScriptRunner } from '../core/script/ScriptRunner.js';
 import { characters } from '../../content/characters/index.js';
 
@@ -37,6 +38,11 @@ export class Cutscene {
         const text = this.field.speech(node.who, this.runner.format(node.say));
         if (this.walking) await this.field.walkLine(node.who, text, label);
         else await ui.say(who?.name ?? '', who?.color ?? '#cfc9dd', text, node.who, node.face);
+      } else if (node.ask) {
+        // 바깥을 향한 질문: 이 게임에서 유일하게 선택지가 뜨는 순간. 대답은 ask.<id>와 ask.<id>.<번호> 플래그로 남는다
+        const i = await ui.choice.choose(node.options);
+        WorldMemory.setFlag(`ask.${node.ask}`);
+        WorldMemory.setFlag(`ask.${node.ask}.${i}`);
       } else if (node.bubble) {
         this.field.bubble(node.bubble.who, node.bubble.text);
       } else if (node.fx) {
