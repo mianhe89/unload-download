@@ -123,7 +123,8 @@ describe('말 걸기 대화', async () => {
     }
   });
   it('화자는 등장인물이거나 내레이션, 태그는 알려진 것만', () => {
-    for (const byPhase of Object.values(TALK)) for (const convos of Object.values(byPhase)) for (const c of convos) for (const line of c) {
+    const ctx = { isErased: () => false, flag: () => false, loads: () => 0, erasedCount: () => 0 };
+    for (const byPhase of Object.values(TALK)) for (const convos of Object.values(byPhase)) for (const c of convos.map((x) => (typeof x === 'function' ? x(ctx) : x))) for (const line of c) {
       const [who, text] = typeof line === 'string' ? [null, line] : line;
       if (who) expect(characters[who], who).toBeTruthy();
       expect(plain(text), text).not.toMatch(/\[\/?(y|r|b|g|shake|wave|big|mood|w|i|q)\b/);

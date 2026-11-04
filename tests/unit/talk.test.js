@@ -12,7 +12,8 @@ describe('말 걸기 대화', () => {
     }
   });
   it('대화 한 묶음은 비어 있지 않고, 화자는 실제 인물이다', () => {
-    for (const [id, byPhase] of Object.entries(TALK)) for (const [ph, convs] of Object.entries(byPhase)) for (const c of convs) {
+    const ctx = { isErased: () => false, flag: () => false, loads: () => 0, erasedCount: () => 0 };
+    for (const [id, byPhase] of Object.entries(TALK)) for (const [ph, convs0] of Object.entries(byPhase)) for (const c of convs0.map((x) => (typeof x === 'function' ? x(ctx) : x))) {
       expect(c.length, `${id}.${ph}`).toBeGreaterThan(0);
       for (const line of c) if (Array.isArray(line) && line[0]) expect(line[0] === 'me' || characters[line[0]], `${id}.${ph}: ${line[0]}`).toBeTruthy();
     }
