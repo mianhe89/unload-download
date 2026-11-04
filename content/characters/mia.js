@@ -9,7 +9,8 @@ export default {
   // recolor: 원본색 → 바꿀색 (# 없이 6자리), edits: 픽셀 덧그리기. 결과는 npm run assets로 만든다
   sprite: {
     base: 'Princess',
-    recolor: { '3b3643': 'a5532c', '4e484a': 'd0703e', e0394c: 'e0607e' },
+    // 일러스트에 맞춘다: 갈색 긴 머리, 해바라기 머리 장식, 크림 블라우스, 주황 치마
+    recolor: { '3b3643': '6e4226', '4e484a': '9c6a40', e0394c: 'f2c21e', a3754e: 'f0c29c', '965340': 'd49a74', f1c471: 'f4ead6', d78b4a: 'cbb894', '8d977f': 'd2702a', abc2bc: 'ec9a4a' },
     edits: [],
   },
   silhouette: '양 갈래 머리. 머리 옆으로 튀어나온 두 덩이가 멀리서도 보인다.',
