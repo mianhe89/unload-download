@@ -192,10 +192,16 @@ export const TALK_ROADS = {
   },
   eda: {
     prep: [
-      ['[mood=neutral]어, 왔어? 지금 손이 좀 바빠.', '…작업대 위는 보지 마. [y]내일 알려 줄게[/y].'],
-      ['[mood=smile]배고파… 아침을 걸렀거든. 호르트 아저씨네 [y]탄 빵[/y], 아직이야?'],
+      // 심부름 진행에 맞춰 말한다 (호르트가 지워진 세계엔 빵 심부름이 없다)
+      (ctx) => {
+        if (ctx.flag('ev.prep.eda')) return ['[mood=smile]고마워, 덕분에 살았어.', '…작업대 위는 아직 비밀이야. [y]내일 밤[/y] 광장에서 알려 줄게.'];
+        if (ctx.flag('got.burnt')) return ['어? 그거 탄 빵이지! 이리 줘!'];
+        if (ctx.flag('eda.asked')) return ['[mood=smile]배고파…', '광장 서쪽 [y]빵집[/y], 호르트 아저씨한테 [y]탄 빵[/y] 좀 받아다 줘. 내 몫은 늘 따로 빼 두셔.'];
+        return ['[mood=neutral]어, 왔어? 거기 서 있지 말고 대장간 안으로 들어와.'];
+      },
     ],
   },
+
   chief: { prep: [['수확제 준비는 잘돼 가나? [mood=smile]올해는 밀이 유난히 잘 여물었다네.']] },
   kid: { prep: [['내일 축제 때 꿀빵 세 개 먹을 거야! [mood=smile]아니 네 개!']] },
   woman: { prep: [['광장 장식 천이 모자라서 큰일이야. [mood=neutral]리네네 꽃이라도 더 얻어야겠어.']] },
