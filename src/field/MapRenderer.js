@@ -1,7 +1,7 @@
 // 맵 그리기: 바닥(풀 + 흙길 자동 타일 + 풀포기)은 한 장의 캔버스로 굽고,
 // 건물·나무·소품은 각각 이미지로 올려 아래쪽 끝 기준으로 앞뒤를 정한다(나무 뒤로 걸어가면 가려짐).
 import { TILE } from '../../content/maps/village.js';
-import { OBJECTS, DIRT, GRASS, DECOR, ANIMATED, THEMES } from '../../content/art/pack.js';
+import { OBJECTS, DIRT, GRASS, DECOR, ANIMATED, THEMES, CROPS } from '../../content/art/pack.js';
 import { dirtQuarter } from './autotile.js';
 
 const hash = (x, y, s = 0) => {
@@ -37,6 +37,41 @@ export class MapRenderer {
   isDirt(x, y) { return this.map.terrain[y]?.[x] === 'd'; }
 
   // ── 바닥 ────────────────────────────────────────────
+  // 밭: 흙 위에 곡식·그루터기·물 뺀 논·채소 고랑을 얹는다 (content/maps의 crops)
+  drawCrops(ctx, water) {
+    const { scene } = this;
+    const tile = (name) => {
+      const c = CROPS[name];
+      const src = scene.textures.get(`sheet.${c.sheet}`).getSourceImage();
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = TILE;
+      const t = cv.getContext('2d');
+      t.imageSmoothingEnabled = false;
+      t.drawImage(src, c.tile[0] * TILE, c.tile[1] * TILE, TILE, TILE, 0, 0, TILE, TILE);
+      if (c.tint) { t.globalCompositeOperation = 'source-atop'; t.fillStyle = c.tint; t.fillRect(0, 0, TILE, TILE); }
+      return cv;
+    };
+    const T = Object.fromEntries(Object.keys(CROPS).map((k) => [k, tile(k)]));
+    const wsrc = water ?? scene.textures.get('sheet.water').getSourceImage();
+    for (const f of this.map.crops) for (let y = f.y; y < f.y + f.h; y += 1) for (let x = f.x; x < f.x + f.w; x += 1) {
+      const dx = x * TILE, dy = y * TILE, r = hash(x, y, 11), row = y - f.y;
+      if (f.kind === 'wheat') {
+        ctx.drawImage(T.wheat, dx, dy);
+      } else if (f.kind === 'stubble') {
+        if (row % 2 === 0 || r < 0.25) ctx.drawImage(T.stubble, dx, dy);
+      } else if (f.kind === 'paddy') {
+        if (row % 3 === 2) continue; // 두렁
+        ctx.globalAlpha = 0.42;
+        ctx.drawImage(wsrc, TILE, TILE, TILE, TILE, dx, dy, TILE, TILE);
+        ctx.globalAlpha = 1;
+        if (r < 0.7) ctx.drawImage(T.stubble, dx, dy);
+      } else if (f.kind === 'veg') {
+        if (row % 2 === 0) ctx.drawImage(r < 0.55 ? T.cabbage : T.sprout, dx, dy);
+        else { ctx.fillStyle = 'rgba(70,44,24,0.28)'; ctx.fillRect(dx, dy + 6, TILE, 4); }
+      }
+    }
+  }
+
   renderGround(key = 'map.ground') {
     const { scene } = this;
     if (scene.textures.exists(key)) scene.textures.remove(key);
@@ -94,6 +129,8 @@ export class MapRenderer {
         ctx.drawImage(detail, sx * TILE, sy * TILE, TILE, TILE, x * TILE, y * TILE, TILE, TILE);
       }
     }
+
+    if (this.map.crops) this.drawCrops(ctx, water);
 
     // 테마 색 덮기 (용암·갱도·은하)
     if (this.theme.tint) {

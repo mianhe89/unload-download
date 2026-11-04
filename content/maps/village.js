@@ -1,4 +1,4 @@
-// 마을 맵 (48×34칸, 1칸 = 16px)
+// 마을 맵 (68×34칸, 1칸 = 16px). 동쪽 20칸은 울타리 너머 들판(밀밭·논·채소밭·농가)
 // - terrain: 바닥. 'g' 풀, 'd' 흙(길·광장). 흙의 경계는 자동 타일로 이어 그린다
 // - objects: 건물·나무·소품. 종류는 content/art/pack.js의 OBJECTS. at = 그림 왼쪽 위 칸
 // - 충돌은 각 그림의 foot 사각형(px)으로 정한다. 맵 가장자리(안개)는 걸어서 나갈 수 없다
@@ -8,7 +8,7 @@ import { OBJECTS } from '../art/pack.js';
 export const id = 'village';
 export const name = '우리 마을';
 export const TILE = 16;
-export const W = 48;
+export const W = 68;
 export const H = 34;
 export const FOG = 3; // 바깥 3칸은 흐릿한 가장자리
 
@@ -30,6 +30,13 @@ function buildTerrain() {
   dirt(34, 27, 5, 2);    // 초소 앞
   dirt(34, 0, 2, 13);    // 북쪽 길 (1장부터 열린다)
   dirt(33, 12, 2, 4);    // 북쪽 길 → 대장간 앞
+  // 동쪽 들판: 수확제의 곡식이 나는 땅
+  dirt(43, 17, 20, 2);   // 큰길이 울타리 문을 지나 들판까지
+  dirt(47, 5, 11, 8);    // 밀밭
+  dirt(58, 5, 1, 13);    // 논두렁 길
+  dirt(59, 5, 5, 9);     // 논
+  dirt(47, 21, 9, 7);    // 채소밭
+  dirt(56, 19, 2, 6);    // 큰길 → 농가
   return g.map((r) => r.join(''));
 }
 
@@ -66,6 +73,12 @@ export const objects = [
   // 꽃밭 (리네)
   O('sunflower', 26, 11), O('flower_red', 27, 10), O('sunflower', 29, 11), O('flower_red', 30, 10), O('sunflower', 31, 11),
 
+  // 동쪽 들판: 울타리(문은 큰길 자리), 다 벤 밀밭의 건초 더미와 허수아비, 채소밭 상자, 농가
+  O('house_wood', 57, 21, { name: '오토네 농가', residents: ['farmer'] }),
+  O('haystack', 53, 6), O('haystack', 55, 6), O('haystack', 54, 9), O('haystack', 56, 10), O('haystack', 53, 11),
+  O('scarecrow', 49, 12), O('cart', 52, 13),
+  O('crate_radish', 47, 28), O('basket_greens', 49, 28), O('crate_radish', 56, 26),
+
   // 마을 안 나무
   O('tree_big', 6, 6), O('tree_big', 39, 6), O('tree_big_autumn', 4, 21),
   O('tree_round', 33, 19), O('tree_round2', 20, 8), O('tree_round', 9, 8),
@@ -84,6 +97,18 @@ for (let y = 5; y < H - 6; y += 3) {
   ring.push(O(y % 2 ? 'tree_grove' : 'tree_pines', W - 4, y));
 }
 objects.push(...ring);
+// 밭 가장자리의 낮은 나무 난간 (큰길 쪽). 드나드는 틈을 하나씩 둔다
+for (let x = 47; x < 64; x += 1) if (x !== 49 && x !== 58) objects.push(O('fence_h', x, 15));   // 밀밭·논 아래
+for (let x = 47; x < 56; x += 1) if (x !== 51) objects.push(O('fence_h', x, 20));               // 채소밭 위
+
+// 밭 바닥 (그림은 field/MapRenderer가 흙 위에 얹는다. 밟고 지나갈 수 있다)
+//   wheat: 아직 안 벤 밀 · stubble: 벤 자리의 그루터기 · paddy: 물 뺀 논(그루터기 + 두렁) · veg: 배추·무 고랑
+export const crops = [
+  { kind: 'wheat', x: 47, y: 5, w: 4, h: 8 },     // 수확제 다음 날 마저 벨 마지막 이랑
+  { kind: 'stubble', x: 51, y: 5, w: 7, h: 8 },
+  { kind: 'paddy', x: 59, y: 5, w: 5, h: 9 },
+  { kind: 'veg', x: 47, y: 21, w: 9, h: 7 },
+];
 
 // 움직이는 장식 (지나갈 수 있음)
 // 줄등: 광장 둘레의 깃대 사이와 모닥불 쪽으로 (축제 날에만, field/systems/Garlands)
@@ -137,6 +162,10 @@ export const spots = {
   post: { x: 36, y: 27 },
   well: { x: 10, y: 28 },
   playerHome: { x: 16, y: 28 },
+  wheatField: { x: 50, y: 9 },
+  paddy: { x: 58, y: 9 },
+  vegPatch: { x: 51, y: 19 },
+  farmGate: { x: 45, y: 17 },
 };
 
 // 이벤트 구역 (칸 좌표 사각형)
@@ -145,6 +174,7 @@ export const zones = {
   tower: { x: 22, y: 10, w: 4, h: 2 },
   post: { x: 34, y: 27, w: 5, h: 3 },
   well: { x: 6, y: 25, w: 6, h: 5 },
+  fields: { x: 46, y: 4, w: 18, h: 25 },
 };
 
 // 모닥불 (2×2칸, 막힘). 그림은 field/Landmarks가 올린다

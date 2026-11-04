@@ -19,7 +19,7 @@ export const phases = {
       // 루는 이 장 내내 북쪽 길 어귀에서 안개를 본다
       lu: { at: [34, 9], mode: 'idle', face: 'up' },
       ...villagers({
-        chief: [24, 14, 'idle'], granny: [28, 21, 'idle'], kid: [12, 26, 'wander', 2], farmer: [11, 21, 'idle'],
+        chief: [24, 14, 'idle'], granny: [28, 21, 'idle'], kid: [12, 26, 'wander', 2], farmer: [48, 13, 'wander', 2],
         hunter: [40, 18, 'idle'], monk: [21, 11, 'idle'], woman: [20, 23, 'idle'], oldman: [30, 18, 'idle'],
       }),
     },

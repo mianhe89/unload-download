@@ -44,6 +44,14 @@ export const THEMES = {
   sea: { offset: [-11, -7], decor: false, water: { plain: [1, 1], variants: [[11, 1]] } },
 };
 
+// 밭 바닥 (맵의 crops): 흙 위에 얹는다. tint는 그 그림에 덮는 색(가을 밀은 금빛, 그루터기는 바랜 짚색)
+export const CROPS = {
+  wheat: { sheet: 'nature', tile: [7, 11], tint: 'rgba(240,190,70,0.62)' },   // 아직 안 벤 밀
+  stubble: { sheet: 'detail', tile: [3, 2], tint: 'rgba(228,196,120,0.75)' }, // 벤 자리의 그루터기
+  cabbage: { sheet: 'detail', tile: [7, 2] },                                   // 늦가을 배추
+  sprout: { sheet: 'detail', tile: [6, 2] },                                    // 무 잎
+};
+
 export const DECOR = {
   tufts: [[0, 2], [1, 2], [2, 2], [3, 2], [6, 2]],
   flowers: [[5, 2], [7, 2]],
@@ -114,6 +122,8 @@ export const OBJECTS = {
   pot: { sheet: 'element', rect: [16, 0, 16, 16], foot: [2, 6, 12, 10] },
   crate: { sheet: 'element', rect: [96, 0, 16, 16], foot: [1, 4, 14, 12] },
   haystack: { sheet: 'element', rect: [192, 0, 16, 16], foot: [1, 6, 14, 10] },
+  // 밭 울타리 (TilesetHouse의 낮은 나무 난간): 한 칸씩 이어 붙인다
+  fence_h: { sheet: 'house', rect: [176, 112, 16, 16], foot: [0, 8, 16, 6] },
   scarecrow: { sheet: 'element', rect: [240, 0, 16, 16], foot: [5, 10, 6, 6] },
   bench: { sheet: 'element', rect: [176, 16, 64, 16], foot: [2, 6, 60, 10] },
   clothesline: { sheet: 'element', rect: [192, 32, 64, 32], foot: [0, 24, 6, 8] },

@@ -183,6 +183,13 @@ export class Minimap {
           px(x * P + 1, y * P + 1, 0x5a8a3e);
         }
       }
+      // 밭: 밀은 금빛, 그루터기는 짚색 줄, 논은 물빛, 채소는 초록 고랑
+      for (const f of map.crops ?? []) for (let y = f.y; y < f.y + f.h; y += 1) for (let x = f.x; x < f.x + f.w; x += 1) {
+        const row = y - f.y;
+        const c = f.kind === 'wheat' ? 0xe8b848 : f.kind === 'stubble' ? (row % 2 ? null : 0xd8c088) : f.kind === 'paddy' ? (row % 3 === 2 ? null : 0x6a9ab0) : (row % 2 ? null : 0x6aa04a);
+        if (c === null) continue;
+        ctx.fillStyle = hex(c); ctx.fillRect(x * P, y * P + 1, P, P - 2);
+      }
       // 지붕: 바깥 어두운 선, 위쪽 밝은 줄, 아래쪽 그늘
       for (const r of roofs) {
         ctx.fillStyle = hex(0x1c1418); ctx.fillRect(r.x, r.y, r.w, r.h);

@@ -24,7 +24,7 @@ export const phases = {
     startAt: '07:00',
     onRoad: true, // 이야기는 길 위의 마을에서 이어진다
     npcs: villagers({
-      chief: [24, 14, 'idle'], granny: [28, 21, 'idle'], kid: [12, 26, 'wander', 2], farmer: [11, 21, 'idle'],
+      chief: [24, 14, 'idle'], granny: [28, 21, 'idle'], kid: [12, 26, 'wander', 2], farmer: [48, 13, 'wander', 2],
       hunter: [40, 18, 'idle'], monk: [21, 11, 'idle'], woman: [20, 23, 'idle'], oldman: [30, 18, 'idle'],
     }),
     onEnter: 'ch4.intro',
