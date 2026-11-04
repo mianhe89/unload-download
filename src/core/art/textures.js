@@ -22,6 +22,7 @@ export function loadPackAssets(scene, manifest) {
     const [fw, fh] = MONSTER_ART[key].frame;
     L.spritesheet(`mon.${key}`, BASE + path, { frameWidth: fw, frameHeight: fh });
   }
+  for (const [key, path] of Object.entries(manifest.emotes ?? {})) L.image(`emote.${key}`, BASE + path);
   for (const [key, path] of Object.entries(manifest.fx)) {
     const p = PARTICLES[key];
     if (p) L.spritesheet(`fx.${key}`, BASE + path, { frameWidth: p.frame[0], frameHeight: p.frame[1] });

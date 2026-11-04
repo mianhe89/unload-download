@@ -3,7 +3,7 @@
 ## 픽셀 아트·음악·효과음
 
 - **Ninja Adventure Asset Pack** by pixel-boy — CC0. https://pixel-boy.itch.io/ninja-adventure-asset-pack
-  - 그림: 필드 캐릭터·타일·소품·몬스터. 이 게임에 맞게 재채색·덧그림(`tools/build-assets.mjs`, 원본은 `assets-src/ninja-adventure/`)
+  - 그림: 필드 캐릭터·타일·소품·몬스터, 감정 말풍선(Ui/Emote). 이 게임에 맞게 재채색·덧그림(`tools/build-assets.mjs`, 원본은 `assets-src/ninja-adventure/`)
   - 소리: 음악·효과음. 웹용으로 변환(`tools/build-audio.mjs`, 목록은 `content/audio/audio.js`)
 
 ## 글꼴

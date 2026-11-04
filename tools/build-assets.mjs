@@ -8,6 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPng, writePng, crop, recolor, setPx, topAt, alphaAt } from './lib/pixels.mjs';
 import { characters } from '../content/characters/index.js';
+import { EMOTES, emoteFile } from '../content/art/emotes.js';
 import { SHEETS, ANIMATED, PARTICLES, SHADOW, FOG, CHAR, MONSTER_ART } from '../content/art/pack.js';
 import { bodyVariant, BODY_SKINS } from './lib/body-edit.mjs';
 
@@ -239,6 +240,13 @@ export function buildAssets({ quiet = false } = {}) {
   for (const [key, p] of Object.entries(PARTICLES)) {
     copyFileSync(join(SRC, p.src), join(OUT, 'fx', `${key}.png`));
     manifest.fx[key] = `fx/${key}.png`;
+  }
+  // 감정 말풍선 (content/art/emotes.js)
+  mkdirSync(join(OUT, 'emote'), { recursive: true });
+  manifest.emotes = {};
+  for (const name of Object.keys(EMOTES)) {
+    copyFileSync(join(SRC, emoteFile(name)), join(OUT, 'emote', `${name}.png`));
+    manifest.emotes[name] = `emote/${name}.png`;
   }
   copyFileSync(join(SRC, SHADOW), join(OUT, 'fx', 'shadow.png'));
   manifest.fx.shadow = 'fx/shadow.png';

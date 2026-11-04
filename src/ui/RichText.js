@@ -31,7 +31,7 @@ export class RichText {
   // 대사를 놓는다 (아직 안 보임). 표정 태그가 있으면 돌려준다
   set(text, maxWidth = this.o.maxWidth) {
     this.clear();
-    const { glyphs, mood } = parseRich(text);
+    const { glyphs, mood, emote } = parseRich(text);
     const { glyphs: laid, lines } = layout(glyphs, (g) => this.measure(g), maxWidth);
     this.glyphs = laid;
     this.lines = lines;
@@ -66,7 +66,7 @@ export class RichText {
       this.container.add(p.text);
     }
     this.shown = 0;
-    return { mood, lines, width: this.width, height: this.height };
+    return { mood, emote, lines, width: this.width, height: this.height };
   }
 
   // 앞에서부터 n글자 보이기

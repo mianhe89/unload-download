@@ -14,6 +14,7 @@ import { plain } from './rich.js';
 import { voiceOf, blip } from '../core/audio/Voice.js';
 import { portraitKey } from './portraits.js';
 import { WorldMemory } from '../core/world/WorldMemory.js';
+import { MOOD_EMOTE } from '../../content/art/emotes.js';
 
 // 흰 대화창의 색 (금 테두리는 kit.js와 같은 금색)
 const PAPER = { body: 0xfffbf2, inner: 0xeadfc8, ink: '#2e2620', narration: '#6a5a4a', shadow: 0x1a100c };
@@ -56,7 +57,9 @@ export class DialogBox {
     // 다음 표시: 통통 튀는 금색 삼각형
     this.more = scene.add.triangle(w / 2 - 22 * s, h / 2 - 18 * s, 0, 0, 10 * s, 0, 5 * s, 7 * s, COLORS.gold).setVisible(false);
     scene.tweens.add({ targets: this.more, y: this.more.y + 3 * s, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.box.add([bg, this.faceCard, this.face, this.plate, this.nameTag, this.text.container, this.more]);
+    // 도트 얼굴 오른쪽 위의 감정 말풍선 (일러스트가 없는 인물도 표정이 보이게)
+    this.faceEmote = scene.add.image(-w / 2 + 22 * s + this.faceW, -this.faceW / 2 + 2 * s, '__DEFAULT').setOrigin(0.5, 1).setVisible(false);
+    this.box.add([bg, this.faceCard, this.face, this.faceEmote, this.plate, this.nameTag, this.text.container, this.more]);
     this.resolve = null;
     this.speaker = undefined;
     scene.events.on('update', (t) => this.text.update(t));
@@ -140,6 +143,15 @@ export class DialogBox {
       this.face.setTexture(`face.${faceId}`).setScale(k).setVisible(true);
       if (changed) { this.face.setScale(k * 0.8); this.scene.tweens.add({ targets: this.face, scale: k, duration: 160, ease: 'Back.out' }); }
     } else this.face.setVisible(false);
+    // 감정 말풍선: [emote=..] 또는 표정([mood=..]·face)에서
+    const em = /\[emote=([\w-]+)\]/.exec(str)?.[1] ?? MOOD_EMOTE[mood];
+    const ek = em && `emote.${em}`;
+    this.scene.tweens.killTweensOf(this.faceEmote);
+    if (hasFace && ek && this.scene.textures.exists(ek)) {
+      const k = Math.max(2, Math.round(2 * s));
+      this.faceEmote.setTexture(ek).setVisible(true).setScale(0);
+      this.scene.tweens.add({ targets: this.faceEmote, scale: k, duration: 180, ease: 'Back.out' });
+    } else this.faceEmote.setVisible(false);
     const left = -w / 2 + 26 * s + (hasFace ? fw + 16 * s : 0);
     const right = w / 2 - 26 * s - (standing ? 120 * s : 0);
     this.nameTag.setText(name).setVisible(Boolean(name));

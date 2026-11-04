@@ -5,7 +5,8 @@
 //   [i=wood]           아이템 이름을 등급 색으로 (이름은 자동)
 //   [q=epic]..[/q]     등급 색으로 칠하기 (common~legendary)
 //   [w=300]            그 자리에서 300ms 멈춤
-//   [mood=smile]       (맨 앞) 이 대사의 표정 — 일러스트가 바뀐다
+//   [mood=smile]       (맨 앞) 이 대사의 표정 — 일러스트가 바뀌고, 일러스트가 없으면 감정 말풍선이 뜬다
+//   [emote=love]       머리 위 감정 말풍선만 (content/art/emotes.js)
 // 문장부호 뒤에는 저절로 잠깐 멈춘다. 모르는 태그는 글자 그대로 둔다.
 import { ITEMS, RARITY } from '../../content/items/items.js';
 
@@ -15,11 +16,12 @@ const TAG = /\[(\/?)([a-z]+)(?:=([\w.-]+))?\]/g;
 
 export const PAUSE = { '.': 200, '!': 200, '?': 200, '…': 260, ',': 90, '~': 120 };
 
-// text → { glyphs: [{ ch, color, fx, big, item, wait }], mood }
+// text → { glyphs: [{ ch, color, fx, big, item, wait }], mood, emote }
 export function parseRich(text) {
   const glyphs = [];
   const stack = { color: [], fx: [] };
   let mood = null;
+  let emote = null;
   let last = 0;
   let pendingWait = 0;
   const push = (s) => {
@@ -37,11 +39,12 @@ export function parseRich(text) {
   };
   for (const m of text.matchAll(TAG)) {
     const [raw, close, name, arg] = m;
-    const known = name in COLOR_TAGS || FX_TAGS.includes(name) || ['i', 'w', 'mood', 'q'].includes(name);
+    const known = name in COLOR_TAGS || FX_TAGS.includes(name) || ['i', 'w', 'mood', 'q', 'emote'].includes(name);
     if (!known) continue;
     push(text.slice(last, m.index));
     last = m.index + raw.length;
     if (name === 'mood' && !close) mood = arg;
+    else if (name === 'emote' && !close) emote = arg;
     else if (name === 'w' && !close) pendingWait += Number(arg) || 0;
     else if (name === 'i' && !close) {
       const it = ITEMS[arg];
@@ -59,7 +62,7 @@ export function parseRich(text) {
   }
   push(text.slice(last));
   if (pendingWait && glyphs.length) glyphs.at(-1).after = pendingWait;
-  return { glyphs, mood };
+  return { glyphs, mood, emote };
 }
 
 // 태그를 뺀 글자만 (읽는 시간 계산, 테스트용)

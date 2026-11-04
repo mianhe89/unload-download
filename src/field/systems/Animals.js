@@ -56,13 +56,13 @@ export class Animals {
     a.pokes = now - a.lastPoke < RECOVER ? a.pokes + 1 : 1;
     a.lastPoke = now;
     a.sprite.setFlipX(this.field.player.x < a.x);
-    this.say(a, a.pokes > PATIENCE ? BORED : pick(a.info.sounds));
+    this.say(a, a.pokes > PATIENCE ? `[emote=meh]${BORED}` : `[emote=${a.pokes === 1 ? 'notice' : 'smile'}]${pick(a.info.sounds)}`);
   }
 
   feed(a, itemId) {
     const liked = a.info.likes.includes(itemId);
     a.pokes = 0;
-    this.say(a, liked ? a.info.fed.liked : a.info.fed.other);
+    this.say(a, liked ? `[emote=love]${a.info.fed.liked}` : `[emote=smile]${a.info.fed.other}`);
     return liked;
   }
 }

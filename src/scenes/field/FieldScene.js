@@ -1,6 +1,7 @@
 // 탑다운 필드. 한 번에 한 페이즈(어디서·누가·무슨 일이)를 돌린다.
 // 페이즈가 바뀌면 씬을 새 페이즈로 다시 시작하고, 시작점을 체크포인트로 저장한다.
 // 전투는 별도 씬(사이드뷰, scenes/battle/)으로 넘어간다 — 다음 단계에서 구현.
+import { GIFT_EMOTE } from '../../../content/art/emotes.js';
 import { GRADE_RARITY } from '../../../content/items/items.js';
 import Phaser from 'phaser';
 import { ZOOM, TALK_RANGE, BUBBLE_RANGE } from '../../config/game.js';
@@ -420,7 +421,7 @@ export default class FieldScene extends Phaser.Scene {
     WorldMemory.setBag(markGifted(takeItem(WorldMemory.run.bag, id), npc.id, day));
     if (characters[npc.id]?.erasable || ['mia', 'selena', 'lu', 'sei', 'leon'].includes(npc.id)) WorldMemory.addAffinity(npc.id, r.aff);
     Sound.sfx(this, 'pickup');
-    this.bubble(npc.id, r.line);
+    this.bubble(npc.id, `[emote=${GIFT_EMOTE[r.liking] ?? 'happy'}]${r.line}`);
   }
 
   // 가까이 가면 가끔 혼잣말

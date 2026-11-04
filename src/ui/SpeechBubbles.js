@@ -3,6 +3,7 @@
 import { FONT } from '../config/game.js';
 import { RichText } from './RichText.js';
 import { voiceOf, blip } from '../core/audio/Voice.js';
+import { MOOD_EMOTE } from '../../content/art/emotes.js';
 
 const EDGE = 0x2a2533;
 const hex = (c) => Number.parseInt(String(c).replace('#', ''), 16);
@@ -44,6 +45,27 @@ export class SpeechBubbles {
     rt.type({ speed: Math.max(18, voice.speed - 8), onChar: opts.faint ? null : (gl, i) => blip(sc, voice, gl.ch, i, 0.03) });
     const b = { target, c, rt, until: sc.time.now + ms, kind: 'say', dy: -18, rise: 0 };
     this.list.push(b);
+    // 표정·감정 태그가 있으면 풍선 옆에 감정 말풍선
+    const e = info.emote ?? MOOD_EMOTE[info.mood];
+    if (e && !opts.faint) this.emote(target, e, Math.min(ms, 2400), { side: w / 2 });
+    return b;
+  }
+
+  // 감정 말풍선: 머리 위(말풍선이 있으면 그 오른쪽 위)에 톡 떴다가 사라진다
+  emote(target, name, ms = 1800, opts = {}) {
+    const sc = this.scene, key = `emote.${name}`;
+    if (!sc.textures.exists(key)) return null;
+    this.list.filter((b) => b.target === target && b.kind === 'emote').forEach((b) => this.remove(b));
+    const s = this.s;
+    const k = Math.max(2, Math.round(2 * s));
+    const img = sc.add.image(0, 0, key).setOrigin(0.5, 1).setScale(0).setDepth(51);
+    const c = sc.add.container(0, 0, [img]).setDepth(51);
+    sc.tweens.add({ targets: img, scale: k, duration: 180, ease: 'Back.out' });
+    sc.tweens.add({ targets: img, y: -3 * s, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: 180 });
+    const rt = { destroy() {}, update() {} };
+    const dx = opts.side ? opts.side + 6 * s : 0;
+    const b = { target, c, rt, until: sc.time.now + ms, kind: 'emote', dy: opts.side ? -40 : -20, rise: 0, dx };
+    this.list.push(b);
     return b;
   }
 
@@ -64,7 +86,7 @@ export class SpeechBubbles {
     return b;
   }
 
-  remove(b) { b.rt.destroy(); b.c.destroy(); this.list = this.list.filter((x) => x !== b); }
+  remove(b) { this.scene.tweens.killTweensOf(b.c.list ?? []); b.rt.destroy(); b.c.destroy(); this.list = this.list.filter((x) => x !== b); }
 
   update(toScreen) {
     const now = this.scene.time.now;
@@ -72,7 +94,7 @@ export class SpeechBubbles {
       if (now > b.until || !b.target.sprite?.active) { this.remove(b); continue; }
       const life = b.rise ? (now - b.born) / (b.until - b.born) : 0;
       const p = toScreen(b.target.x, b.target.y + b.dy - life * b.rise);
-      b.c.setPosition(Math.round(p.x), Math.round(p.y));
+      b.c.setPosition(Math.round(p.x + (b.dx ?? 0)), Math.round(p.y));
       b.rt.update(now);
       if (b.rise && life > 0.8) b.c.setAlpha(0.95 * (1 - life) / 0.2);
     }

@@ -147,3 +147,21 @@ describe('가방: 전투 소모품·장비도 보이고, 장비는 입고 벗는
     expect(toggleEquip(on, 'knightPlate', EQUIP_DEFAULT).armor).toBe(EQUIP_DEFAULT.armor);
   });
 });
+
+describe('감정 말풍선', async () => {
+  const { EMOTES, MOOD_EMOTE, GIFT_EMOTE, emoteFile } = await import('../../content/art/emotes.js');
+  const { existsSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  it('팩 원본 30장이 다 있고 이름이 겹치지 않는다', () => {
+    expect(new Set(Object.values(EMOTES)).size).toBe(30);
+    for (const n of Object.keys(EMOTES)) expect(existsSync(join(import.meta.dirname, '../../assets-src/ninja-adventure', emoteFile(n))), n).toBe(true);
+  });
+  it('표정·선물 반응은 있는 감정 말풍선만 쓴다', () => {
+    for (const e of [...Object.values(MOOD_EMOTE), ...Object.values(GIFT_EMOTE)]) expect(EMOTES[e], e).toBeTruthy();
+  });
+  it('[emote=..] 태그는 글자에서 빠지고 따로 읽힌다', () => {
+    const r = parseRich('[emote=love]고마워!');
+    expect(r.emote).toBe('love');
+    expect(plain('[emote=love]고마워!')).toBe('고마워!');
+  });
+});
