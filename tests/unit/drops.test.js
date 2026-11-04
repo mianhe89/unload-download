@@ -1,4 +1,4 @@
-// 전투 보상: 몬스터가 떨어뜨리는 것
+// 전투 보상(몬스터가 떨어뜨리는 것), 지워진 사람의 흔적 자리
 import { describe, it, expect } from 'vitest';
 describe('이기면 떨어뜨리는 것', async () => {
   const { rollDrops } = await import('../../src/battle/encounters.js');
@@ -20,5 +20,19 @@ describe('이기면 떨어뜨리는 것', async () => {
     for (let s = 0; s < 400; s += 1) herbs += rollDrops(['slime'], s).filter((d) => d.item === 'herb').length;
     expect(herbs / 400).toBeGreaterThan(0.25);
     expect(herbs / 400).toBeLessThan(0.45);
+  });
+});
+
+describe('일과로 사는 사람이 지워지면 일터에 흔적이 남는다', async () => {
+  const { workSpot } = await import('../../src/field/systems/Schedules.js');
+  const village = await import('../../content/maps/village.js');
+  it('호르트의 흔적은 빵집 좌판 자리', () => {
+    const at = workSpot('hort', village);
+    const s = village.spots.bakeryStall;
+    expect(at).toEqual([Math.round(s.x), Math.round(s.y)]);
+  });
+  it('지워질 수 있는 사람은 모두 흔적 자리가 있다', async () => {
+    const { characters } = await import('../../content/characters/index.js');
+    for (const id of ['hort', 'tom', 'rine', 'per']) if (characters[id].schedule) expect(workSpot(id, village), id).toBeTruthy();
   });
 });

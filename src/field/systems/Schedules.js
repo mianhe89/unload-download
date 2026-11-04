@@ -28,6 +28,15 @@ export function doorStep(obj) {
   return [obj.at[0] + Math.floor(w / 2), obj.at[1] + h];
 }
 
+// 지워진 사람의 흔적을 둘 자리: 그 사람 일과의 첫 일터(집이 아닌 첫 장소). 없으면 null
+export function workSpot(id, map) {
+  const e = (characters[id]?.schedule ?? []).find((x) => !x.home && x.at);
+  if (!e) return null;
+  if (Array.isArray(e.at)) return e.at;
+  const s = map.spots?.[e.at];
+  return s ? [Math.round(s.x), Math.round(s.y)] : null;
+}
+
 export class Schedules {
   constructor(field, map) {
     this.field = field;
@@ -69,8 +78,22 @@ export class Schedules {
     return s ? [Math.round(s.x), Math.round(s.y)] : null;
   }
 
+  // 일과로 사는 사람이 지워졌으면, 그 사람의 일터에 흔적(remnant)이 남는다 (빈자리 찾기가 이어지게)
+  placeRemnants() {
+    if (!this.active) return;
+    const placed = this.field.phase.npcs ?? {};
+    const here = this.mapData.id ?? 'village';
+    for (const id of Object.keys(characters)) {
+      const c = characters[id];
+      if (!c.schedule || !c.remnant || placed[id] || (c.home ?? 'village') !== here || !WorldMemory.isErased(id)) continue;
+      const at = workSpot(id, this.mapData);
+      if (at) this.field.placeRemnant(id, at);
+    }
+  }
+
   // 페이즈 시작: 지금 시각의 자리에 바로 세운다 (걷지 않고)
   place() {
+    this.placeRemnants();
     const f = this.field;
     for (const id of this.ids()) {
       const e = this.entryAt(id, f.clock.minute);
