@@ -34,6 +34,7 @@ import { Schedules } from '../../field/systems/Schedules.js';
 import { Raids } from '../../field/systems/Raids.js';
 import { FieldBattle } from '../../field/systems/FieldBattle.js';
 import { Crow } from '../../field/systems/Crow.js';
+import { Animals } from '../../field/systems/Animals.js';
 import { addItem, takeItem, giftResult, markGifted } from '../../life/bag.js';
 import { TALK, TALK_AFF } from '../../../content/talk/talk.js';
 import { HEROINES } from '../../../content/portraits/portraits.js';
@@ -129,6 +130,7 @@ export default class FieldScene extends Phaser.Scene {
     this.clues = new Clues(this);
     this.battle = new FieldBattle(this);
     this.crow = new Crow(this);
+    this.animals = new Animals(this);
     this.raids = new Raids(this, this.mapDef);
 
     // UI 씬이 준비된 다음 프레임에 연결
@@ -191,6 +193,7 @@ export default class FieldScene extends Phaser.Scene {
     if (!busy || this.cutscene.walking) { this.quests.update(dt); this.clues.update(dt); this.schedules.update(dt); }
     if (!busy) this.raids.update(dt);
     this.crow.update(dt);
+    this.animals.update(dt, busy);
     if (!busy) {
       const { runs, bubbles } = this.director.update(dt, this.world(), busy);
       bubbles.forEach((b) => this.bubble(b.who, b.text));
@@ -242,6 +245,7 @@ export default class FieldScene extends Phaser.Scene {
     if (!target || this.cooldown > 0 || !this.player.justPressed('act')) return;
     this.player.idleTime = 0;
     if (target.npc) this.talkTo(target.npc);
+    else if (target.animal) { this.animals.poke(target.animal); this.cooldown = 0.3; }
     else if (target.life) this.doLife(target.life);
     else this.examine(target);
   }
@@ -252,6 +256,8 @@ export default class FieldScene extends Phaser.Scene {
       const d = this.player.distTo(npc.x, npc.y);
       if (d < bestD) { best = { npc, x: npc.x, y: npc.y }; bestD = d; }
     }
+    const animal = this.animals?.nearest(this.player.x, this.player.y, bestD);
+    if (animal) { best = { animal, x: animal.x, y: animal.y }; bestD = this.player.distTo(animal.x, animal.y); }
     for (const l of this.lifeSpots ?? []) {
       const d = this.player.distTo(l.x, l.y);
       if (d < bestD) { best = { life: l, x: l.x, y: l.y }; bestD = d; }
@@ -347,6 +353,15 @@ export default class FieldScene extends Phaser.Scene {
 
   // 가방에서 고른 먹을 것을 곁에 있는 사람에게 (ui/BagPanel). 마음은 숫자로 보이지 않고 말풍선으로만
   giveItem(id) {
+    // 동물이 사람보다 가까우면 동물에게 (먹을 것을 받아먹는다. 마음은 쌓지 않는다)
+    const animal = this.animals?.nearest(this.player.x, this.player.y, TALK_RANGE * 1.6);
+    const npc0 = Object.values(this.npcs).filter((n) => !characters[n.id]?.monster).sort((a, b) => a.distTo(this.player.x, this.player.y) - b.distTo(this.player.x, this.player.y))[0];
+    if (animal && (!npc0 || Math.hypot(animal.x - this.player.x, animal.y - this.player.y) < npc0.distTo(this.player.x, this.player.y))) {
+      WorldMemory.setBag(takeItem(WorldMemory.run.bag, id));
+      this.animals.feed(animal, id);
+      Sound.sfx(this, 'pickup');
+      return;
+    }
     const npc = Object.values(this.npcs)
       .filter((n) => !characters[n.id]?.monster && n.distTo(this.player.x, this.player.y) < TALK_RANGE * 1.6)
       .sort((a, b) => a.distTo(this.player.x, this.player.y) - b.distTo(this.player.x, this.player.y))[0];
