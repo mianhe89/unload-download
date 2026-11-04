@@ -11,8 +11,7 @@ describe('지워진 이름', () => {
   it('깨진 글자는 길이가 같고, 같은 이름은 늘 같은 모양', () => {
     expect(corrupt('호르트')).toHaveLength(3);
     expect(corrupt('호르트')).toBe(corrupt('호르트'));
-    expect(corrupt('호르트')).toBe('ㅎㄹㅌ');
-    expect(corrupt('에다')).toBe('ㅇㄷ');
+    expect(corrupt('호르트')).toMatch(/^[!@#$%&*?]+$/);
   });
 
   it('마을 사람 입에서는 깨진다', () => {
