@@ -15,7 +15,7 @@ export const quests = [
       { text: '약속대로 에다의 대장간에 간다', done: { flag: 'smithy.seen' }, goal: { zone: 'smithy' } },
       { text: '에다를 아는 사람을 찾는다 — 미아, 그리고 초소의 셀레나', done: { flag: 'selena.done' }, goal: [{ npc: 'mia', unlessFlag: 'mia.talked' }, { zone: 'post' }] },
       { text: '우물가에 왔다는 마법사를 만난다', done: { flag: 'done.lu' }, goal: [{ npc: 'lu' }, { spot: 'well' }] },
-      { text: '밤, 종탑 앞에 가 본다', done: { flag: 'done.keeper' }, goal: { zone: 'tower' } },
+      { text: '밤, 광장 북쪽 종탑 앞으로 가 본다', done: { flag: 'done.keeper' }, goal: { zone: 'tower' } },
     ],
   },
 ];

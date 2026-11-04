@@ -137,7 +137,7 @@ export const phases = {
     time: 'day',
     bonfire: 'embers',
     player: { at: [16, 28], face: 'up' },
-    objective: '에다의 대장간',
+    objective: '광장 동쪽, 에다의 대장간에 가 본다',
     npcs: {
       mia: { at: [26, 19], mode: 'idle', face: 'down' },
       hort: { at: [16, 16], mode: 'idle', face: 'down' },
@@ -175,7 +175,7 @@ export const phases = {
     time: 'night',
     bonfire: 'out',
     player: { at: [24, 20], face: 'up' },
-    objective: '종탑',
+    objective: '광장 북쪽, 종탑 앞으로 가 본다',
     npcs: {},
     lights: [{ spot: 'towerDoor', radius: 50, flicker: false }],
     onEnter: 'night.intro',

@@ -10,7 +10,7 @@ export const phases = {
     time: 'day',
     bonfire: 'out',
     player: { at: [16, 28], face: 'up' },
-    objective: '종탑',
+    objective: '에다를 찾는다',
     // 마을 밖 길이 처음으로 '불러와졌다' (북쪽, 서리 마을 방향)
     exits: ['n'],
     // 시계가 돈다: 이름 있는 사람들은 배치 대신 각자 하루 일과(인물 파일의 schedule)대로 산다

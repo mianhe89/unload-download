@@ -5,6 +5,7 @@ import { characters } from '../../../content/characters/index.js';
 import { OBJECTS, ANIMATED, PARTICLES, CHAR, FACE, MONSTER_ART } from '../../../content/art/pack.js';
 import { propPixels, PROP_NAMES, TILE } from '../../../content/art/props.js';
 import { animalPixels, SPECIES } from '../../../content/art/animals.js';
+import { iconPixels, ICON_IDS } from '../../../content/art/icons.js';
 
 const BASE = 'assets/gen/';
 
@@ -49,6 +50,7 @@ export function buildTextures(scene) {
   // 대본용 작은 소품 (빵, 화관, 반지 등). 아직 코드로 그린다
   for (const kind of PROP_NAMES) if (!scene.textures.exists(`prop.${kind}`)) canvasFrom(scene, `prop.${kind}`, TILE, TILE, propPixels(kind));
   for (const sp of SPECIES) for (const f of [0, 1]) if (!scene.textures.exists(`animal.${sp}.${f}`)) canvasFrom(scene, `animal.${sp}.${f}`, 16, 16, animalPixels(sp, f));
+  for (const id of ICON_IDS) if (!scene.textures.exists(`icon.${id}`)) canvasFrom(scene, `icon.${id}`, 16, 16, iconPixels(id));
 
   // 빛: 부드러운 원형 그라데이션 (조명·어둠 지우개)
   if (!scene.textures.exists('fx.glow')) {

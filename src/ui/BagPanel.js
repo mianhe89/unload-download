@@ -1,4 +1,6 @@
-// 가방 (I): 먹을 것·재료·소중한 것. ↑↓ 고르기, Enter 곁에 있는 사람에게 건네기, I·Esc 닫기.
+// 가방 (I): 왼쪽은 장비 칸(투구·갑옷·무기·장신구, 가운데 주인공), 오른쪽은 인벤토리 칸.
+//   인벤토리: 분류 탭(Q·E 또는 누르기), 칸마다 아이템 그림·개수·등급 색 테두리, 입은 장비엔 E 표시
+//   ←→↑↓(WASD) 칸 옮기기, Enter: 먹을 것은 곁에 있는 사람에게 건네기, 장비는 입기/벗기. I·Esc 닫기
 // 선택창이 아니라 가방이다. 건넬지는 플레이어가 사람 곁에 가서 정한다. 열려 있는 동안 주인공은 멈춘다.
 import Phaser from 'phaser';
 import { COLORS, frame, text, scaleOf, titleBand } from './kit.js';
@@ -6,23 +8,36 @@ import { WorldMemory } from '../core/world/WorldMemory.js';
 import { listBag, toggleEquip } from '../life/bag.js';
 import { RARITY } from '../../content/items/items.js';
 import { EQUIP_DEFAULT } from '../../content/action/action.js';
+import { ITEMS } from '../../content/items.js';
 import { equipSkin } from '../art/equipLook.js';
 import { skinOf } from '../life/life.js';
 
-const KIND = { food: '먹을 것', battle: '전투에 쓰는 것', gear: '장비', material: '재료', key: '소중한 것' };
-const SLOT = { weapon: '무기', armor: '갑옷', trinket: '장신구' };
+const TABS = [
+  { id: 'all', label: '전체' }, { id: 'food', label: '먹을 것' }, { id: 'battle', label: '전투' },
+  { id: 'gear', label: '장비' }, { id: 'material', label: '재료' }, { id: 'key', label: '소중한 것' },
+];
+const SLOTS = [
+  { id: 'head', label: '투구' }, { id: 'armor', label: '갑옷' }, { id: 'weapon', label: '무기' }, { id: 'trinket', label: '장신구' },
+];
+const COLS = 7, ROWS = 4;
+const hex = (c) => Number.parseInt(String(c).replace('#', ''), 16);
 
 export class BagPanel {
   constructor(scene) {
     this.scene = scene;
     this.s = scaleOf(scene);
+    this.tab = 0;
     this.pick = 0;
     this.box = null;
     const keys = scene.input.keyboard;
     const on = (k, fn) => keys.on(`keydown-${k}`, () => { if (this.open) fn(); });
-    ['UP', 'W'].forEach((k) => on(k, () => this.move(-1)));
-    ['DOWN', 'S'].forEach((k) => on(k, () => this.move(1)));
-    on('ENTER', () => this.give());
+    ['LEFT', 'A'].forEach((k) => on(k, () => this.move(-1)));
+    ['RIGHT', 'D'].forEach((k) => on(k, () => this.move(1)));
+    ['UP', 'W'].forEach((k) => on(k, () => this.move(-COLS)));
+    ['DOWN', 'S'].forEach((k) => on(k, () => this.move(COLS)));
+    on('Q', () => this.setTab(this.tab - 1));
+    on('E', () => this.setTab(this.tab + 1));
+    on('ENTER', () => this.use());
     on('ESC', () => this.close());
   }
 
@@ -37,25 +52,30 @@ export class BagPanel {
   show() { this.freeze(true); this.render(); }
   close() { this.box?.destroy(); this.box = null; this.freeze(false); }
 
+  equip() { return { ...EQUIP_DEFAULT, ...(WorldMemory.run.equip ?? {}) }; }
+
   list() {
     const run = WorldMemory.run;
-    return listBag(run.bag, { farmItems: run.farm?.items ?? {}, flags: run.flags, gear: run.gear ?? {}, equip: { ...EQUIP_DEFAULT, ...(run.equip ?? {}) } });
+    const all = listBag(run.bag, { farmItems: run.farm?.items ?? {}, flags: run.flags, gear: run.gear ?? {}, equip: this.equip() });
+    const t = TABS[this.tab].id;
+    return t === 'all' ? all : all.filter((it) => it.def.kind === t);
   }
 
-  move(d) { this.pick = Phaser.Math.Clamp(this.pick + d, 0, Math.max(0, this.list().length - 1)); this.render(); }
+  setTab(i) { this.tab = (i + TABS.length) % TABS.length; this.pick = 0; this.render(); }
+  move(d) { const n = this.list().length; if (!n) return; this.pick = Math.max(0, Math.min(n - 1, this.pick + d)); this.render(); }
 
-  // 고른 먹을 것을 곁에 있는 사람에게. 건넸으면 창을 닫는다
-  give() {
+  // Enter: 먹을 것은 곁에 있는 사람에게, 장비는 입기/벗기
+  use() {
     const it = this.list()[this.pick];
-    if (it?.def.kind === 'gear') { this.wear(it.id); return; }
-    if (!it || it.def.kind !== 'food') return;
+    if (!it) return;
+    if (it.def.kind === 'gear') { this.wear(it.id); return; }
+    if (it.def.kind !== 'food') return;
     const f = this.field();
     if (!f?.giveItem) return;
     this.close();
     f.giveItem(it.id);
   }
 
-  // 장비: Enter로 입기 / 다시 Enter로 벗기. 주인공 도트가 바로 바뀐다
   wear(id) {
     const equip = toggleEquip(WorldMemory.run.equip, id, EQUIP_DEFAULT);
     WorldMemory.setEquip(equip);
@@ -64,43 +84,92 @@ export class BagPanel {
     this.render();
   }
 
+  // 아이템 한 칸: 등급 색 테두리, 그림, 개수, 입었으면 E
+  cell(box, x, y, size, it, on) {
+    const sc = this.scene, s = this.s;
+    const g = sc.add.graphics();
+    const r = it ? RARITY[it.def.rarity ?? 'common'] : null;
+    g.fillStyle(0x1a1418, 0.85).fillRoundedRect(x, y, size, size, 4 * s);
+    g.lineStyle((on ? 2.5 : 1.5) * s, on ? COLORS.gold : r ? hex(r.glow) : COLORS.inner, on ? 1 : r ? 0.75 : 0.6).strokeRoundedRect(x, y, size, size, 4 * s);
+    box.add(g);
+    if (!it) return g;
+    if (sc.textures.exists(`icon.${it.id}`)) box.add(sc.add.image(x + size / 2, y + size / 2, `icon.${it.id}`).setScale((size * 0.72) / 16));
+    if (it.def.kind !== 'key' && it.def.kind !== 'gear' && it.count > 1) box.add(text(sc, x + size - 3 * s, y + size - 2 * s, `${it.count}`, { size: 9, bold: true, color: '#fbf8f2' }).setOrigin(1, 1).setStroke('#1a1418', 3 * s));
+    if (it.worn) box.add(text(sc, x + 3 * s, y + 2 * s, 'E', { size: 8, bold: true, color: COLORS.accent }).setStroke('#1a1418', 3 * s));
+    return g;
+  }
+
   render() {
     this.box?.destroy();
     const sc = this.scene, s = this.s;
     const { width, height } = sc.scale;
-    const W = 560 * s, H = 340 * s, x0 = width / 2 - W / 2, y0 = height / 2 - H / 2;
+    const W = 760 * s, H = 430 * s, x0 = width / 2 - W / 2, y0 = height / 2 - H / 2;
     const box = (this.box = sc.add.container(0, 0).setDepth(200));
+    box.add(sc.add.rectangle(0, 0, width, height, 0x000000, 0.35).setOrigin(0, 0).setInteractive());
     const g = sc.add.graphics();
     frame(g, x0, y0, W, H, s, { corners: 'diamond', sheen: false });
     box.add(g);
     box.add(titleBand(sc, g, width / 2, y0, '가방', s));
-    const list = this.list();
-    const left = x0 + 36 * s;
-    if (!list.length) {
-      box.add(text(sc, left, y0 + 50 * s, '가방이 비어 있다.', { size: 13, color: COLORS.dim }));
-    } else {
-      this.pick = Math.min(this.pick, list.length - 1);
-      let y = y0 + 44 * s, lastKind = null;
-      list.forEach((it, i) => {
-        if (it.def.kind !== lastKind) { box.add(text(sc, left, y, KIND[it.def.kind], { size: 10, color: COLORS.dim })); y += 18 * s; lastKind = it.def.kind; }
-        const on = i === this.pick;
-        const tail = it.def.kind === 'key' ? '' : it.def.kind === 'gear' ? (it.worn ? '  (입음)' : '') : `  ×${it.count}`;
-        const t = text(sc, left + 8 * s, y, `${on ? '▸ ' : '  '}${it.def.name}${tail}`, { size: 12, bold: on, color: RARITY[it.def.rarity ?? 'common']?.glow ?? COLORS.text })
-          .setInteractive({ useHandCursor: true }).on('pointerdown', () => { if (this.pick === i) this.give(); else { this.pick = i; this.render(); } });
-        box.add(t);
-        y += 22 * s;
-      });
-      // 오른쪽: 설명
-      const rx = x0 + 250 * s, it = list[this.pick];
-      box.add(sc.add.rectangle(rx - 16 * s, y0 + 40 * s, 1 * s, H - 80 * s, COLORS.inner).setOrigin(0.5, 0));
-      const r = RARITY[it.def.rarity ?? 'common'];
-      box.add(text(sc, rx, y0 + 44 * s, it.def.name, { size: 14, bold: true, color: r.glow }));
-      box.add(text(sc, x0 + W - 36 * s, y0 + 47 * s, it.def.kind === 'gear' ? `${r.name} · ${SLOT[it.def.slot]}` : r.name, { size: 10, color: r.glow }).setOrigin(1, 0));
-      box.add(text(sc, rx, y0 + 72 * s, it.def.desc, { size: 12, color: COLORS.text, lineSpacing: 6 * s, wordWrap: { width: x0 + W - 36 * s - rx, useAdvancedWrap: true } }));
-      if (it.def.kind === 'food') box.add(text(sc, rx, y0 + H - 54 * s, '곁에 있는 사람에게 건넬 수 있다', { size: 10, color: COLORS.sub }));
-      if (it.def.kind === 'gear') box.add(text(sc, rx, y0 + H - 54 * s, it.worn ? 'Enter로 벗는다' : 'Enter로 입는다 (보스 2단계의 스킬이 바뀐다)', { size: 10, color: COLORS.sub }));
-      if (it.def.kind === 'battle') box.add(text(sc, rx, y0 + H - 54 * s, '보스 2단계에서 1~8로 쓴다', { size: 10, color: COLORS.sub }));
+
+    // ── 왼쪽: 장비 칸 ─────────────────────────────
+    const lx = x0 + 24 * s, lw = 240 * s;
+    g.fillStyle(0x000000, 0.18).fillRoundedRect(lx, y0 + 34 * s, lw, H - 70 * s, 6 * s);
+    box.add(text(sc, lx + 12 * s, y0 + 44 * s, '장비', { size: 12, bold: true, color: COLORS.accent }));
+    const eq = this.equip();
+    const cx = lx + lw / 2, cy = y0 + 200 * s;
+    // 가운데 주인공(현재 체형·장비의 도트)
+    const f = this.field();
+    const skin = f?.player?.sprite?.texture?.key ?? 'char.me';
+    if (sc.textures.exists(skin)) box.add(sc.add.image(cx, cy + 6 * s, skin, 0).setScale(5 * s));
+    const slotAt = { head: [cx, cy - 92 * s], armor: [cx - 84 * s, cy], weapon: [cx + 84 * s, cy], trinket: [cx, cy + 96 * s] };
+    const SZ = 48 * s;
+    for (const sl of SLOTS) {
+      const [sx, sy] = slotAt[sl.id];
+      const id = eq[sl.id];
+      const it = id && ITEMS[id] ? { id, def: ITEMS[id], count: 1 } : null;
+      this.cell(box, sx - SZ / 2, sy - SZ / 2, SZ, it, false);
+      box.add(text(sc, sx, sy + SZ / 2 + 9 * s, it ? it.def.name : `${sl.label} —`, { size: 9, color: it ? RARITY[it.def.rarity ?? 'common'].glow : COLORS.dim }).setOrigin(0.5, 0.5));
+      if (!it) box.add(text(sc, sx, sy, sl.label, { size: 10, color: COLORS.dim }).setOrigin(0.5, 0.5));
     }
-    box.add(text(sc, x0 + W - 24 * s, y0 + H - 18 * s, '↑↓ 고르기   Enter 건네기·입기   I 닫기', { size: 10, color: COLORS.dim }).setOrigin(1, 0.5));
+    // 장비가 주는 것
+    const atk = ['weapon', 'armor', 'trinket'].reduce((a, k) => a + (ITEMS[eq[k]]?.atk ?? 0), 0);
+    const def = ['weapon', 'armor', 'trinket'].reduce((a, k) => a + (ITEMS[eq[k]]?.def ?? 0), 0);
+    box.add(text(sc, cx, y0 + H - 50 * s, `공격 +${atk}   받는 피해 -${Math.round(def * 100)}%`, { size: 10, color: COLORS.sub }).setOrigin(0.5, 0.5));
+
+    // ── 오른쪽: 인벤토리 ─────────────────────────────
+    const rx = lx + lw + 20 * s, rw = x0 + W - 24 * s - rx;
+    TABS.forEach((t, i) => {
+      const on = i === this.tab;
+      const tx = rx + i * 70 * s, ty = y0 + 44 * s;
+      const label = text(sc, tx, ty, t.label, { size: 11, bold: on, color: on ? COLORS.accent : COLORS.dim })
+        .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.setTab(i));
+      box.add(label);
+      if (on) box.add(sc.add.rectangle(tx, ty + 16 * s, label.width, 2 * s, COLORS.gold).setOrigin(0, 0.5));
+    });
+    const list = this.list();
+    this.pick = Math.min(this.pick, Math.max(0, list.length - 1));
+    const CS = Math.min(52 * s, (rw - (COLS - 1) * 6 * s) / COLS), gy = y0 + 70 * s;
+    for (let i = 0; i < COLS * ROWS; i += 1) {
+      const x = rx + (i % COLS) * (CS + 6 * s), y = gy + Math.floor(i / COLS) * (CS + 6 * s);
+      const it = list[i];
+      const cg = this.cell(box, x, y, CS, it, it && i === this.pick);
+      if (it) cg.setInteractive(new Phaser.Geom.Rectangle(x, y, CS, CS), Phaser.Geom.Rectangle.Contains)
+        .on('pointerdown', () => { if (this.pick === i) this.use(); else { this.pick = i; this.render(); } });
+    }
+    // 고른 것의 설명
+    const dy = gy + ROWS * (CS + 6 * s) + 8 * s;
+    g.fillStyle(0x000000, 0.18).fillRoundedRect(rx, dy, rw, y0 + H - 34 * s - dy, 6 * s);
+    const it = list[this.pick];
+    if (!it) box.add(text(sc, rx + 12 * s, dy + 14 * s, '비어 있다.', { size: 12, color: COLORS.dim }));
+    else {
+      const r = RARITY[it.def.rarity ?? 'common'];
+      box.add(text(sc, rx + 12 * s, dy + 12 * s, it.def.name, { size: 13, bold: true, color: r.glow }));
+      const kind = { food: '먹을 것', battle: '전투에 쓰는 것', gear: `장비 · ${SLOTS.find((x) => x.id === it.def.slot)?.label ?? ''}`, material: '재료', key: '소중한 것' }[it.def.kind];
+      box.add(text(sc, rx + rw - 12 * s, dy + 14 * s, `${r.name} · ${kind}`, { size: 10, color: r.glow }).setOrigin(1, 0));
+      box.add(text(sc, rx + 12 * s, dy + 34 * s, it.def.desc ?? '', { size: 11, color: COLORS.text, lineSpacing: 4 * s, wordWrap: { width: rw - 24 * s, useAdvancedWrap: true } }));
+      const hint = { food: '곁에 있는 사람에게 건넬 수 있다', gear: it.worn ? '입고 있다' : '입을 수 있다', battle: '보스와 맞설 때 꺼내 쓴다' }[it.def.kind];
+      if (hint) box.add(text(sc, rx + rw - 12 * s, y0 + H - 46 * s, hint, { size: 10, color: COLORS.sub }).setOrigin(1, 0.5));
+    }
+    box.add(text(sc, x0 + W - 24 * s, y0 + H - 16 * s, 'Q·E 탭   방향키 고르기   Enter 건네기·입기   I 닫기', { size: 10, color: COLORS.dim }).setOrigin(1, 0.5));
   }
 }
