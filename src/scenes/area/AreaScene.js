@@ -29,6 +29,7 @@ import { Ambient } from '../../field/Ambient.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 import { fieldHubAt, visitPhase } from '../../world/visits.js';
 import { passes } from '../../core/script/ScriptRunner.js';
+import { resolveGoal, trackedStep } from '../../field/goals.js';
 
 const HOME = cellKey('surface', HUBS.home.at);
 const FACE = { n: 'down', s: 'up', w: 'right', e: 'left' };
@@ -312,13 +313,21 @@ export default class AreaScene extends Phaser.Scene {
     });
   }
 
+  // 머리 위 이름(ui/NameTags): 길 위의 떠돌이
+  nameTagsInfo(range) {
+    const t = this.traveler;
+    if (!t || !this.player || Math.hypot(t.x - this.player.x, t.y - this.player.y) > range) return [];
+    return [{ x: t.x, y: t.y - 17, name: characters[t.id]?.name ?? '' }];
+  }
+
   // 작은 지도(ui/Minimap)에 넘길 것: 이 칸의 맵, 나, 떠돌이(흰 점)와 몬스터(붉은 점)
   minimapInfo() {
     if (!this.player?.sprite?.active) return null;
     const people = [];
     if (this.traveler) people.push({ x: this.traveler.x / 16, y: this.traveler.y / 16 });
     if (this.monster?.active) people.push({ x: this.monster.x / 16, y: this.monster.y / 16, foe: true });
-    return { key: this.key, map: this.area, name: this.area.name, player: { x: this.player.x / 16, y: this.player.y / 16 }, people };
+    const goal = this.layerId === 'surface' ? resolveGoal(trackedStep(WorldMemory.run.quests), { map: this.area, ctx: this.condCtx(), here: this.at, hubHere: null }) : null;
+    return { key: this.key, map: this.area, name: this.area.name, player: { x: this.player.x / 16, y: this.player.y / 16 }, people, goal };
   }
 
   // 대본 조건(when)을 길 맵에서 볼 때 쓰는 최소한의 상태

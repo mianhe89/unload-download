@@ -36,6 +36,8 @@ import { FieldBattle } from '../../field/systems/FieldBattle.js';
 import { Crow } from '../../field/systems/Crow.js';
 import { Animals } from '../../field/systems/Animals.js';
 import { Signs } from '../../field/systems/Signs.js';
+import { resolveGoal, hubOfMap } from '../../field/goals.js';
+import { HUBS } from '../../../content/world/world.js';
 import { addItem, takeItem, giftResult, markGifted } from '../../life/bag.js';
 import { TALK, TALK_AFF } from '../../../content/talk/talk.js';
 import { HEROINES } from '../../../content/portraits/portraits.js';
@@ -621,13 +623,25 @@ export default class FieldScene extends Phaser.Scene {
     }));
   }
 
+  // 머리 위 이름(ui/NameTags): 가까운 사람들. 할 일이 남은 사람은 금색
+  nameTagsInfo(range) {
+    if (!this.player?.sprite?.active) return [];
+    const w = this.world();
+    return Object.values(this.npcs).filter((n) => n.sprite?.visible !== false && n.distTo(this.player.x, this.player.y) < range)
+      .map((n) => ({ x: n.x, y: n.y - 17, name: characters[n.id]?.name ?? n.id, color: this.director.hasPendingFor(n.id, w) ? '#ffd84a' : null }));
+  }
+
   // 작은 지도(ui/Minimap)에 넘길 것: 맵, 나, 사람들(할 일이 남은 사람은 task)
   minimapInfo() {
     if (!this.player?.sprite?.active) return null;
     const w = this.world();
     const step = this.quests?.tracked()?.step;
     const want = new Set([step?.done?.talk, ...Object.keys(step?.count?.of ?? {}).filter((id) => !WorldMemory.run.flags[step.count.of[id]])].filter(Boolean));
+    const people = Object.fromEntries(Object.values(this.npcs).map((n) => [n.id, [n.x / TILE, n.y / TILE]]));
+    const hubHere = hubOfMap(this.mapDef.id);
+    const goal = resolveGoal(step, { map: this.mapDef, people, ctx: this.ctx(), here: HUBS[hubHere]?.at, hubHere });
     return {
+      goal,
       key: this.roomId ?? this.mapDef.id ?? 'village', map: this.mapDef, name: this.roomId ? this.mapDef.name : this.phase.place,
       player: { x: this.player.x / TILE, y: this.player.y / TILE },
       people: Object.values(this.npcs).map((n) => ({ x: n.x / TILE, y: n.y / TILE, task: want.has(n.id) || this.director.hasPendingFor(n.id, w) })),

@@ -5,11 +5,11 @@ export const quests = [
     id: 'q.ch3', title: '첫눈 축제', kind: 'main',
     start: { auto: true, when: { ifFlag: 'ch3.started' } },
     steps: [
-      { text: '겨울 장에서 미아와 함께 걷는다 (22일부터, 낮)', done: { flag: 'route.mia.hands' } },
-      { text: '오후에 초소에 들러 셀레나의 명부 정리를 돕는다 (23일부터)', done: { flag: 'route.selena.quarrel' } },
-      { text: '아침에 셀레나를 만난다', done: { flag: 'route.selena.made_up' } },
-      { text: '사라졌던 루를 다시 만난다 (28일부터)', done: { flag: 'route.lu.back' } },
-      { text: '30일 저녁, 광장의 첫눈 축제에 간다', done: { flag: 'part1.done' } },
+      { text: '겨울 장에서 미아와 함께 걷는다 (22일부터, 낮)', done: { flag: 'route.mia.hands' }, goal: [{ npc: 'mia', minDay: 22 }, { spot: 'playerHome' }] },
+      { text: '오후에 초소에 들러 셀레나의 명부 정리를 돕는다 (23일부터)', done: { flag: 'route.selena.quarrel' }, goal: [{ zone: 'post', minDay: 23 }, { spot: 'playerHome' }] },
+      { text: '아침에 셀레나를 만난다 (밤엔 집에서 자면 하루가 지난다)', done: { flag: 'route.selena.made_up' }, goal: [{ npc: 'selena' }, { zone: 'post' }] },
+      { text: '사라졌던 루를 다시 만난다 (28일부터)', done: { flag: 'route.lu.back' }, goal: [{ npc: 'lu', minDay: 28 }, { spot: 'well', minDay: 28 }, { spot: 'playerHome' }] },
+      { text: '서른째 날 저녁, 광장의 첫눈 축제에 간다', done: { flag: 'part1.done' }, goal: [{ spot: 'plaza', minDay: 30 }, { spot: 'playerHome' }] },
     ],
   },
 ];

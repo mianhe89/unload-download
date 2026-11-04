@@ -13,6 +13,8 @@ import { CG, TINTS, PORTRAITS } from '../../content/cg.js';
 import { doorStep } from '../../src/field/systems/Schedules.js';
 import { RAIDS } from '../../content/raids.js';
 import { MONSTERS, PARTY } from '../../content/battles/units.js';
+import { QUESTS } from '../../content/quests/index.js';
+import { HUBS } from '../../content/world/world.js';
 
 export function validateContent() {
   const stats = {};
@@ -48,6 +50,21 @@ export function validateContent() {
       if (!characters[b.id]) err(`습격 ${r.id}: 인물 없음 ${b.id}`);
       if (solid(...b.from)) err(`습격 ${r.id}: 출발점이 막힌 칸 ${b.from}`);
     }
+  }
+
+  // 퀘스트 단계의 목적지(goal): 사람·거점·장소·구역 이름이 실제로 있는지 (작은 지도의 별·화살표)
+  {
+    const spotNames = new Set(Object.values(MAPS).flatMap((m) => Object.keys(m.spots ?? {})));
+    const zoneNames = new Set(Object.values(MAPS).flatMap((m) => Object.keys(m.zones ?? {})));
+    for (const q of Object.values(QUESTS)) q.steps.forEach((st, i) => {
+      for (const g of [st.goal ?? []].flat()) {
+        const at = `퀘스트 ${q.id} ${i}단계 목적지`;
+        if (g.npc && !characters[g.npc]) err(`${at}: 인물 없음 ${g.npc}`);
+        if (g.place && !HUBS[g.place]) err(`${at}: 거점 없음 ${g.place}`);
+        if (g.spot && !spotNames.has(g.spot)) err(`${at}: 장소 없음 ${g.spot}`);
+        if (g.zone && !zoneNames.has(g.zone)) err(`${at}: 구역 없음 ${g.zone}`);
+      }
+    });
   }
 
   // 하루 일과: 시각 형식, 장소가 있는지, 걸을 수 있는 칸인지, 집으로 가면 집(맵 objects의 residents)이 있는지

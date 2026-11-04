@@ -99,6 +99,22 @@ export class Minimap {
     m.lineStyle(1 * s, accent, 1).strokeCircle(cx, cy, mr - 2 * s);
   }
 
+  star(g, x, y, r) {
+    const pts = [];
+    for (let i = 0; i < 10; i += 1) { const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.45 : r; pts.push({ x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr }); }
+    g.fillStyle(0x000000, 0.6).fillPoints(pts.map((p) => ({ x: p.x + this.s, y: p.y + this.s })), true);
+    g.fillStyle(0xffd84a, 1).fillPoints(pts, true);
+    g.lineStyle(1 * this.s, 0x5a3a10, 1).strokePoints(pts, true);
+  }
+
+  arrow(g, x, y, ang, r) {
+    const p = (a, d) => ({ x: x + Math.cos(ang + a) * d, y: y + Math.sin(ang + a) * d });
+    const pts = [p(0, r), p(2.5, r * 0.8), p(-2.5, r * 0.8)];
+    g.fillStyle(0x000000, 0.6).fillPoints(pts.map((q) => ({ x: q.x + this.s, y: q.y + this.s })), true);
+    g.fillStyle(0xffd84a, 1).fillPoints(pts, true);
+    g.lineStyle(1 * this.s, 0x5a3a10, 1).strokePoints(pts, true);
+  }
+
   zoom(d) { this.level = Math.max(0, Math.min(LEVELS.length - 1, this.level + d)); this.timer = 0; }
 
   setVisible(v) { this.box.setVisible(v); this.dots.setVisible(v); }
@@ -160,6 +176,18 @@ export class Minimap {
       const r = Math.max(2.6 * this.s, k * 0.4);
       g.fillStyle(0x000000, 0.55).fillCircle(x, y + this.s, r + this.s);
       g.fillStyle(p.task ? 0xffd84a : p.foe ? 0xe05a4a : 0xf4f0e8, 1).fillCircle(x, y, r);
+    }
+    // 목적지: 같은 맵이면 금색 별(보이는 범위 밖이면 가장자리 화살표), 다른 마을이면 그쪽 가장자리 화살표
+    if (info.goal) {
+      const cx0 = this.x0 + this.size / 2, cy0 = this.y0 + this.size / 2;
+      const pulse = 1 + 0.15 * Math.sin(sc.time.now / 180);
+      if (info.goal.angle === undefined && inside(at(info.goal))) this.star(g, ...at(info.goal), 5 * this.s * pulse);
+      else {
+        const ang = info.goal.angle ?? Math.atan2(at(info.goal)[1] - cy0, at(info.goal)[0] - cx0);
+        const r = this.size / 2 - 9 * this.s;
+        const ex = cx0 + Math.cos(ang) * r, ey = cy0 + Math.sin(ang) * r;
+        this.arrow(g, ex, ey, ang, 7 * this.s * pulse);
+      }
     }
     const [px, py] = at(info.player);
     const r = Math.max(3.6 * this.s, k * 0.55);
