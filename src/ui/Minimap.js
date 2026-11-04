@@ -45,8 +45,9 @@ export class Minimap {
     this.size = Math.round(150 * s);
     this.level = 1;
     const { width } = scene.scale;
-    this.x0 = width - this.size - 14 * s;
-    this.y0 = 82 * s; // 소리 단추 아래
+    // 오른쪽 위 모서리에 붙인다 (소리 단추는 그 왼쪽, ui/SoundButton.js)
+    this.x0 = width - this.size - 5 * s;
+    this.y0 = 13 * s; // 윗줄 까마귀 메달이 화면 밖으로 잘리지 않을 만큼만 내린다
     this.box = scene.add.container(0, 0).setDepth(45);
     const g = (this.frameG = scene.add.graphics());
     this.img = scene.add.image(this.x0, this.y0, '__DEFAULT').setOrigin(0, 0).setVisible(false);
@@ -54,10 +55,11 @@ export class Minimap {
     this.maskShape = scene.make.graphics({}, false).fillRect(this.x0, this.y0, this.size, this.size);
     const mask = this.maskShape.createGeometryMask();
     this.img.setMask(mask); // 점은 마스크 대신 테두리 안에 있을 때만 찍는다(Graphics에 마스크가 먹지 않는다)
-    // 이름 명패와 넓게·좁게 단추 (명패 양 끝의 둥근 단추)
-    const plateY = this.y0 + this.size + 17 * s;
-    this.label = text(scene, this.x0 + this.size / 2, plateY, '', { size: 10, bold: true, color: PAPER.ink }).setOrigin(0.5, 0.5);
-    const btn = (dx, str, d) => text(scene, this.x0 + dx, plateY, str, { size: 12, bold: true, color: PAPER.ink }).setOrigin(0.5, 0.5)
+    // 지도 아래쪽 안의 얇은 띠: 이름과 넓게·좁게 단추
+    const stripY = this.y0 + this.size - 7 * s;
+    this.strip = scene.add.rectangle(this.x0, stripY - 7 * s, this.size, 14 * s, 0x15151c, 0.62).setOrigin(0, 0);
+    this.label = text(scene, this.x0 + this.size / 2, stripY, '', { size: 9, bold: true, color: '#fbf8f2' }).setOrigin(0.5, 0.5);
+    const btn = (dx, str, d) => text(scene, this.x0 + dx, stripY, str, { size: 11, bold: true, color: '#fbf8f2' }).setOrigin(0.5, 0.5)
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.zoom(d));
     // 까마귀 문장 (윗줄 가운데)
     if (!scene.textures.exists('ui.crow')) {
@@ -67,8 +69,8 @@ export class Minimap {
       tex.refresh();
     }
     this.medal = scene.add.graphics();
-    this.crow = scene.add.image(this.x0 + this.size / 2, this.y0 - 9 * s, 'ui.crow').setScale(Math.max(1, Math.round(1.6 * s))).setOrigin(0.5, 0.5);
-    this.box.add([g, this.img, this.medal, this.crow, this.label, btn(9 * s, '+', -1), btn(this.size - 9 * s, '−', 1)]);
+    this.crow = scene.add.image(this.x0 + this.size / 2, this.y0 - 2 * s, 'ui.crow').setScale(Math.max(1, Math.round(1.4 * s))).setOrigin(0.5, 0.5);
+    this.box.add([g, this.img, this.medal, this.crow, this.strip, this.label, btn(8 * s, '+', -1), btn(this.size - 8 * s, '−', 1)]);
     this.drawFrame(ACCENT_BY_MAP.village);
     const kb = scene.input.keyboard;
     ['PLUS', 'NUMPAD_ADD'].forEach((k) => kb.on(`keydown-${k}`, () => this.zoom(-1)));
@@ -81,25 +83,20 @@ export class Minimap {
     this.mapKey = null;
   }
 
-  // 테두리: 그림자 → 순백 종이 → 지역 색 가는 선 → 지도 칸의 어두운 안쪽 테. 위엔 까마귀 메달, 아래엔 이름 명패
+  // 테두리: 얇은 띠 — 어두운 바깥선 · 흰 띠 · 지역 색 안쪽선. 윗줄 가운데엔 작은 까마귀 메달
   drawFrame(accent) {
     if (this.accent === accent) return;
     this.accent = accent;
     const g = this.frameG.clear(), s = this.s, x = this.x0, y = this.y0, n = this.size;
-    const pad = 7 * s, r = 8 * s;
-    g.fillStyle(0x000000, 0.28).fillRoundedRect(x - pad + 2 * s, y - pad + 4 * s, n + pad * 2, n + pad * 2 + 22 * s, r);
-    g.fillStyle(PAPER.body, 1).fillRoundedRect(x - pad, y - pad, n + pad * 2, n + pad * 2 + 22 * s, r);
-    g.lineStyle(1.5 * s, PAPER.edge, 0.9).strokeRoundedRect(x - pad, y - pad, n + pad * 2, n + pad * 2 + 22 * s, r);
-    g.lineStyle(1.5 * s, accent, 1).strokeRoundedRect(x - pad + 3 * s, y - pad + 3 * s, n + pad * 2 - 6 * s, n + pad * 2 + 16 * s, r * 0.7);
-    g.fillStyle(0x15151c, 1).fillRect(x - 1.5 * s, y - 1.5 * s, n + 3 * s, n + 3 * s);
-    // 명패 칸: 지도 아래 얇은 지역 색 줄
-    g.fillStyle(accent, 1).fillRect(x + 18 * s, y + n + 7 * s, n - 36 * s, 1.5 * s);
-    // 까마귀 메달
-    const m = this.medal.clear(), cx = x + n / 2, cy = y - 9 * s, mr = 15 * s;
-    m.fillStyle(0x000000, 0.25).fillCircle(cx + 1 * s, cy + 2 * s, mr);
+    g.fillStyle(0x000000, 0.3).fillRect(x - 3 * s, y - 2 * s, n + 6 * s, n + 6 * s);
+    g.fillStyle(PAPER.edge, 1).fillRect(x - 3.5 * s, y - 3.5 * s, n + 7 * s, n + 7 * s);
+    g.fillStyle(PAPER.body, 1).fillRect(x - 2.5 * s, y - 2.5 * s, n + 5 * s, n + 5 * s);
+    g.fillStyle(accent, 1).fillRect(x - 1 * s, y - 1 * s, n + 2 * s, n + 2 * s);
+    g.fillStyle(0x15151c, 1).fillRect(x, y, n, n);
+    const m = this.medal.clear(), cx = x + n / 2, cy = y - 2 * s, mr = 10 * s;
+    m.fillStyle(PAPER.edge, 1).fillCircle(cx, cy, mr + 1 * s);
     m.fillStyle(PAPER.body, 1).fillCircle(cx, cy, mr);
-    m.lineStyle(1.5 * s, PAPER.edge, 0.9).strokeCircle(cx, cy, mr);
-    m.lineStyle(1.5 * s, accent, 1).strokeCircle(cx, cy, mr - 3 * s);
+    m.lineStyle(1 * s, accent, 1).strokeCircle(cx, cy, mr - 2 * s);
   }
 
   zoom(d) { this.level = Math.max(0, Math.min(LEVELS.length - 1, this.level + d)); this.timer = 0; }
@@ -148,8 +145,9 @@ export class Minimap {
       this.drawFrame(ACCENT_BY_MAP[info.map.id] ?? ACCENT_BY_THEME[info.map.theme] ?? ACCENT_BY_MAP.village);
     }
     // 보이는 칸 수 → 한 칸의 크기. 나를 가운데에 두되 맵 밖으로 나가지 않게
-    const n = LEVELS[this.level], k = this.size / n;
+    // 보이는 칸 수는 맵의 짧은 쪽을 넘지 않는다 → 어느 단계에서도 지도가 테두리를 꽉 채운다(빈 띠 없음)
     const { W, H } = info.map;
+    const n = Math.min(LEVELS[this.level], W, H), k = this.size / n;
     const cx = Math.max(n / 2, Math.min(W - n / 2, info.player.x)), cy = Math.max(n / 2, Math.min(H - n / 2, info.player.y));
     const ox = W <= n ? (n - W) / 2 : n / 2 - cx, oy = H <= n ? (n - H) / 2 : n / 2 - cy;
     this.img.setScale(k).setPosition(this.x0 + ox * k, this.y0 + oy * k);

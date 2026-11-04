@@ -29,13 +29,14 @@ export function mountSoundButton(parent = document.body) {
     btn.style.opacity = muted ? '0.75' : '1';
   };
 
-  // 게임 화면(캔버스)의 오른쪽 위 구석, 날짜·조작 안내 글 한 줄 아래에 붙인다
+  // 게임 화면(캔버스)의 오른쪽 위, 작은 지도 왼쪽에 붙인다
   const place = () => {
     const canvas = parent.querySelector('canvas') ?? document.querySelector('#game canvas');
     const r = canvas?.getBoundingClientRect();
     if (!r || !r.width) { btn.style.top = '12px'; btn.style.right = '12px'; return; }
-    btn.style.top = `${Math.round(r.top + r.height * 0.065)}px`;
-    btn.style.right = `${Math.round(window.innerWidth - r.right + r.width * 0.012)}px`;
+    // 오른쪽 위 작은 지도(ui/Minimap.js, 960 기준 150 + 여백) 바로 왼쪽
+    btn.style.top = `${Math.round(r.top + r.width * (10 / 960))}px`;
+    btn.style.right = `${Math.round(window.innerWidth - r.right + r.width * (166 / 960))}px`;
   };
 
   btn.addEventListener('click', (e) => {
