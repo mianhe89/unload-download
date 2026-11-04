@@ -18,6 +18,15 @@ export class Actor {
     this.face(face);
   }
 
+  // 도트 바꿔 입기 (장비를 바꾸면 주인공 옷 색이 바뀐다)
+  setSkin(skin) {
+    const key = `char.${skin}`;
+    if (!this.scene.textures.exists(key) || key === this.key) return;
+    this.key = key;
+    this.sprite.anims.stop();
+    this.sprite.setTexture(key, CHAR.dirs[this.dir ?? 'down']);
+  }
+
   get x() { return this.sprite.x; }
   get y() { return this.sprite.y; }
 

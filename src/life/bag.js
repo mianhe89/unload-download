@@ -19,14 +19,19 @@ export function takeItem(bag, id) {
   return b;
 }
 
-// 가방에 보이는 목록: [{ id, def, count }] — 먹을 것, 재료, 소중한 것 순
-export function listBag(bag, { farmItems = {}, flags = {} } = {}) {
+// 가방에 보이는 목록: [{ id, def, count, worn }] — 먹을 것, 전투, 장비, 재료, 소중한 것 순
+// gear: 가진 장비 { id: n } (run.gear), equip: 입은 장비 { weapon, armor, trinket }
+export function listBag(bag, { farmItems = {}, flags = {}, gear = {}, equip = {} } = {}) {
   const out = [];
+  const worn = new Set(Object.values(equip).filter(Boolean));
   for (const [id, def] of Object.entries(ITEMS)) {
-    const count = def.kind === 'key' ? (flags[def.has] ? 1 : 0) : def.farm ? farmItems[id] ?? 0 : bag?.items?.[id] ?? 0;
-    if (count > 0) out.push({ id, def, count });
+    let count;
+    if (def.kind === 'key') count = flags[def.has] ? 1 : 0;
+    else if (def.kind === 'gear') count = (gear[id] ?? 0) || (worn.has(id) ? 1 : 0);
+    else count = def.farm ? farmItems[id] ?? 0 : bag?.items?.[id] ?? 0;
+    if (count > 0) out.push({ id, def, count, worn: worn.has(id) });
   }
-  const order = { food: 0, material: 1, key: 2 };
+  const order = { food: 0, battle: 1, gear: 2, material: 3, key: 4 };
   return out.sort((a, b) => order[a.def.kind] - order[b.def.kind]);
 }
 
@@ -44,4 +49,13 @@ export function markGifted(bag, who, day) {
   const b = structuredClone(bag ?? freshBag());
   b.gifted[who] = day;
   return b;
+}
+
+// 장비 입기·벗기 (순수): 같은 걸 다시 고르면 그 칸의 기본 장비로 돌아간다
+export function toggleEquip(equip, id, defaults) {
+  const def = ITEMS[id];
+  if (!def || def.kind !== 'gear') return equip;
+  const e = { ...defaults, ...(equip ?? {}) };
+  e[def.slot] = e[def.slot] === id ? defaults[def.slot] : id;
+  return e;
 }

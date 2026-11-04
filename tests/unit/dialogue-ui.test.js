@@ -23,8 +23,8 @@ describe('대사 꾸밈', () => {
     expect(glyphs.at(-1)).toMatchObject({ ch: '쾅', big: true, fx: null });
   });
   it('[i=id]는 아이템 이름을 등급 색으로', () => {
-    const { glyphs } = parseRich('[i=starDust] 하나');
-    expect(plain('[i=starDust] 하나')).toBe('별가루 하나');
+    const { glyphs } = parseRich('[i=twinEdge] 하나');
+    expect(plain('[i=twinEdge] 하나')).toBe('쌍날 「가로지르기」 하나');
     expect(glyphs[0].color).toBe('rarity.legendary');
     expect(colorOf(glyphs[0].color, '#000')).toBe(RARITY.legendary.ink);
   });
@@ -128,5 +128,21 @@ describe('말 걸기 대화', async () => {
       if (who) expect(characters[who], who).toBeTruthy();
       expect(plain(text), text).not.toMatch(/\[\/?(y|r|b|g|shake|wave|big|mood|w|i|q)\b/);
     }
+  });
+});
+
+describe('가방: 전투 소모품·장비도 보이고, 장비는 입고 벗는다', async () => {
+  const { listBag, toggleEquip } = await import('../../src/life/bag.js');
+  const { EQUIP_DEFAULT } = await import('../../content/action/action.js');
+  it('붕대는 전투 칸, 가진 장비는 장비 칸 (입은 건 표시)', () => {
+    const l = listBag({ items: {} }, { farmItems: { bandage: 2 }, gear: { twinEdge: 1 }, equip: { weapon: 'twinEdge' } });
+    expect(l.find((x) => x.id === 'bandage')).toMatchObject({ count: 2 });
+    expect(l.find((x) => x.id === 'bandage').def.kind).toBe('battle');
+    expect(l.find((x) => x.id === 'twinEdge')).toMatchObject({ worn: true });
+  });
+  it('같은 장비를 다시 고르면 벗는다 (기본 장비로)', () => {
+    const on = toggleEquip({}, 'knightPlate', EQUIP_DEFAULT);
+    expect(on.armor).toBe('knightPlate');
+    expect(toggleEquip(on, 'knightPlate', EQUIP_DEFAULT).armor).toBe(EQUIP_DEFAULT.armor);
   });
 });
