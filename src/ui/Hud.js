@@ -84,14 +84,21 @@ export class Hud {
   }
 
   // 명판 틀을 글자 길이에 맞춰 다시 그린다
+  // 명패: 글자 크기를 재서 위·아래·왼쪽·오른쪽 여백을 똑같이 둔다(테두리 두께 포함)
   drawPlate() {
     const s = this.s, g = this.plateG;
-    this.clock.setX(this.place.x + this.place.width + 10 * s);
-    const w = Math.max(this.place.width + (this.clockText ? this.clock.width + 10 * s : 0), this.objective.text ? this.objective.width : 0) + 32 * s;
-    const h = (this.objective.text ? 52 : 32) * s;
+    const X = 10 * s, Y = 10 * s, PAD_X = 16 * s, PAD_Y = 11 * s, GAP = 6 * s;
+    const hasObj = Boolean(this.objective.text);
+    this.place.setPosition(X + PAD_X, Y + PAD_Y);
+    this.clock.setPosition(this.place.x + this.place.width + 10 * s, this.place.y + (this.place.height - this.clock.height) / 2);
+    this.objective.setPosition(X + PAD_X, this.place.y + this.place.height + GAP);
+    const top = this.place.width + (this.clockText ? this.clock.width + 10 * s : 0);
+    const w = Math.max(top, hasObj ? this.objective.width : 0) + PAD_X * 2;
+    const bottom = hasObj ? this.objective.y + this.objective.height : this.place.y + this.place.height;
+    const h = bottom - Y + PAD_Y;
     g.clear();
-    if (!this.place.text && !this.objective.text) return;
-    frame(g, 10 * s, 10 * s, w, h, s, { corners: 'diamond', radius: 6, sheen: false, alpha: 0.88 });
+    if (!this.place.text && !hasObj) return;
+    frame(g, X, Y, w, h, s, { corners: 'diamond', radius: 6, sheen: false, alpha: 0.88 });
   }
 
   // 장소 이름 옆에 게임 안 시계를 붙인다 (시계가 도는 날에만): '우리 마을  4일째 21:00'
