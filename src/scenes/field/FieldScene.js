@@ -267,7 +267,21 @@ export default class FieldScene extends Phaser.Scene {
     else this.examine(target);
   }
 
+  // 살펴볼 대상. 한 번 잡은 대상은 조금 멀어져도(1.6배) 놓지 않는다 — 사람이 살짝 움직일 때 표시가 깜박이지 않게
   nearestInteractable() {
+    const t = this.pickInteractable();
+    const keep = this.lastTarget;
+    if (!t && keep) {
+      const obj = keep.npc ?? keep.animal;
+      const x = obj ? obj.x : keep.x, y = obj ? obj.y : keep.y;
+      const alive = keep.npc ? this.npcs[keep.npc.id] === keep.npc : keep.animal ? this.animals.list.includes(keep.animal) : true;
+      if (alive && this.player.distTo(x, y) < TALK_RANGE * 1.6) return { ...keep, x, y };
+    }
+    this.lastTarget = t;
+    return t;
+  }
+
+  pickInteractable() {
     let best = null, bestD = TALK_RANGE;
     for (const npc of Object.values(this.npcs)) {
       const d = this.player.distTo(npc.x, npc.y);

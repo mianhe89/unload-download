@@ -127,7 +127,8 @@ export class DialogBox {
     const changed = this.speaker !== faceId;
     this.speaker = faceId;
     const standing = this.showFigure(faceId, mood);
-    const hasFace = !standing && Boolean(faceId) && this.scene.textures.exists(`face.${faceId}`);
+    // 주인공의 얼굴은 보여 주지 않는다 (플레이어가 곧 주인공이다)
+    const hasFace = !standing && Boolean(faceId) && faceId !== 'me' && this.scene.textures.exists(`face.${faceId}`);
     const fw = this.faceW;
     this.faceCard.clear();
     if (hasFace) {

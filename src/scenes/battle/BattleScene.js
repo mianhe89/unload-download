@@ -73,7 +73,7 @@ export default class BattleScene extends Phaser.Scene {
     this.who = this.add.text(28 * this.s, H - 108 * this.s, '', { fontFamily: FONT, fontSize: `${13 * this.s}px`, color: COLOR.gold });
     this.skillTexts = [0, 1, 2, 3].map((i) => this.add.text(28 * this.s + i * 228 * this.s, H - 84 * this.s, '', { fontFamily: FONT, fontSize: `${12 * this.s}px`, color: COLOR.text, wordWrap: { width: 218 * this.s } })
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.cursor.skill = i; this.confirm(); }));
-    this.hint = this.add.text(W - 28 * this.s, H - 108 * this.s, '1·2·3 스킬  4 궁극기  ←→ 대상  Enter 실행', { fontFamily: FONT, fontSize: `${11 * this.s}px`, color: COLOR.dim }).setOrigin(1, 0);
+    this.hint = this.add.text(W - 28 * this.s, H - 108 * this.s, 'Q·W·E 스킬  R 궁극기  ←→ 대상  Enter 실행', { fontFamily: FONT, fontSize: `${11 * this.s}px`, color: COLOR.dim }).setOrigin(1, 0);
     this.panel.add([this.panelBg, this.who, ...this.skillTexts, this.hint]);
     this.panel.setVisible(false);
     this.targetMark = this.add.text(0, 0, '▼', { fontFamily: FONT, fontSize: `${16 * this.s}px`, color: COLOR.gold }).setOrigin(0.5, 1).setVisible(false);
@@ -81,12 +81,13 @@ export default class BattleScene extends Phaser.Scene {
 
     // 입력
     const kb = this.input.keyboard;
-    ['ONE', 'TWO', 'THREE', 'FOUR'].forEach((k, i) => kb.on(`keydown-${k}`, () => this.pickSkill(i)));
+    // 스킬 Q W E, 궁극기 R (같은 키를 두 번 누르면 바로 실행)
+    ['Q', 'W', 'E', 'R'].forEach((k, i) => kb.on(`keydown-${k}`, () => this.pickSkill(i)));
     kb.on('keydown-LEFT', () => this.moveTarget(-1));
     kb.on('keydown-RIGHT', () => this.moveTarget(1));
     kb.on('keydown-A', () => this.moveTarget(-1));
     kb.on('keydown-D', () => this.moveTarget(1));
-    ['ENTER', 'SPACE', 'E'].forEach((k) => kb.on(`keydown-${k}`, () => this.confirm()));
+    ['ENTER', 'SPACE'].forEach((k) => kb.on(`keydown-${k}`, () => this.confirm()));
 
     this.cameras.main.fadeIn(400, 0, 0, 0);
     Sound.music(this, this.data0.boss || this.data0.tough ? 'boss' : 'battle', { fade: 300 });
@@ -178,13 +179,13 @@ export default class BattleScene extends Phaser.Scene {
     // 4번: 궁극기
     if (u.ultimate) {
       const ready = this.battle.canBurst(u);
-      this.skillTexts[3].setText(`4. ${u.ultimate.name}\n${ready ? u.ultimate.desc : `게이지 ${Math.floor(u.burst)}%`}`).setColor(ready ? COLOR.gold : COLOR.dim);
+      this.skillTexts[3].setText(`R. ${u.ultimate.name}\n${ready ? u.ultimate.desc : `게이지 ${Math.floor(u.burst)}%`}`).setColor(ready ? COLOR.gold : COLOR.dim);
     } else this.skillTexts[3].setText('');
     u.skills.forEach((s, i) => {
       const cd = u.cooldowns[s.id] ?? 0;
       const tag = s.element ? ` [${ELEMENTS[s.element]}]` : '';
       const desc = s.desc ?? (s.hits ? `${s.target === 'all' ? '적 전체' : '적 하나'} · ${s.hits}타` : '');
-      this.skillTexts[i].setText(`${i + 1}. ${s.name}${tag}\n${usable.has(s.id) ? desc : `쉬는 중 (${cd})`}`).setColor(usable.has(s.id) ? COLOR.text : COLOR.dim);
+      this.skillTexts[i].setText(`${'QWE'[i]}. ${s.name}${tag}\n${usable.has(s.id) ? desc : `쉬는 중 (${cd})`}`).setColor(usable.has(s.id) ? COLOR.text : COLOR.dim);
     });
     this.cursor.skill = [0, 1, 2].find((i) => usable.has(u.skills[i].id)) ?? 0;
     this.cursor.target = Math.min(this.cursor.target, this.targets().length - 1);
@@ -298,7 +299,7 @@ export default class BattleScene extends Phaser.Scene {
     Sound.sfx(this, 'secret', { volume: 0.4 });
     const band = this.add.rectangle(W / 2, H * 0.38, W, 150 * s, 0x0b0b14, 0.92).setDepth(300).setScale(1, 0);
     const stripe = this.add.rectangle(W / 2, H * 0.38 + 72 * s, W, 4 * s, 0xb9a8ff).setDepth(301).setScale(0, 1);
-    const face = this.textures.exists(`face.${u.id}`) ? this.add.image(-200 * s, H * 0.38, `face.${u.id}`).setScale(3.4 * s).setDepth(302) : null;
+    const face = u.id !== 'me' && this.textures.exists(`face.${u.id}`) ? this.add.image(-200 * s, H * 0.38, `face.${u.id}`).setScale(3.4 * s).setDepth(302) : null;
     const name = this.add.text(W * 0.36, H * 0.38 - 40 * s, e.name, { fontFamily: FONT, fontSize: `${26 * s}px`, color: '#ffffff' }).setDepth(302).setAlpha(0).setShadow(2, 2, '#000', 0);
     const line = this.add.text(W * 0.36, H * 0.38 + 6 * s, e.line ?? '', { fontFamily: FONT, fontSize: `${15 * s}px`, color: COLOR.gold }).setDepth(302).setAlpha(0);
     this.tweens.add({ targets: band, scaleY: 1, duration: 160, ease: 'Quad.out' });

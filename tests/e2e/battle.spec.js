@@ -58,9 +58,9 @@ test('궁극기: 게이지가 차면 4번 두 번 → 컷인 후 발동, 싸움�
   await page.waitForFunction(() => window.__game.scene.getScene('Battle').panel?.visible);
   const fatigue0 = await page.evaluate(() => window.__ud.run.life.fatigue);
   await page.evaluate(() => { const s = window.__game.scene.getScene('Battle'); s.current.burst = 100; s.openPanel(s.current); });
-  await page.keyboard.press('4');
+  await page.keyboard.press('r');
   await page.waitForTimeout(150);
-  await page.keyboard.press('4');
+  await page.keyboard.press('r');
   await page.waitForFunction(() => window.__game.scene.getScene('Battle').battle.log.some((e) => e.type === 'skill' && e.ultimate));
   // 끝까지 싸운다
   for (let i = 0; i < 200; i += 1) {

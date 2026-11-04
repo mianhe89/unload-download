@@ -1,5 +1,5 @@
 // 보스전 2단계: 탑뷰 액션. 규칙은 src/action/engine.js(순수), 여기선 그리고 입력만 받는다.
-//   WASD 이동 · 마우스 조준 + 클릭 기본 공격 · Q W E R 스킬 · 1~8 퀵슬롯
+//   방향키 이동 · 마우스 조준 + 클릭 기본 공격 · Q W E R 스킬 · 1~8 퀵슬롯
 // 1단계(턴제)에서 보스 체력이 일정 이하로 떨어지면 BattleScene이 이 장면을 연다.
 import Phaser from 'phaser';
 import { FONT, FONT_TALK } from '../../config/game.js';
@@ -147,7 +147,7 @@ export default class ActionScene extends Phaser.Scene {
 
   bindInput() {
     const kb = this.input.keyboard;
-    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
+    this.keys = kb.addKeys('UP,DOWN,LEFT,RIGHT'); // 이동은 방향키 (Q W E R은 스킬)
     // 스킬 4칸: 키는 content/action/action.js 의 CONTROLS
     for (const [slot, key] of Object.entries(CONTROLS.skills)) kb.on(`keydown-${key}`, (e) => { if (!e.repeat) this.pressed[slot] = true; });
     ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT'].forEach((name, i) => kb.on(`keydown-${name}`, () => { this.quickPressed = i; }));
@@ -161,7 +161,7 @@ export default class ActionScene extends Phaser.Scene {
     this.paused = true;
     const band = this.add.rectangle(W / 2, H / 2, W, 90 * s, 0x000000, 0.75).setDepth(50);
     const t1 = this.add.text(W / 2, H / 2 - 16 * s, '그림자가 일어선다', { fontFamily: FONT_TALK, fontSize: `${30 * s}px`, color: '#e6d8ff' }).setOrigin(0.5).setDepth(51);
-    const t2 = this.add.text(W / 2, H / 2 + 20 * s, `WASD 이동 · 클릭 공격 · ${Object.values(CONTROLS.skills).join(' ')} 스킬 · 1~8 아이템 — 바닥의 붉은 예고를 피하라`, { fontFamily: FONT, fontSize: `${12 * s}px`, color: '#ffffff' }).setOrigin(0.5).setDepth(51);
+    const t2 = this.add.text(W / 2, H / 2 + 20 * s, `방향키 이동 · 클릭 공격 · ${Object.values(CONTROLS.skills).join(' ')} 스킬 · 1~8 퀵슬롯 — 바닥의 붉은 예고를 피하라`, { fontFamily: FONT, fontSize: `${12 * s}px`, color: '#ffffff' }).setOrigin(0.5).setDepth(51);
     this.cameras.main.flash(400, 200, 160, 255);
     Sound.sfx(this, 'tell');
     this.time.delayedCall(1900, () => {
@@ -174,8 +174,8 @@ export default class ActionScene extends Phaser.Scene {
 
   readInput() {
     const k = this.keys;
-    const x = (k.D.isDown || k.RIGHT.isDown ? 1 : 0) - (k.A.isDown || k.LEFT.isDown ? 1 : 0);
-    const y = (k.S.isDown || k.DOWN.isDown ? 1 : 0) - (k.W.isDown || k.UP.isDown ? 1 : 0);
+    const x = (k.RIGHT.isDown ? 1 : 0) - (k.LEFT.isDown ? 1 : 0);
+    const y = (k.DOWN.isDown ? 1 : 0) - (k.UP.isDown ? 1 : 0);
     const ptr = this.input.activePointer;
     const aim = this.toWorld(ptr.x, ptr.y);
     const input = { move: { x, y }, aim, ...this.pressed, quick: this.quickPressed };
