@@ -1,9 +1,18 @@
 // 오른쪽 위 작은 지도. 늘 켜져 있고, + / - (또는 마우스 휠, 지도 옆 단추)로 넓게·좁게 본다.
 // 지금 있는 맵(마을·길·건물 안)을 칸 하나 = 점 하나로 그린 바탕 위에, 나(금색)와 사람들(흰 점)을 찍는다.
 // 지금 할 일이 남은 사람은 노란 점으로 — 어디로 가야 할지 눈으로 보인다.
-// 바탕은 맵이 바뀔 때만 다시 그린다. 점은 0.2초마다.
+// 바탕은 맵이 바뀔 때만 다시 그린다(칸 하나 = 4×4 화소: 풀결·나무 덩이·지붕 색·건물 외곽선). 점은 0.2초마다.
+// 이름 있는 건물엔 무엇을 하는 곳인지 작은 그림 휘장이 붙는다(종탑 종, 잡화점 물약, 대장간 칼과 방패…).
+// 주인이 지워져 세상이 이름을 모르는 집(빈 가게, 빈 대장간)엔 휘장이 없다.
 import { text, scaleOf } from './kit.js';
+import { OBJECTS } from '../../content/art/pack.js';
+import { MAP_ICONS, iconFor } from '../../content/art/mapIcons.js';
 
+const TPX = 4;                     // 지도 바탕에서 칸 하나의 화소 수
+const ROOF = {                     // 건물 종류별 지붕 색 (필드 그림의 지붕과 같은 계열)
+  house_red: 0xb8483a, house_orange: 0xd07a38, house_wood: 0x8a5a34, house_stone: 0x8a8a94, house_plain: 0xa88a5a,
+  house_tall: 0x5a5a7a, bakery: 0xd8944a, shop: 0x4a7ab8, belltower: 0x9a9aa8, forge: 0x5a5058,
+};
 const LEVELS = [18, 30, 48];       // 한 변에 보이는 칸 수 (가까이 → 멀리)
 const GROUND = {                   // 테마별 바닥 색 [풀, 길]
   village: [0x4f7f36, 0xb08a52], grass: [0x6a9a3e, 0xb89058], snow: [0xdfe6ee, 0xb8c2cc], sand: [0xe0cf98, 0xc8ae78],
@@ -51,7 +60,8 @@ export class Minimap {
     this.box = scene.add.container(0, 0).setDepth(45);
     const g = (this.frameG = scene.add.graphics());
     this.img = scene.add.image(this.x0, this.y0, '__DEFAULT').setOrigin(0, 0).setVisible(false);
-    this.dots = scene.add.graphics().setDepth(46); // 컨테이너 밖에 둔다 (마스크 낀 이미지 옆에 두면 그려지지 않았다)
+    this.badgeG = scene.add.graphics().setDepth(46); // 건물 휘장 바탕
+    this.dots = scene.add.graphics().setDepth(47); // 컨테이너 밖에 둔다 (마스크 낀 이미지 옆에 두면 그려지지 않았다)
     // 지도 그림은 마스크 대신 보이는 칸만 잘라 쓴다(setCrop) — 이 판본의 Phaser에선 마스크가 먹지 않아 테두리 밖으로 넘쳤다
     // 지도 아래쪽 안의 얇은 띠: 이름과 넓게·좁게 단추
     const stripY = this.y0 + this.size - 7 * s;
@@ -113,31 +123,72 @@ export class Minimap {
     g.lineStyle(1 * this.s, 0x5a3a10, 1).strokePoints(pts, true);
   }
 
+  // 휘장 그림: 한 번 텍스처로 만들어 두고, 그림 객체는 돌려 쓴다
+  badge(i, icon) {
+    const sc = this.scene, key = `mmicon.${icon}`;
+    if (!sc.textures.exists(key)) {
+      const { pal, rows } = MAP_ICONS[icon];
+      const tex = sc.textures.createCanvas(key, rows[0].length, rows.length);
+      const ctx = tex.getContext();
+      rows.forEach((row, y) => [...row].forEach((ch, x) => { if (pal[ch]) { ctx.fillStyle = pal[ch]; ctx.fillRect(x, y, 1, 1); } }));
+      tex.refresh();
+    }
+    this.badges ??= [];
+    while (this.badges.length <= i) this.badges.push(sc.add.image(0, 0, key).setDepth(46.5).setScale(Math.max(1, Math.round(1.2 * this.s))));
+    const img = this.badges[i];
+    if (img.texture.key !== key) img.setTexture(key);
+    return img;
+  }
+
   zoom(d) { this.level = Math.max(0, Math.min(LEVELS.length - 1, this.level + d)); this.timer = 0; }
 
-  setVisible(v) { this.box.setVisible(v); this.dots.setVisible(v); }
+  setVisible(v) { this.box.setVisible(v); this.dots.setVisible(v); this.badgeG.setVisible(v); if (!v) for (const b of this.badges ?? []) b.setVisible(false); }
 
   // 맵 바탕: 칸 하나 = 점 하나
   build(map, key) {
     const sc = this.scene;
     const texKey = `minimap.${key}`;
     if (!sc.textures.exists(texKey)) {
-      const tex = sc.textures.createCanvas(texKey, map.W, map.H);
+      const P = TPX;
+      const tex = sc.textures.createCanvas(texKey, map.W * P, map.H * P);
       const ctx = tex.getContext();
       const [grass, path] = GROUND[map.theme ?? 'village'] ?? GROUND.village;
-      const buildings = new Set();
-      for (const o of map.objects ?? []) if (o.name || o.residents || /^house|bakery|shop|forge|belltower/.test(o.type)) {
-        for (let y = o.at[1] + 1; y < o.at[1] + 3; y += 1) for (let x = o.at[0]; x < o.at[0] + 4; x += 1) buildings.add(`${x},${y}`);
-      }
       const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
+      const shade = (c, f) => { const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255, m = (v) => Math.max(0, Math.min(255, Math.round(v * f))); return (m(r) << 16) | (m(g) << 8) | m(b); };
+      const px = (x, y, c) => { ctx.fillStyle = hex(c); ctx.fillRect(x, y, 1, 1); };
+      const hash = (x, y) => ((x * 73856093) ^ (y * 19349663)) >>> 0;
+      // 건물: 그림 사각형 그대로(지붕까지) 덮는다
+      const roofs = [];
+      for (const o of map.objects ?? []) {
+        const def = OBJECTS[o.type];
+        if (!def || !(o.name || o.residents || ROOF[o.type])) continue;
+        roofs.push({ x: o.at[0] * P, y: o.at[1] * P, w: Math.round((def.rect[2] / 16) * P), h: Math.round((def.rect[3] / 16) * P), c: ROOF[o.type] ?? BUILDING });
+      }
       for (let y = 0; y < map.H; y += 1) for (let x = 0; x < map.W; x += 1) {
         const t = map.terrain?.[y]?.[x];
+        const solid = map.isSolidTile?.(x, y);
         const edge = x < map.FOG || y < map.FOG || x >= map.W - map.FOG || y >= map.H - map.FOG;
         let c = t === 'd' ? path : t === 'w' ? WATER : grass;
-        if (map.isSolidTile?.(x, y)) c = buildings.has(`${x},${y}`) ? BUILDING : t === 'w' ? WATER : SOLID;
-        if (edge && map.isSolidTile?.(x, y)) c = FOG;
+        if (solid && edge) c = FOG;
+        else if (solid && t !== 'w') c = SOLID;
         ctx.fillStyle = hex(c);
-        ctx.fillRect(x, y, 1, 1);
+        ctx.fillRect(x * P, y * P, P, P);
+        // 결: 풀포기·물결·나무 덩이
+        const h = hash(x, y);
+        if (c === grass) { px(x * P + (h % P), y * P + ((h >> 3) % P), shade(grass, 1.12)); if (h % 5 === 0) px(x * P + ((h >> 6) % P), y * P + ((h >> 9) % P), shade(grass, 0.88)); }
+        else if (c === path) { if (h % 3 === 0) px(x * P + (h % P), y * P + ((h >> 3) % P), shade(path, 0.9)); }
+        else if (c === WATER) { if (h % 2) { ctx.fillStyle = hex(shade(WATER, 1.25)); ctx.fillRect(x * P + (h % 2), y * P + 1 + ((h >> 2) % 2), 2, 1); } }
+        else if (c === SOLID) {
+          ctx.fillStyle = hex(shade(0x3a6a2e, 0.95)); ctx.fillRect(x * P + 1, y * P, P - 2, P); ctx.fillRect(x * P, y * P + 1, P, P - 2);
+          px(x * P + 1, y * P + 1, 0x5a8a3e);
+        }
+      }
+      // 지붕: 바깥 어두운 선, 위쪽 밝은 줄, 아래쪽 그늘
+      for (const r of roofs) {
+        ctx.fillStyle = hex(0x1c1418); ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.fillStyle = hex(r.c); ctx.fillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+        ctx.fillStyle = hex(shade(r.c, 1.25)); ctx.fillRect(r.x + 1, r.y + 1, r.w - 2, 1);
+        ctx.fillStyle = hex(shade(r.c, 0.7)); ctx.fillRect(r.x + 1, r.y + r.h - 3, r.w - 2, 2);
       }
       tex.refresh();
     }
@@ -161,15 +212,31 @@ export class Minimap {
     // 보이는 칸 수 → 한 칸의 크기. 나를 가운데에 두되 맵 밖으로 나가지 않게
     // 보이는 칸 수는 맵의 짧은 쪽을 넘지 않는다 → 어느 단계에서도 지도가 테두리를 꽉 채운다(빈 띠 없음)
     const { W, H } = info.map;
-    const n = Math.min(LEVELS[this.level], W, H), k = this.size / n;
+    const n = Math.min(LEVELS[this.level], W, H), k = this.size / n, P = TPX;
     const cx = Math.max(n / 2, Math.min(W - n / 2, info.player.x)), cy = Math.max(n / 2, Math.min(H - n / 2, info.player.y));
     const ox = W <= n ? (n - W) / 2 : n / 2 - cx, oy = H <= n ? (n - H) / 2 : n / 2 - cy;
-    this.img.setScale(k).setPosition(this.x0 + ox * k, this.y0 + oy * k);
+    this.img.setScale(k / P).setPosition(this.x0 + ox * k, this.y0 + oy * k);
     const kx = Math.max(0, -ox), ky = Math.max(0, -oy);
-    this.img.setCrop(kx, ky, Math.min(n, W - kx), Math.min(n, H - ky));
+    this.img.setCrop(kx * P, ky * P, Math.min(n, W - kx) * P, Math.min(n, H - ky) * P);
     const g = this.dots.clear();
     const at = (p) => [this.x0 + (ox + p.x) * k, this.y0 + (oy + p.y) * k];
     const inside = ([x, y]) => x >= this.x0 + 2 && x <= this.x0 + this.size - 2 && y >= this.y0 + 2 && y <= this.y0 + this.size - 2;
+    // 건물 휘장 (사람 점보다 아래)
+    let used = 0;
+    const bg = this.badgeG.clear();
+    for (const b of info.buildings ?? []) {
+      const icon = iconFor(b.name);
+      if (!icon) continue;
+      const [x, y] = at(b);
+      if (!inside([x, y])) continue;
+      const img = this.badge(used++, icon);
+      const R = 6.5 * this.s;
+      bg.fillStyle(0x000000, 0.45).fillCircle(x, y + this.s, R + 1.2 * this.s);
+      bg.fillStyle(0x2a2026, 1).fillCircle(x, y, R + 1 * this.s);
+      bg.fillStyle(0xfbf8f2, 1).fillCircle(x, y, R);
+      img.setPosition(x, y).setVisible(true);
+    }
+    for (let i = used; i < this.badges.length; i += 1) this.badges[i].setVisible(false);
     for (const p of info.people) {
       const [x, y] = at(p);
       if (!inside([x, y])) continue;

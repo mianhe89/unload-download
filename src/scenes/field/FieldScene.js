@@ -689,6 +689,12 @@ export default class FieldScene extends Phaser.Scene {
       key: this.roomId ?? this.mapDef.id ?? 'village', map: this.mapDef, name: this.roomId ? this.mapDef.name : this.phase.place,
       player: { x: this.player.x / TILE, y: this.player.y / TILE },
       people: Object.values(this.npcs).map((n) => ({ x: n.x / TILE, y: n.y / TILE, task: want.has(n.id) || this.director.hasPendingFor(n.id, w) })),
+      // 이름 있는 건물 (지워진 주인의 집은 세상이 부르는 이름 그대로 — 빈 가게 등. 그런 집엔 휘장이 붙지 않는다)
+      buildings: this.roomId ? [] : (this.mapDef.objects ?? []).filter((o) => o.name && OBJECTS[o.type]).map((o) => {
+        const r = OBJECTS[o.type].rect;
+        const name = this.signs?.label(o) ?? o.name;
+        return { x: o.at[0] + r[2] / TILE / 2, y: o.at[1] + (r[3] / TILE) * 0.45, name: name === o.name ? name : null };
+      }),
     };
   }
 
