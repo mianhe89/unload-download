@@ -448,12 +448,19 @@ export default class BattleScene extends Phaser.Scene {
   // 이기면 몬스터가 떨군 것을 줍는다 (content/battles/encounters.js의 DROPS). 주운 수를 돌려준다
   loot() {
     if (!WorldMemory.run) return 0;
-    const drops = rollDrops(this.data0.enemies ?? [], (this.data0.seed ?? 1) + WorldMemory.world.loads);
+    const gear = { ...(WorldMemory.run.gear ?? {}) };
+    const worn = new Set(Object.values(WorldMemory.run.equip ?? {}));
+    const drops = rollDrops(this.data0.enemies ?? [], (this.data0.seed ?? 1) + WorldMemory.world.loads, (id) => Boolean(gear[id]) || worn.has(id));
     if (!drops.length) return 0;
     const farm = WorldMemory.run.farm ?? freshFarm();
     const items = { ...farm.items };
-    for (const d of drops) items[d.item] = (items[d.item] ?? 0) + d.n;
+    // 장비는 가방의 장비 칸(run.gear)으로, 나머지는 재료·소모품(run.farm.items)으로
+    for (const d of drops) {
+      if (ITEMS[d.item]?.kind === 'gear') gear[d.item] = (gear[d.item] ?? 0) + d.n;
+      else items[d.item] = (items[d.item] ?? 0) + d.n;
+    }
     WorldMemory.setFarm({ ...farm, items });
+    WorldMemory.setGear(gear);
     const { width: W, height: H } = this.scale;
     drops.forEach((d, i) => this.time.delayedCall(500 + i * 700, () => {
       const it = ITEMS[d.item], r = RARITY[it?.rarity ?? 'common'];

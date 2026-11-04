@@ -24,10 +24,12 @@ export function encounterAt(key, { kind, biome }, date = new Date(), beaten = ()
 export const beatKey = (key, boss, date = new Date()) => (boss ? `boss.${key}` : `${key}.${dayOf(date)}`);
 
 // 이긴 뒤 떨어진 것 (같은 씨앗이면 같은 결과): [{ item, n, text }]
-export function rollDrops(enemies, seed = 1) {
+// owned(item) → 이미 가진 once 아이템이면 true (다시 떨구지 않는다)
+export function rollDrops(enemies, seed = 1, owned = () => false) {
   const out = [];
   enemies.forEach((id, i) => {
     for (const d of DROPS[id] ?? []) {
+      if (d.once && (owned(d.item) || out.some((o) => o.item === d.item))) continue;
       if (hash(`drop|${seed}|${i}|${d.item}`) < d.p) out.push({ item: d.item, n: d.n ?? 1, text: d.text });
     }
   });

@@ -31,13 +31,14 @@ export const BOSSES = {
 };
 
 // 이기면 떨어뜨리는 것: 몬스터마다 그럴 만한 것만 (포션은 귀해서 일반 몬스터는 안 떨군다)
-//   p: 확률, n: 개수, text: 얻을 때 보이는 한 줄
+//   p: 확률, n: 개수, text: 얻을 때 보이는 한 줄, once: 장비처럼 한 번 얻으면 다시 안 나오는 것
 export const DROPS = {
   slime: [{ item: 'herb', p: 0.35, text: '슬라임이 삼키다 만 약초가 남았다.' }],
   beast: [{ item: 'herb', p: 0.2, text: '짐승이 뜯어 먹던 약초 덤불이 그대로 있다.' }],
   owl: [{ item: 'antidote', p: 0.25, text: '부엉이 둥지에 해독초가 깔려 있었다.' }],
   mole: [{ item: 'stone', p: 0.5, n: 2, text: '두더지 굴에서 돌이 굴러 나왔다.' }],
   skull: [{ item: 'bandage', p: 0.3, text: '해골이 감고 있던 붕대. 빨면 쓸 만하다.' }],
-  orc: [{ item: 'bandage', p: 0.4, text: '오크가 허리에 차고 있던 붕대를 떨어뜨렸다.' }, { item: 'ointment', p: 0.15, text: '오크의 짐에서 화상 연고가 나왔다. 불을 다루는 부족이다.' }],
-  tork: [{ item: 'potion', p: 0.5, text: '토르크가 품에 지니던 물약. 오크 족장 집안의 것이다.' }],
+  orc: [{ item: 'bandage', p: 0.4, text: '오크가 허리에 차고 있던 붕대를 떨어뜨렸다.' }, { item: 'ointment', p: 0.15, text: '오크의 짐에서 화상 연고가 나왔다. 불을 다루는 부족이다.' }, { item: 'orcGloves', p: 0.08, once: true, text: '달아난 오크가 가죽 장갑 한 켤레를 떨구고 갔다.' }],
+  tork: [{ item: 'potion', p: 0.5, text: '토르크가 품에 지니던 물약. 오크 족장 집안의 것이다.' }, { item: 'emberCharm', p: 1, once: true, text: '토르크의 목에서 끊어진 불씨 부적이 떨어졌다.' }],
+  lostknight: [{ item: 'oldHelm', p: 1, once: true, text: '빈 갑옷이 무너지며 투구가 굴러 나왔다.' }],
 };

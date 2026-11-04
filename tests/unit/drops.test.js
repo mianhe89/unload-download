@@ -36,3 +36,19 @@ describe('일과로 사는 사람이 지워지면 일터에 흔적이 남는다'
     for (const id of ['hort', 'tom', 'rine', 'per']) if (characters[id].schedule) expect(workSpot(id, village), id).toBeTruthy();
   });
 });
+
+describe('장비를 떨구는 곳', async () => {
+  const { rollDrops } = await import('../../src/battle/encounters.js');
+  const { ITEMS } = await import('../../content/items/items.js');
+  it('길 잃은 기사는 투구, 토르크는 불씨 부적을 처음 이길 때 꼭 떨군다', () => {
+    expect(rollDrops(['lostknight'], 1).map((d) => d.item)).toContain('oldHelm');
+    expect(rollDrops(['tork'], 1).map((d) => d.item)).toContain('emberCharm');
+    expect(ITEMS.oldHelm.kind).toBe('gear');
+  });
+  it('이미 가진 장비는 다시 떨구지 않는다', () => {
+    expect(rollDrops(['lostknight'], 1, (id) => id === 'oldHelm')).toEqual([]);
+  });
+  it('오크 셋을 한꺼번에 이겨도 장갑은 한 켤레만', () => {
+    for (let s = 0; s < 200; s += 1) expect(rollDrops(['orc', 'orc', 'orc'], s).filter((d) => d.item === 'orcGloves').length).toBeLessThanOrEqual(1);
+  });
+});

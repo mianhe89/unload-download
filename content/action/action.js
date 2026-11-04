@@ -65,6 +65,8 @@ export const EQUIPMENT = {
     desc: '막기가 탄환·원거리 공격도 막고 되받아친다.',
   },
   wanderCoat:  { name: '나그네 외투', slot: 'armor', rarity: 'uncommon', def: 0.05, desc: '받는 피해 -5%. 눈길에서 얻은 두꺼운 외투.', look: { body: ['b89a6a', '6a5236'] } },
+  oldHelm:     { name: '빈 기사의 투구', slot: 'head', rarity: 'rare', def: 0.06, desc: '받는 피해 -6%. 길 잃은 기사의 투구. 안쪽에 영주 기사단의 옛 문장이 있다.' },
+  orcGloves:   { name: '오크 가죽 장갑', slot: 'gloves', rarity: 'uncommon', atk: 2, desc: '거칠게 무두질한 가죽 장갑. 손에 힘이 잘 실린다.' },
   emberCharm:  { name: '불씨 부적', slot: 'accessory', rarity: 'uncommon', mods: [{ skill: 'atk', status: { id: 'burn', chance: 0.2 } }], desc: '기본 공격이 20% 확률로 화상을 입힌다.' },
 };
 export const SETS = {
