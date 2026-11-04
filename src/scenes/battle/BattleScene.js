@@ -6,7 +6,9 @@
 import Phaser from 'phaser';
 import { FONT } from '../../config/game.js';
 import { createBattle } from '../../battle/engine.js';
-import { beatKey } from '../../battle/encounters.js';
+import { beatKey, rollDrops } from '../../battle/encounters.js';
+import { ITEMS, RARITY } from '../../../content/items/items.js';
+import { freshFarm } from '../../farm/farm.js';
 import { BODIES } from '../../battle/body.js';
 import { ELEMENTS } from '../../../content/battles/units.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
@@ -338,7 +340,8 @@ export default class BattleScene extends Phaser.Scene {
       if (from?.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss)}`);
       if (this.data0.winFlag) WorldMemory.setFlag(this.data0.winFlag);
       this.say(this.data0.winLine ?? (this.data0.boss ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : '이겼다.'), COLOR.gold);
-      this.time.delayedCall(1500, () => this.leave('win'));
+      const drops = this.loot();
+      this.time.delayedCall(1500 + drops * 700, () => this.leave('win'));
       return;
     }
     // 졌다: 되돌리면 누군가 지워진다
@@ -361,6 +364,25 @@ export default class BattleScene extends Phaser.Scene {
     Sound.sfx(this, 'spirit', { detune: -1200 });
     softFlash(this, { color: 0xd8d4ec, alpha: 0.3, ms: 600 });
     this.time.delayedCall(550, () => this.scene.restart({ ...this.data0, seed: (this.data0.seed ?? 1) + WorldMemory.world.loads, victim }));
+  }
+
+  // 이기면 몬스터가 떨군 것을 줍는다 (content/battles/encounters.js의 DROPS). 주운 수를 돌려준다
+  loot() {
+    if (!WorldMemory.run) return 0;
+    const drops = rollDrops(this.data0.enemies ?? [], (this.data0.seed ?? 1) + WorldMemory.world.loads);
+    if (!drops.length) return 0;
+    const farm = WorldMemory.run.farm ?? freshFarm();
+    const items = { ...farm.items };
+    for (const d of drops) items[d.item] = (items[d.item] ?? 0) + d.n;
+    WorldMemory.setFarm({ ...farm, items });
+    const { width: W, height: H } = this.scale;
+    drops.forEach((d, i) => this.time.delayedCall(500 + i * 700, () => {
+      const it = ITEMS[d.item], r = RARITY[it?.rarity ?? 'common'];
+      const t = this.add.text(W / 2, H * 0.5 - i * 26 * this.s, `${d.text}  — ${it?.name ?? d.item}${d.n > 1 ? ` ×${d.n}` : ''}`, { fontFamily: FONT, fontSize: `${13 * this.s}px`, color: r.glow }).setOrigin(0.5).setShadow(1, 1, '#000', 0).setAlpha(0);
+      this.tweens.add({ targets: t, alpha: 1, y: t.y - 8 * this.s, duration: 260 });
+      Sound.sfx(this, 'pickup');
+    }));
+    return drops.length;
   }
 
   leave(result) {

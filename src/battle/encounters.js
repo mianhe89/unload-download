@@ -1,5 +1,5 @@
 // 마주침 규칙 (순수 함수 — 테스트 가능)
-import { ENCOUNTER_CHANCE, POOLS, BOSSES } from '../../content/battles/encounters.js';
+import { ENCOUNTER_CHANCE, POOLS, BOSSES, DROPS } from '../../content/battles/encounters.js';
 
 const hash = (s) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
 export const dayOf = (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -22,3 +22,14 @@ export function encounterAt(key, { kind, biome }, date = new Date(), beaten = ()
 
 // 이겼을 때 남기는 표시 (보스는 영구, 일반은 그날만)
 export const beatKey = (key, boss, date = new Date()) => (boss ? `boss.${key}` : `${key}.${dayOf(date)}`);
+
+// 이긴 뒤 떨어진 것 (같은 씨앗이면 같은 결과): [{ item, n, text }]
+export function rollDrops(enemies, seed = 1) {
+  const out = [];
+  enemies.forEach((id, i) => {
+    for (const d of DROPS[id] ?? []) {
+      if (hash(`drop|${seed}|${i}|${d.item}`) < d.p) out.push({ item: d.item, n: d.n ?? 1, text: d.text });
+    }
+  });
+  return out;
+}
