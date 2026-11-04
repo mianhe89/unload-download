@@ -168,6 +168,7 @@ export class MapRenderer {
       list.push({ ...o, img, w, h });
     }
     for (const a of this.map.animated ?? []) {
+      if (a.festive && !this.festive) continue; // 축제 장식은 축제 날에만
       const def = ANIMATED[a.type];
       scene.add.sprite(a.at[0] * TILE, a.at[1] * TILE, `anim.${a.type}`, 0).setOrigin(0, 0)
         .setDepth(a.at[1] * TILE + def.frame[1]).play(`anim.${a.type}`);

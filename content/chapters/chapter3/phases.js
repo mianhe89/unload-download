@@ -59,6 +59,7 @@ export const phases = {
 
   // 30일 밤, 첫눈 축제. 광장에 모닥불, 다들 모였다
   snowfest: {
+    festive: true, // 광장의 축제 깃발
     place: '첫눈 축제',
     time: 'night',
     bonfire: 'lit',

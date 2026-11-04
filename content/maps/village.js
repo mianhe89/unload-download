@@ -86,9 +86,10 @@ for (let y = 5; y < H - 6; y += 3) {
 objects.push(...ring);
 
 // 움직이는 장식 (지나갈 수 있음)
+// 축제 깃발(festive): 축제 날에만 걸린다 (수확제 전날·수확제·첫눈 축제)
 export const animated = [
-  { type: 'flag_red', at: [18, 13] }, { type: 'flag_yellow', at: [22, 13] },
-  { type: 'flag_blue', at: [26, 13] }, { type: 'flag_red', at: [30, 13] },
+  { type: 'flag_red', at: [18, 13], festive: true }, { type: 'flag_yellow', at: [22, 13], festive: true },
+  { type: 'flag_blue', at: [26, 13], festive: true }, { type: 'flag_red', at: [30, 13], festive: true },
 ];
 
 // ── 충돌 ───────────────────────────────────────────────

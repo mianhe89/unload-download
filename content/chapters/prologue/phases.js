@@ -25,6 +25,8 @@ export const phases = {
   // 이야기는 평화에서 시작한다. 어두운 일은 하나도 일어나지 않는다(기획서 '평화에서 시작').
   // 마을을 돌며 축제 준비를 돕고, 특히 에다와 정을 붙인다(내일 밤의 반지로 이어진다).
   prep: {
+    festive: true, // 광장의 축제 깃발
+    sleepTo: 'prep.sleep', // 침대에서 자면 저녁(수확제 날)로
     place: '수확제 전날',
     time: 'day',
     bonfire: 'out',
@@ -75,6 +77,7 @@ export const phases = {
 
   // ── 수확제의 밤 ───────────────────────────────
   festival: {
+    festive: true, // 광장의 축제 깃발
     place: '수확제의 광장',
     time: 'night',
     bonfire: 'lit',

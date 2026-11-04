@@ -107,6 +107,16 @@ export const script = {
     { flag: 'prep.ready' },
   ],
 
+  // 수확제 전날, 침대에서 눈을 붙이면 하루가 지난다
+  'prep.sleep': [
+    N('잠깐 눈을 붙인다는 게, 깨어 보니 창밖이 붉었다. 하루가 꼬박 지나 있었다.'),
+    N('광장 쪽에서 음악 소리가 들렸다. 수확제였다.'),
+    { flag: 'crow.arrived' },
+    { flag: 'prep.ready' },
+    { fx: 'fade' },
+    { phase: 'festival' },
+  ],
+
   'prep.evening': [
     { cg: 'festival', tint: 'dusk' },
     N('해가 기울 무렵, 광장 장식이 다 걸렸다.'),

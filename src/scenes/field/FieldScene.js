@@ -84,6 +84,7 @@ export default class FieldScene extends Phaser.Scene {
     // 맵
     this.openExits = (this.roomId ? null : this.phase.exits) ?? this.mapDef.openExits ?? [];
     this.map = new MapRenderer(this, this.mapDef, { open: this.openExits });
+    this.map.festive = Boolean(this.phase.festive);
     this.add.image(0, 0, this.map.renderGround()).setOrigin(0).setDepth(-1000);
     this.placed = this.map.placeObjects();
 
@@ -365,6 +366,12 @@ export default class FieldScene extends Phaser.Scene {
     this.cooldown = 0.5;
     // 시계가 도는 날엔 잠자리에 들면 언제든 다음 날 아침 6시로 (피로도 풀린다)
     const now = worldNow(WorldMemory.run);
+    // 시계가 없는 이야기의 날: 그 날이 정해 둔 잠(sleepTo)이 있으면 하루가 지난다(수확제 전날 → 수확제 저녁)
+    if (spot.action === 'sleep' && !this.clock.running && this.phase.sleepTo) {
+      WorldMemory.setLife({ ...act(life, 'sleep', now), fatigue: 0 });
+      this.cutscene.play(this.phase.sleepTo);
+      return;
+    }
     if (spot.action === 'sleep' && this.clock.running) {
       WorldMemory.setLife({ ...act(life, 'sleep', now), fatigue: 0 });
       this.sleep();
