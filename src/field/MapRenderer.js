@@ -158,7 +158,7 @@ export class MapRenderer {
       const def = OBJECTS[o.type];
       const [, , w, h] = def.rect;
       const x = o.at[0] * TILE, y = o.at[1] * TILE;
-      const img = scene.add.image(x, y, textureOf(def), o.type).setOrigin(0, 0).setDepth(y + h);
+      const img = scene.add.image(x, y, textureOf(def), o.type).setOrigin(0, 0).setDepth(def.flat ? -900 : y + h); // flat: 깔개는 늘 사람 아래
       if (this.map.objectTint) img.setTint(this.map.objectTint); // 빛바랜 마을(빈 마을)
       // 땅에 닿는 그림자 (막히는 물체만)
       if (def.foot) {

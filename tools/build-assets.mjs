@@ -114,6 +114,22 @@ function forEachFrame(img, fn) {
 }
 
 // 종탑: 회관 지붕 가운데에 종루(어두운 창 + 금색 종)를 그린다
+// 침대 (16×28): 팩(이 리포에 든 부분)에 침대가 없어 팩 색과 외곽선에 맞춰 찍는다. 나무 머리판·베개·이불·발판
+function buildFurniture() {
+  const img = { width: 16, height: 28, data: Buffer.alloc(16 * 28 * 4) };
+  const rows = [
+    '..dddddddddddd..', '.dwwwwwwwwwwwwd.', '.dwWWWWWWWWWWwd.', '.dwwwwwwwwwwwwd.',
+    '.dsppppppppppsd.', '.dspPPPPPPPPpsd.', '.dspPPPPPPPPpsd.', '.dsppppppppppsd.', '.dssssssssssssd.',
+    '.dSSSSSSSSSSSSd.', '.dbbbbbbbbbbbbd.', '.dbBBbbbbbbBBbd.', '.dbbbbbbbbbbbbd.', '.dbbbbBBBBbbbbd.',
+    '.dbbbbbbbbbbbbd.', '.dbBBbbbbbbBBbd.', '.dbbbbbbbbbbbbd.', '.dbbbbBBBBbbbbd.', '.dbbbbbbbbbbbbd.',
+    '.dbbbbbbbbbbbbd.', '.dBbbbbbbbbbbBd.', '.dBBBBBBBBBBBBd.', '.dwwwwwwwwwwwwd.', '.dwWWWWWWWWWWwd.',
+    '.dwwwwwwwwwwwwd.', '..dddddddddddd..', '..dd........dd..', '................',
+  ];
+  const pal = { d: '141b1b', w: 'b8683a', W: 'd88a4e', s: 'f4ecdc', S: 'd8ccb4', p: 'fbf6ec', P: 'e8dfcc', b: '5a78b0', B: '43609a' };
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (pal[ch]) setPx(img, x, y, pal[ch]); }));
+  return img;
+}
+
 function buildBellTower() {
   const house = readPng(join(SRC, SHEETS.house));
   const img = crop(house, 400, 224, 64, 80);
@@ -176,6 +192,8 @@ export function buildAssets({ quiet = false } = {}) {
   }
   writePng(join(OUT, 'sheets', 'belltower.png'), buildBellTower());
   manifest.sheets['gen:belltower'] = 'sheets/belltower.png';
+  writePng(join(OUT, 'sheets', 'furniture.png'), buildFurniture());
+  manifest.sheets['gen:furniture'] = 'sheets/furniture.png';
 
   for (const [key, m] of Object.entries(MONSTER_ART)) {
     if (m.recolor) { const img = readPng(join(SRC, m.src)); recolor(img, m.recolor); writePng(join(OUT, 'mon', `${key}.png`), img); }

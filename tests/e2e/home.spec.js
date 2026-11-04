@@ -12,11 +12,12 @@ test('집에 들어가 낮잠으로 피로를 풀고 나온다', async ({ page }
   await page.keyboard.down('w'); await page.waitForTimeout(500); await page.keyboard.up('w');
   await page.waitForFunction(() => window.__game.scene.getScene('Field').roomId === 'myhome', null, { timeout: 10_000 });
   await page.waitForTimeout(500);
-  await teleport(page, 4, 3);
+  await teleport(page, 3, 3);
   await page.keyboard.down('e'); await page.waitForTimeout(120); await page.keyboard.up('e');
   await page.waitForTimeout(500);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/room.png` });
   expect(await page.evaluate(() => window.__ud.run.life.fatigue)).toBeLessThan(80);
-  await teleport(page, 7, 8);
+  await teleport(page, 7, 9);
   await page.keyboard.down('s'); await page.waitForTimeout(700); await page.keyboard.up('s');
   await page.waitForFunction(() => { const f = window.__game.scene.getScene('Field'); return f.roomId === null && f.player?.sprite?.active; }, null, { timeout: 10_000 });
   expect(errors).toEqual([]);

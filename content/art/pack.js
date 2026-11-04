@@ -62,6 +62,14 @@ export const OBJECTS = {
   forge: { sheet: 'house', rect: [464, 64, 48, 64], foot: [4, 30, 40, 34] },
   // 종탑: 큰 목조 회관을 바탕으로 박공 창에 종을 그려 넣은 변형본 (npm run assets가 만든다)
   belltower: { sheet: 'gen:belltower', rect: [0, 0, 64, 80], foot: [2, 40, 60, 40] },
+  // 집 안 가구 (팩의 TilesetElement). flat: 바닥에 깔려 사람이 밟고 지나간다(언제나 사람 아래)
+  bed: { sheet: 'gen:furniture', rect: [0, 0, 16, 28], foot: [1, 4, 14, 22] },   // 침대: 팩에 없어 팩 색으로 찍었다
+  bookshelf: { sheet: 'element', rect: [48, 112, 16, 32], foot: [0, 20, 16, 12] },
+  bookshelf_wide: { sheet: 'element', rect: [128, 112, 32, 32], foot: [0, 20, 32, 12] },
+  drawers: { sheet: 'element', rect: [96, 121, 32, 23], foot: [0, 10, 32, 13] },
+  table_small: { sheet: 'element', rect: [48, 145, 16, 15], foot: [1, 6, 14, 9] },
+  plant_pot: { sheet: 'element', rect: [0, 120, 15, 24], foot: [2, 16, 11, 8] },
+  rug: { sheet: 'element', rect: [209, 64, 47, 45], flat: true },
 
   // ── 나무 (nature 시트). 줄기 한 칸만 막고 수관 아래로는 가려진다
   tree_round: { sheet: 'nature', rect: [256, 0, 32, 32], foot: [10, 24, 12, 8] },
