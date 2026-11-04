@@ -25,6 +25,7 @@ test('타이틀: 게임 이름 없이 일러스트와 START만', async ({ page }
 });
 
 test('프롤로그 완주 → CONTINUE하면 가장 아낀 마을 사람이 지워진다', async ({ page }) => {
+  test.setTimeout(600_000); // 걸으며 듣는 대사가 많아 헤드리스(CI)에서 5분을 넘긴다
   const errors = await openGame(page);
   await wipe(page);
 
