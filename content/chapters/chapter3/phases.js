@@ -1,7 +1,7 @@
-// 1부 3장 「겨울 준비」(21~30일). 줄거리는 docs/스토리.md '3장 · 겨울 준비'.
-// 평화가 가장 따뜻한 장이다. 3부에서 잃을 것을 여기서 가장 많이 쥐여 준다.
-//   미아와 겨울 장을 걷고(처음 손잡은 날), 셀레나와 명부를 두고 다투고, 루가 사흘 동안 사라졌다 돌아온다.
-//   24일 밤엔 토르크가 쳐들어온다(content/raids.js). 30일 저녁, 첫눈 축제에서 종소리를 센다.
+// 1부 3장 「겨울 준비」(21~30일). 줄거리는 docs/스토리.md '새 뼈대'.
+// 메인은 토르크의 습격(24일 밤, content/raids.js)에 대비하는 겨울 준비. 3부에서 잃을 것을 여기서 가장 많이 쥐여 준다.
+//   미아와 겨울 장을 걷고(처음 손잡은 날), 셀레나와 목책을 세우다 명부의 빈 줄로 다투고,
+//   루는 물러간 오크를 따라 사흘 동안 사라졌다 돌아온다. 30일 저녁, 첫눈 축제에서 종소리를 센다.
 const villagers = (m) => Object.fromEntries(Object.entries(m).map(([id, [x, y, mode, radius]]) => [id, { at: [x, y], mode, radius, face: 'down' }]));
 
 export const phases = {
@@ -42,7 +42,7 @@ export const phases = {
       // 루: 25~27일엔 없다. 우물가에 가 보면 빈자리 / 28일에 돌아온다
       { id: 'lu.missing', when: { minDay: 25, maxDay: 27 }, trigger: { zone: 'well' }, run: 'ch3.lu_missing' },
       { id: 'lu.back', when: { minDay: 28 }, trigger: { near: 'lu', r: 3 }, run: 'ch3.lu_back' },
-      // 루가 다시 안개 길로 가자고 하자 미아가 막는다
+      // 루가 고원까지 같이 가 보자고 하자 미아가 막는다
       { id: 'quarrel', when: { ifFlag: 'route.lu.back' }, trigger: { near: 'mia', r: 3 }, run: 'ch3.quarrel' },
       // 레온의 밤: 견습이 된 뒤, 밤 10시가 넘어 초소에 가면
       { id: 'leon.night', when: { ifFlag: 'rank.squire', afterTime: '22:00' }, trigger: { zone: 'post' }, run: 'ch3.leon_night' },
