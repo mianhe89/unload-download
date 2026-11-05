@@ -16,10 +16,10 @@ const EDGE = FOG + 1;
 const GAP = 3; // 출구 너비(칸)
 
 // 바닥 → 테마 (content/art/pack.js THEMES)
-const THEME_OF = { grass: 'grass', darkGrass: 'village', dryGrass: 'grass', snow: 'snow', snowGrass: 'snow', sand: 'sand', beach: 'sand', dirt: 'earth', lava: 'lava', cave: 'cave', water: 'sea', void: 'void' };
+export const THEME_OF = { grass: 'grass', darkGrass: 'village', dryGrass: 'grass', snow: 'snow', snowGrass: 'snow', sand: 'sand', beach: 'sand', dirt: 'earth', lava: 'lava', cave: 'cave', water: 'sea', void: 'void' };
 
 // 기후별 나무·바위 (큰 것, 작은 것)
-const FLORA = {
+export const FLORA = {
   temperate: { big: ['tree_grove', 'tree_grove2', 'tree_grove_green'], small: ['tree_round', 'tree_round2', 'bush', 'bush2'] },
   deepForest: { big: ['tree_pines', 'tree_pines', 'tree_grove'], small: ['tree_pine', 'tree_pine', 'stump'] },
   lateAutumn: { big: ['tree_grove', 'dead_grove'], small: ['tree_dead', 'tree_round', 'stump', 'bush'] },
