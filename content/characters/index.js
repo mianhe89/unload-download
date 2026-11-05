@@ -50,3 +50,6 @@ export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keep
 
 // 로드 시 지워질 수 있는 사람(동점일 때 이 순서)
 export const ERASE_ORDER = ['hort', 'tom', 'rine', 'per', 'elder'];
+// 히로인은 2부(소집)부터 지워질 수 있다: 이 플래그가 켜진 뒤로. 가장 마음을 준 사람이 먼저다
+export const HEROINE_ORDER = ['mia', 'selena', 'lu'];
+export const HEROINES_FROM = 'part1.done';

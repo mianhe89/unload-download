@@ -1,5 +1,5 @@
 // 옆 마을 (40×30칸). 우리 마을과 같은 영주의 땅이지만, 2장 전까지는 안개 너머라 이름조차 떠오르지 않던 곳.
-// 무녀 세이가 가이아의 사당을 지키고, 회장(옛 왕국의 시종)이 마을을 이끈다(docs/스토리.md '2장 · 안개 너머').
+// 무녀 세이가 호라의 사당을 지키고, 회장(옛 왕국의 시종)이 마을을 이끈다(docs/스토리.md '2장 · 안개 너머').
 // 동쪽 길이 서리 마을 가는 길(전체 지도 surface:5,9)로 이어진다. 형식은 content/maps/village.js와 같다.
 import { OBJECTS } from '../art/pack.js';
 
@@ -29,8 +29,8 @@ export const terrain = buildTerrain();
 const O = (type, x, y, extra = {}) => ({ type, at: [x, y], ...extra });
 
 export const objects = [
-  // 사당: 붉은 지붕 집에 룬돌 두 개. 가이아께 맡겨 둔 것들을 모시는 곳
-  O('house_red', 17, 3, { name: '가이아의 사당' }),
+  // 사당: 붉은 지붕 집에 룬돌 두 개. 호라께 맡겨 둔 것들을 모시는 곳
+  O('house_red', 17, 3, { name: '호라의 사당' }),
   O('runestone', 15, 6), O('runestone2', 22, 6),
   O('house_tall', 4, 10, { name: '회장 댁', residents: ['elder'] }),
   O('house_wood', 26, 6, { name: '세이의 집', residents: ['sei'] }),

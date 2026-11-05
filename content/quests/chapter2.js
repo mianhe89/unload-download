@@ -20,7 +20,7 @@ export const quests = [
     steps: [{ text: '낮에 초소에 들러 레온 앞으로 온 편지를 전한다', goal: [{ zone: 'post' }, { place: 'home' }], done: { flag: 'ch2.sealed_letter' } }],
   },
   {
-    id: 'q.ch2.offering', title: '가이아께 올리는 날', kind: 'once',
+    id: 'q.ch2.offering', title: '호라께 올리는 날', kind: 'once',
     start: { auto: true, when: { ifFlag: 'ch2.sei_eda', minDay: 16 } },
     steps: [{ text: '낮에 옆 마을 사당에 들러 세이의 제사를 함께한다', goal: [{ zone: 'shrine' }, { place: 'neighbor' }], done: { flag: 'ch2.offering' } }],
     reward: { aff: { sei: 2 } },

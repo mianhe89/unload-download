@@ -1,7 +1,7 @@
 // 타이틀. 게임 이름은 보여주지 않는다 — 처음 실행하면 무슨 게임인지 알게 된다.
 // 화면은 계절의 마을 일러스트(TitleArt): 실제 시각의 빛, 지워진 사람만큼 빠진 색. 흔들림·번쩍임은 없다.
 // 일러스트가 없으면 예전처럼 지금 이 순간의 마을(필드 맵)을 그린다.
-//   CONTINUE       → 로드. 이 순간 누군가 지워진다
+//   CONTINUE       → 로드. 네다섯 번에 한 번 누군가 지워진다
 //   RESET & START  → 진행을 처음부터. 지워진 사람은 돌아오지 않는다(두 번 눌러 확인)
 import Phaser from 'phaser';
 import { FONT, ZOOM } from '../../config/game.js';
@@ -142,7 +142,7 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   continue() {
-    const { run } = WorldMemory.load(); // 이 순간 누군가 지워진다
+    const { run } = WorldMemory.load(); // 네다섯 번에 한 번 누군가 지워진다
     this.go(run.chapter, run.phase, run.where);
   }
 

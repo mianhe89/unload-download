@@ -33,7 +33,7 @@ test('슬라임: 1번 스킬로 계속 치면 이기고, 길 맵으로 돌아가
   expect(errors).toEqual([]);
 });
 
-test('지면 되돌리기: 로드 횟수가 오르고 한 명이 지워지고, 같은 전투가 다시 시작된다', async ({ page }) => {
+test('지면 되돌리기: 로드 횟수가 오르고(네 번째면 한 명이 지워지고), 같은 전투가 다시 시작된다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
   await start(page, ['sweeper'], true);
@@ -41,7 +41,7 @@ test('지면 되돌리기: 로드 횟수가 오르고 한 명이 지워지고, �
   // 아군을 쓰러뜨린다 (전투 결과 화면 확인용)
   await page.evaluate(() => { const s = window.__game.scene.getScene('Battle'); for (const u of s.battle.units) if (u.side === 'party') u.hp = 0; s.step(); });
   await page.waitForFunction(() => window.__game.scene.getScene('Battle').choices?.length === 2);
-  const before = await page.evaluate(() => ({ loads: window.__ud.world.loads, erased: window.__ud.world.erased.length }));
+  const before = await page.evaluate(() => { window.__ud.world.loads = 3; return { loads: 3, erased: window.__ud.world.erased.length }; });
   await page.keyboard.press('r');
   await page.waitForFunction((n) => window.__ud.world.loads === n + 1, before.loads);
   await page.waitForFunction(() => window.__game.scene.getScene('Battle').panel?.visible, null, { timeout: 10_000 });

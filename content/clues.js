@@ -40,7 +40,7 @@ export const CLUES = [
   // ── 2장
   { id: 'clue.lostknight', title: '안개 길의 빈 갑옷', when: { ifFlag: 'ch2.knight_beaten' },
     text: '옆 마을로 가는 안개 길에서 녹슨 갑옷이 길을 막았다. 투구 안은 비어 있었다. 쓰러진 갑옷 안쪽에 기사단 문장이 새겨져 있었다. 지금은 아무도 쓰지 않는 옛 문장이다.' },
-  { id: 'clue.gaia', title: '가이아', when: { ifFlag: 'ch2.sei_met' },
+  { id: 'clue.gaia', title: '호라', when: { ifFlag: 'ch2.sei_met' },
     text: '옆 마을 무녀 세이가 모시는 신. 잃어버린 것을 버리지 않고 맡아 둔다고 한다. 언젠가 돌려준다고.' },
   { id: 'clue.old_kingdom', title: '북쪽의 망한 왕국', when: { ifFlag: 'ch2.old_kingdom' },
     text: '북쪽에 왕국이 있었고 전쟁으로 망했다고 한다. 그런데 누구와 싸웠는지 아무도 모른다. 이야기를 수십 번 했다는 사람조차 한 번도 말한 적이 없다.' },
@@ -48,8 +48,8 @@ export const CLUES = [
     text: '세이에게 에다의 이름을 말하자, 기도할 때 들은 것 같다고 했다. 지워진 것을 어렴풋이 느끼는 사람이 나 말고도 있다.' },
   { id: 'clue.seal', title: '낯선 봉인', when: { ifFlag: 'ch2.sealed_letter' },
     text: '레온 앞으로 온 편지의 봉인은 영주의 것도, 왕국의 것도 아니었다. 레온은 받자마자 봉인을 손으로 가렸다. "잊어라."' },
-  { id: 'clue.gaia_breath', title: '가이아의 숨', when: { ifFlag: 'ch2.offering' },
-    text: '사당에 첫 수확을 올리자 맑은 하늘에서 눈이 내렸다. 세이는 가이아가 맡아 둔 것을 잠깐 보여 주는 거라고 했다. 수확제 이레 뒤에도 같은 눈이 내렸다.' },
+  { id: 'clue.gaia_breath', title: '호라의 숨', when: { ifFlag: 'ch2.offering' },
+    text: '사당에 첫 수확을 올리자 맑은 하늘에서 눈이 내렸다. 세이는 호라가 맡아 둔 것을 잠깐 보여 주는 거라고 했다. 수확제 이레 뒤에도 같은 눈이 내렸다.' },
   // ── 3장
   { id: 'clue.mia_hands', title: '잃어버릴까 봐', when: { ifFlag: 'route.mia.hands' },
     text: '겨울 장 인파 속에서 미아가 손을 잡았다. "잃어버릴까 봐." 미아는 늘 내가 어디 갈까 봐 무서워한다.' },
@@ -92,7 +92,7 @@ export const CLUES = [
   { id: 'clue.bastard', title: '서자', when: { ifFlag: 'duel.offered' },
     text: '북쪽에서 온 검은 갑옷이 레온을 서자라고 불렀다. 숨겨진 왕국의 왕이 레온의 아버지다. 세이는 지워진 왕국의 마지막 핏줄이라고 했다. 레온이 세이를 찾으러 왔던 거였다.' },
   { id: 'clue.sei_north', title: '북쪽으로 간 무녀', when: { ifFlag: 'sei.went_north' },
-    text: '세이는 사자들과 북쪽 고개로 갔다. 가이아께서 잠깐 맡아 두실 거라고 했다.' },
+    text: '세이는 사자들과 북쪽 고개로 갔다. 호라께서 잠깐 맡아 두실 거라고 했다.' },
   { id: 'clue.ice_heart', title: '얼음 심장', when: { ifFlag: 'ice.offered' },
     text: '얼음성의 노엘: 얼음 심장에 손을 대면 마을을 지금 이대로 멈춰 준다. 아무도 늙지 않고 사라지지 않는다. 대신 아무도 돌아오지 않는다.' },
 ];

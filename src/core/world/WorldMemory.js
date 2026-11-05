@@ -1,12 +1,21 @@
-// 핵심 메카닉: 로드할 때마다 누군가 지워진다.
+// 핵심 메카닉: 되돌릴(로드) 때마다 세계가 조금씩 닳고, 네다섯 번에 한 번꼴로 누군가 지워진다.
+// - 언제 지워지는지는 정해져 있다: 지난번 지워짐 뒤로 4번째, 그다음은 5번째 로드에 (4 · 9 · 13 · 18 …). ERASE_GAPS
 // - 지워지는 건 무작위가 아니다. 플레이어가 가장 마음을 준 사람부터 사라진다.
+// - 1부에선 마을 사람만. 2부(소집)부터는 히로인도 지워질 수 있다(HEROINES_FROM).
+// - 지워지지 않는 로드도 흔적은 남는다: 로드 직후의 어긋난 대사(minLoads), 늘어나는 종소리({bells}).
 // - RESET & START는 진행만 처음으로 돌린다. 지워진 사람은 돌아오지 않는다. 세계는 기억한다.
 // - 개인 데이터는 막지 않는다(기획서 '조작 정책'). 공유 데이터는 GlobalWorld를 통해 서버에서 검증한다.
 import { SaveRepository } from '../save/SaveRepository.js';
 import { freshRun } from '../save/SaveSchema.js';
 import { chapters } from '../../../content/chapters/index.js';
 import { GlobalWorld } from './GlobalWorld.js';
-import { ERASE_ORDER } from '../../../content/characters/index.js';
+import { ERASE_ORDER, HEROINE_ORDER, HEROINES_FROM } from '../../../content/characters/index.js';
+
+// 지워짐 사이의 로드 수: 4, 5, 4, 5 …
+export const ERASE_GAPS = [4, 5];
+export function eraseDue(loads, erasedSoFar, lastAtLoad = 0) {
+  return loads - lastAtLoad >= ERASE_GAPS[erasedSoFar % ERASE_GAPS.length];
+}
 
 export const WorldMemory = {
   get world() { return SaveRepository.get().world; },
@@ -88,12 +97,13 @@ export const WorldMemory = {
     SaveRepository.update((d) => { d.run.affinity[id] = (d.run.affinity[id] ?? 0) + amount; });
   },
 
-  // CONTINUE = 로드 = 세계선 이동. 대가로 한 명이 지워진다.
+  // CONTINUE = 로드 = 세계선 이동. 네다섯 번에 한 번, 대가로 한 명이 지워진다.
   load() {
     let victim = null;
     SaveRepository.update((d) => {
       d.world.loads += 1;
-      victim = pickVictim(d);
+      const er = d.world.erased;
+      if (eraseDue(d.world.loads, er.length, er.at(-1)?.atLoad ?? 0)) victim = pickVictim(d);
       if (victim) d.world.erased.push({ id: victim, atLoad: d.world.loads, at: Date.now() });
     });
     GlobalWorld.reportLoad({ victim });
@@ -105,7 +115,8 @@ export const WorldMemory = {
 };
 
 function pickVictim(d) {
-  const alive = ERASE_ORDER.filter((id) => !d.world.erased.some((e) => e.id === id));
+  const pool = d.run?.flags?.[HEROINES_FROM] ? [...ERASE_ORDER, ...HEROINE_ORDER] : ERASE_ORDER;
+  const alive = pool.filter((id) => !d.world.erased.some((e) => e.id === id));
   if (!alive.length) return null;
   const aff = d.run?.affinity ?? {};
   return alive.reduce((best, id) => ((aff[id] ?? 0) > (aff[best] ?? 0) ? id : best), alive[0]);

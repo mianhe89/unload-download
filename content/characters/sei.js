@@ -1,4 +1,4 @@
-// 세이 (가칭) — 옆 마을의 무녀. 가이아의 사당을 지킨다. 지워진 왕국의 마지막 공주라는 건 본인도 모른다(docs/스토리.md)
+// 세이 (가칭) — 옆 마을의 무녀. 호라의 사당을 지킨다. 지워진 왕국의 마지막 공주라는 건 본인도 모른다(docs/스토리.md)
 // 갓난아이 때 회장이 안고 국경을 넘었다. 지워진 것을 기도 속에서 어렴풋이 느낀다
 export default {
   id: 'sei',
@@ -21,7 +21,7 @@ export default {
   // 4장: 순례로 소집 길에 합류하면 옆 마을에 없다
   away: { ifFlag: 'ch4.sei_joined' },
   schedule: [
-    { from: '06:00', at: 'shrine', face: 'up', say: ['가이아께서 오늘도 맡아 주시기를.'] },
+    { from: '06:00', at: 'shrine', face: 'up', say: ['호라께서 오늘도 맡아 주시기를.'] },
     { from: '11:00', at: 'plaza', mode: 'wander', radius: 3, say: ['오늘은 바람이 조용하네요.'] },
     { from: '16:00', at: 'well', mode: 'wander', radius: 2 },
     { from: '18:00', at: 'shrine', task: '(사당 처마에 등불을 건다)' },

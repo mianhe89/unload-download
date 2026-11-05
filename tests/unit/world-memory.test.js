@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { WorldMemory } from '../../src/core/world/WorldMemory.js';
-import { ERASE_ORDER } from '../../content/characters/index.js';
+import { ERASE_ORDER, HEROINES_FROM } from '../../content/characters/index.js';
+
+// 다음 지워짐까지 로드한다 (네다섯 번에 한 번)
+const untilErased = () => { for (let i = 0; i < 10; i += 1) { const r = WorldMemory.load(); if (r.victim) return r.victim; } return null; };
 import { freshWorld } from '../helpers/world.js';
 
 describe('지워짐 규칙 (WorldMemory)', () => {
@@ -19,13 +22,12 @@ describe('지워짐 규칙 (WorldMemory)', () => {
     expect(WorldMemory.hasRun).toBe(false);
   });
 
-  it('로드하면 로드 횟수가 오르고 한 명이 지워진다', () => {
+  it('네다섯 번에 한 번 지워진다: 4번째, 9번째, 13번째, 18번째 로드', () => {
     WorldMemory.startNew();
-    const { victim } = WorldMemory.load();
-    expect(WorldMemory.world.loads).toBe(1);
-    expect(WorldMemory.isErased(victim)).toBe(true);
-    expect(WorldMemory.world.erased).toHaveLength(1);
-    expect(WorldMemory.world.erased[0]).toMatchObject({ id: victim, atLoad: 1 });
+    const at = [];
+    for (let i = 1; i <= 18; i += 1) if (WorldMemory.load().victim) at.push(i);
+    expect(at).toEqual([4, 9, 13, 18]);
+    expect(WorldMemory.world.erased.map((e) => e.atLoad)).toEqual([4, 9, 13, 18]);
   });
 
   it('호감도가 가장 높은 사람부터 지워진다', () => {
@@ -33,42 +35,42 @@ describe('지워짐 규칙 (WorldMemory)', () => {
     WorldMemory.addAffinity('per', 3);
     WorldMemory.addAffinity('rine', 2);
     WorldMemory.addAffinity('tom', 1);
-    expect(WorldMemory.load().victim).toBe('per');
-    expect(WorldMemory.load().victim).toBe('rine');
-    expect(WorldMemory.load().victim).toBe('tom');
+    expect(untilErased()).toBe('per');
+    expect(untilErased()).toBe('rine');
+    expect(untilErased()).toBe('tom');
   });
 
   it('동점이면 정해진 순서대로', () => {
     WorldMemory.startNew();
-    expect(WorldMemory.load().victim).toBe(ERASE_ORDER[0]);
-    expect(WorldMemory.load().victim).toBe(ERASE_ORDER[1]);
+    expect(untilErased()).toBe(ERASE_ORDER[0]);
+    expect(untilErased()).toBe(ERASE_ORDER[1]);
   });
 
-  it('지워질 수 없는 인물(미아 등)의 호감도는 순서에 영향을 주지 않는다', () => {
+  it('1부에선 히로인(미아 등)은 지워지지 않는다. 2부부터는 가장 마음을 준 히로인이 먼저다', () => {
     WorldMemory.startNew();
     WorldMemory.addAffinity('mia', 99);
-    expect(WorldMemory.load().victim).toBe(ERASE_ORDER[0]);
+    expect(untilErased()).toBe(ERASE_ORDER[0]);
     expect(WorldMemory.isErased('mia')).toBe(false);
+    WorldMemory.setFlag(HEROINES_FROM);
+    expect(untilErased()).toBe('mia');
   });
 
   it('모두 지워진 뒤엔 더 지워지지 않고 로드 횟수만 오른다', () => {
     WorldMemory.startNew();
-    for (let i = 0; i < ERASE_ORDER.length; i += 1) WorldMemory.load();
-    const { victim } = WorldMemory.load();
-    expect(victim).toBeNull();
+    for (let i = 0; i < ERASE_ORDER.length; i += 1) untilErased();
+    expect(untilErased()).toBeNull();
     expect(WorldMemory.world.erased).toHaveLength(ERASE_ORDER.length);
-    expect(WorldMemory.world.loads).toBe(ERASE_ORDER.length + 1);
   });
 
   it('RESET & START는 진행만 처음으로. 지워진 사람과 로드 횟수는 남는다', () => {
     WorldMemory.startNew();
     WorldMemory.setFlag('ev.hort');
     WorldMemory.checkpoint('prologue', 'night');
-    WorldMemory.load();
+    untilErased();
     WorldMemory.startNew();
     expect(WorldMemory.run).toMatchObject({ chapter: 'prologue', phase: 'prep', flags: {}, affinity: {} });
     expect(WorldMemory.world.erased).toHaveLength(1);
-    expect(WorldMemory.world.loads).toBe(1);
+    expect(WorldMemory.world.loads).toBe(4);
   });
 
   it('체크포인트·플래그·호감도가 진행에 기록된다', () => {

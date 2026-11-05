@@ -84,13 +84,14 @@ test('프롤로그 완주 → CONTINUE하면 가장 아낀 마을 사람이 지�
   expect(before.erased).toEqual([]);
   expect(before.affinity.hort).toBeGreaterThan(before.affinity.per ?? 0);
 
-  // ── CONTINUE: 이 순간 누군가 지워진다
+  // ── CONTINUE: 네 번째 되돌림이면 누군가 지워진다 (앞의 세 번은 이미 했다고 친다)
+  await page.evaluate(() => { window.__ud.world.loads = 3; });
   await clickMenu(page, 'CONTINUE');
   await waitField(page, 'aftermath');
   const after = await state(page);
   expect(after.chapter).toBe('chapter1');
   expect(after.erased).toEqual(['hort']);
-  expect(after.loads).toBe(1);
+  expect(after.loads).toBe(4);
   expect(after.npcs).not.toContain('hort');   // 지워진 사람은 필드에 없다
 
   // 빈자리에 흔적이 남는다
@@ -110,6 +111,7 @@ test('RESET & START는 진행만 처음으로, 지워진 사람은 돌아오지 
   // 타이틀로 돌아가서 CONTINUE → 한 명 지워짐
   await page.evaluate(() => { const g = window.__game; g.scene.stop('UI'); g.scene.stop('Field'); g.scene.start('Title'); });
   await page.waitForFunction(() => window.__game.scene.isActive('Title'));
+  await page.evaluate(() => { window.__ud.world.loads = 3; });
   await clickMenu(page, 'CONTINUE');
   await waitField(page);
   const erased = (await state(page)).erased;

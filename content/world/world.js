@@ -26,7 +26,7 @@ export const HUBS = {
   lordtown:  { at: [13, 7], name: '영주의 성 아랫마을', kind: 'village', note: '우리 영지의 영주가 사는 성. 초상화 자리가 비어 있다', field: 'lordtown' },
   ledger:    { at: [14, 4], name: '기록하는 마을', kind: 'village', note: '잊지 않으려고 모두가 매일 서로의 이름을 적는 마을', field: 'ledger' },
   icecastle: { at: [5, 4],  name: '얼음성',     kind: 'village', note: '성째로 얼어붙은 성. 그 안에서는 아무것도 늙지도, 사라지지도 않는다', field: 'icecastle' },
-  neighbor:  { at: [4, 9],  name: '옆 마을',     kind: 'village', note: '같은 영주의 땅. 무녀가 가이아의 사당을 지킨다', field: 'neighbor' },
+  neighbor:  { at: [4, 9],  name: '옆 마을',     kind: 'village', note: '같은 영주의 땅. 무녀가 호라의 사당을 지킨다', field: 'neighbor' },
   castle:    { at: [8, 1],  name: '검은 성',     kind: 'castle',  note: '해가 들지 않는 북쪽 끝. 이야기 속 이야기의 마왕' },
   elf:       { at: [2, 12], name: '엘프 마을',   kind: 'elf',     note: '깊은 숲 속. 숲을 지나치게 베면 마을이 보이지 않게 된다', field: 'elf' },
   dwarf:     { at: [11, 5], name: '드워프 마을', kind: 'dwarf',   note: '산을 파고 사는 마을. 갱도가 지하로 이어진다', field: 'dwarf' },

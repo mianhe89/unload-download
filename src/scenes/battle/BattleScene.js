@@ -2,7 +2,7 @@
 //   위:   차례 순서(속도 게이지 미리보기), 보스 예고
 //   가운데: 왼쪽 아군 / 오른쪽 적, 머리 위 체력 막대
 //   아래:   지금 차례인 아군의 스킬 Q·W·E, 궁극기 R, 그 위 퀵슬롯 1~8(소모품 — 아군을 ←→로 골라 쓴다, 차례 하나), Enter/Space 실행
-// 지면: 되돌리기(로드 = 누군가 지워진다) 또는 물러나기. 이기면 길 맵으로 돌아간다.
+// 지면: 되돌리기(로드 — 네다섯 번에 한 번 누군가 지워진다) 또는 물러나기. 이기면 길 맵으로 돌아간다.
 import Phaser from 'phaser';
 import { FONT } from '../../config/game.js';
 import { createBattle } from '../../battle/engine.js';
@@ -423,10 +423,10 @@ export default class BattleScene extends Phaser.Scene {
       this.time.delayedCall(1500 + drops * 700, () => this.leave('win'));
       return;
     }
-    // 졌다: 되돌리면 누군가 지워진다
+    // 졌다: 되돌리기(로드) 또는 물러나기
     this.say('쓰러졌다.', COLOR.red);
     const opts = [
-      { label: '되돌리기 — 이 순간, 누군가 지워진다', act: () => this.retry() },
+      { label: '되돌리기', act: () => this.retry() },
       { label: this.village ? '물러나기 — 놈은 그대로 간다' : '물러나기', act: () => this.leave('lose') },
     ];
     this.choices = opts.map((o, i) => this.add.text(W / 2, H * 0.8 + i * 30 * this.s, o.label, { fontFamily: FONT, fontSize: `${15 * this.s}px`, color: i ? COLOR.text : COLOR.red })

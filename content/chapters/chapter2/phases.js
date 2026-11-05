@@ -62,7 +62,7 @@ export const phases = {
       },
       // 시험에 붙은 뒤 13일부터: 레온이 세이를 처음 본다
       { id: 'leon.sei', when: { ifFlag: 'rank.squire', minDay: 13 }, trigger: { near: 'sei', r: 4 }, run: 'neighbor.leon_sei' },
-      // 16일부터: 가이아께 올리는 날 (가이아의 숨)
+      // 16일부터: 호라께 올리는 날 (호라의 숨)
       { id: 'offering', when: { ifFlag: 'ch2.sei_eda', minDay: 16, afterTime: '08:00', beforeTime: '17:00' }, trigger: { zone: 'shrine' }, run: 'neighbor.offering' },
     ],
   },

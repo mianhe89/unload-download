@@ -363,7 +363,7 @@ export default class ActionScene extends Phaser.Scene {
     }
     this.message('쓰러졌다.', '#ff7a6a');
     const opts = [
-      { label: '되돌리기 — 이 순간, 누군가 지워진다 (R)', act: () => this.retry() },
+      { label: '되돌리기 (R)', act: () => this.retry() },
       { label: '물러나기 (Esc)', act: () => this.leave() },
     ];
     opts.forEach((o, i) => this.add.text(W / 2, H * 0.42 + i * 34 * s, o.label, { fontFamily: FONT_TALK, fontSize: `${15 * s}px`, color: i ? '#f4f0e8' : '#ff7a6a' })
@@ -399,7 +399,7 @@ export default class ActionScene extends Phaser.Scene {
     });
   }
 
-  // 되돌리기 = 로드: 보스전을 1단계부터 다시 (누군가 지워진다)
+  // 되돌리기 = 로드: 보스전을 1단계부터 다시 (네다섯 번에 한 번 누군가 지워진다)
   retry() {
     if (this.leaving) return;
     this.leaving = true;
