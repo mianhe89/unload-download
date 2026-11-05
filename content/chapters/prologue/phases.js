@@ -152,6 +152,8 @@ export const phases = {
       }),
       // 셀레나와 이야기한 뒤에 나타난다 (컷신에서 등장, 이어하기 시엔 여기서 배치)
       lu: { at: [10, 28], mode: 'idle', face: 'right', when: { ifFlag: 'selena.done' } },
+      // 영주의 전령: 미아에게 간 뒤 광장에 와 있다(이어하기 시엔 여기서 배치)
+      herald: { at: [24, 15], mode: 'idle', face: 'down', when: { ifFlag: 'mia.talked' } },
     },
     props: [
       { prop: 'burntBread', at: [14, 16], when: { unlessErased: 'hort' }, text: '진열대 구석, 탄 빵만 따로 모아둔 바구니. 호르트 아저씨도 왜 모아뒀는지 모른다.' },

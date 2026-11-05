@@ -13,9 +13,10 @@ export const quests = [
       { text: '수확제의 밤을 함께 보낸다 — 광장 사람들을 돕거나, 미아 곁에 가만히 서 있는다', done: { flag: 'eda.met' }, goal: { spot: 'plaza' }, count: { n: 2, of: { hort: 'ev.hort', rine: 'ev.rine', per: 'ev.per', tom: 'ev.tom', mia: 'ev.mia' } } },
       { text: '광장에서 자정의 종소리를 기다린다', done: { flag: 'done.bells' }, goal: { spot: 'plaza' } },
       { text: '약속대로 에다의 대장간에 간다', done: { flag: 'smithy.seen' }, goal: { zone: 'smithy' } },
-      { text: '에다를 아는 사람을 찾는다 — 미아, 그리고 초소의 셀레나', done: { flag: 'selena.done' }, goal: [{ npc: 'mia', unlessFlag: 'mia.talked' }, { zone: 'post' }] },
-      { text: '우물가에 왔다는 마법사를 만난다', done: { flag: 'done.lu' }, goal: [{ npc: 'lu' }, { spot: 'well' }] },
-      { text: '밤, 광장 북쪽 종탑 앞으로 가 본다', done: { flag: 'done.keeper' }, goal: { zone: 'tower' } },
+      { text: '광장이 소란스럽다 — 미아에게 간다', done: { flag: 'mia.talked' }, goal: { npc: 'mia' } },
+      { text: '초소의 셀레나에게 견습 이름을 올린다', done: { flag: 'selena.done' }, goal: { zone: 'post' } },
+      { text: '우물가의 떠돌이 마법사에게 인사한다', done: { flag: 'done.lu' }, goal: [{ npc: 'lu' }, { spot: 'well' }] },
+      { text: '잠이 오지 않는다. 광장 북쪽, 종탑 쪽에서 비질 소리가 난다', done: { flag: 'done.keeper' }, goal: { zone: 'tower' } },
     ],
   },
 ];

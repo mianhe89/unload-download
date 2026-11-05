@@ -45,8 +45,9 @@ import mara from './mara.js';
 import scribe from './scribe.js';
 import envoy from './envoy.js';
 import noel from './noel.js';
+import herald from './herald.js';
 
-export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, leon, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant, elf, orc, tork, sei, elder, lostknight, brenna, gord, yuna, marlo, nell, brok, helga, sylwen, alma, tobin, oswin, mara, scribe, envoy, noel };
+export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, leon, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant, elf, orc, tork, sei, elder, lostknight, brenna, gord, yuna, marlo, nell, brok, helga, sylwen, alma, tobin, oswin, mara, scribe, envoy, noel, herald };
 
 // 로드 시 지워질 수 있는 사람(동점일 때 이 순서)
 export const ERASE_ORDER = ['hort', 'tom', 'rine', 'per', 'elder'];
