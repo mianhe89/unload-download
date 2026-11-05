@@ -5,12 +5,12 @@ import { openGame, wipe, waitField } from './game.js';
 const SHOTS = process.env.SHOTS;
 const start = (page, fn, arg) => page.evaluate(fn, arg);
 
-test('안개 길에 길 잃은 기사가 서 있고, 옆 마을 칸으로 가면 옆 마을 필드로 들어간다', async ({ page }) => {
+test('옆 마을 길에 길 잃은 기사가 서 있고, 옆 마을 칸으로 가면 옆 마을 필드로 들어간다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
   await start(page, () => {
     const g = window.__game, u = window.__ud;
-    u.startNew(); u.checkpoint('chapter2', 'fogroad'); u.setFlag('ch2.started');
+    u.startNew(); u.checkpoint('chapter2', 'fogroad'); u.setFlag('ch2.started'); u.setFlag('rank.squire');
     g.scene.stop('Title');
     g.scene.start('Area', { layer: 'surface', at: [5, 10], entry: 'e', back: { chapter: 'chapter2', phase: 'fogroad', time: 'day' } });
   });

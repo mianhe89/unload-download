@@ -9,6 +9,7 @@ import { mapOf } from '../../content/maps/index.js';
 import { ScriptRunner, passes } from '../../src/core/script/ScriptRunner.js';
 import { EventDirector } from '../../src/field/EventDirector.js';
 import { QUESTS } from '../../content/quests/index.js';
+import { RAIDS } from '../../content/raids.js';
 import { BOSSES } from '../../content/battles/encounters.js';
 
 describe('콘텐츠 검증', () => {
@@ -149,7 +150,10 @@ function playChapter(chapterId, erased, { maxSeconds = 900, flags: startFlags = 
         // 들를 마을: 아직 일어날 일이 남은 visit 페이즈 (하루에 한 번)
         const open = (p) => (p.events ?? []).some((e) => !flags[`done.${e.id}`] && (!e.when || passes(e.when, ctx)));
         const visit = !ph.visit && Object.entries(ch.phases).find(([id, p]) => p.visit && visitedOn[id] !== clock.day && (!p.when || passes(p.when, ctx)) && (open(p) || !entered.has(id)))?.[0];
-        if (boss) { flags[boss.flag] = true; log.push(`보스 ${boss.enemies.join(',')}`); }
+        // 마을 습격: 그날이 되면 온다(그 맵에 있을 때). 지킨 것으로 친다(싸움은 action.test가 지킨다)
+        const raid = RAIDS.find((r) => r.kind === 'raid' && !r.daily && (r.map ?? 'village') === (mapOf(ph).id ?? 'village') && clock.day >= r.day && !flags[`raid.${r.id}.over`]);
+        if (raid) { for (const f of ['on', 'won', 'over']) flags[`raid.${raid.id}.${f}`] = true; for (const f of raid.won?.flags ?? []) flags[f] = true; log.push(`습격 ${raid.id}`); }
+        else if (boss) { flags[boss.flag] = true; log.push(`보스 ${boss.enemies.join(',')}`); }
         else if (visit) { visitedOn[visit] = clock.day; next = { phase: visit, back: phaseId }; log.push(`→ ${visit}`); }
         else if (ph.visit) { next = { phase: returnTo }; log.push(`← ${returnTo}`); }
         // 할 일이 없으면 시간을 흘려보낸다(두 시간씩, 밤 11시까지). 그래도 없으면 자고 다음 날 아침

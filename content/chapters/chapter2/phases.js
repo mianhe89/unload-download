@@ -1,9 +1,9 @@
-// 1부 2장 「안개 너머」(11~20일). 줄거리는 docs/스토리.md '2장 · 안개 너머'.
+// 1부 2장 「옆 마을 가는 길」(11~20일). 줄거리는 docs/스토리.md '새 뼈대'.
 // 우리 마을의 하루(fogroad)와 옆 마을에 들르는 페이즈(neighbor, visit)로 나뉜다.
-//   1) 루와 북쪽 길로 나가 서쪽 갈림길의 안개 속으로 → 길 잃은 기사(보스, content/battles/encounters.js의 surface:5,10)
-//   2) 이기면 옆 마을에 닿는다: 세이, 회장의 옛이야기, 세이에게 에다의 이름
-//   3) 돌아와 견습 시험(감독 레온) → 견습 기사. 15일 밤엔 오크 정찰대가 온다(content/raids.js)
-//   4) 20일, 루에게 가면 장이 끝난다
+//   1) 11일 견습 시험(감독 레온) → 견습 기사
+//   2) 첫 임무: 북쪽 길에서 서쪽으로 갈라지는 옆 마을 길을 막은 빈 갑옷(길 잃은 기사, surface:5,10)
+//   3) 옆 마을: 세이와 호라의 사당, 회장의 옛이야기. 세이가 기도에서 들은 이름 — 더 묻기 전에 봉화가 오른다
+//   4) 15일 밤 오크 정찰대(content/raids.js). 20일, 초소에서 장이 끝난다
 const villagers = (m) => Object.fromEntries(Object.entries(m).map(([id, [x, y, mode, radius]]) => [id, { at: [x, y], mode, radius, face: 'down' }]));
 
 export const phases = {
@@ -16,8 +16,8 @@ export const phases = {
     clock: true,
     day: 11,
     npcs: {
-      // 루는 이 장 내내 북쪽 길 어귀에서 안개를 본다
-      lu: { at: [34, 9], mode: 'idle', face: 'up' },
+      // 루는 이 장 내내 초소 곁에서 견습들을 본다
+      lu: { at: [32, 26], mode: 'idle', face: 'down' },
       ...villagers({
         chief: [24, 14, 'idle'], granny: [28, 21, 'idle'], kid: [12, 26, 'wander', 2], farmer: [48, 13, 'wander', 2],
         hunter: [40, 18, 'idle'], monk: [21, 11, 'idle'], woman: [20, 23, 'idle'], oldman: [30, 18, 'idle'],
@@ -25,16 +25,16 @@ export const phases = {
     },
     onEnter: 'ch2.intro',
     events: [
-      // 옆 마을에서 돌아와 초소에 가면: 견습 시험 (낮에)
-      { id: 'exam', when: { ifFlag: 'ch2.sei_eda', unlessFlag: 'rank.squire', afterTime: '09:00', beforeTime: '18:00' }, trigger: { zone: 'post' }, run: 'ch2.exam' },
+      // 11일 낮, 초소에 가면: 견습 시험
+      { id: 'exam', when: { unlessFlag: 'rank.squire', afterTime: '09:00', beforeTime: '18:00' }, trigger: { zone: 'post' }, run: 'ch2.exam' },
       // 시험 뒤, 16일부터: 레온 앞으로 온 봉인된 편지
       { id: 'letter', when: { ifFlag: 'rank.squire', minDay: 16, afterTime: '09:00', beforeTime: '18:00' }, trigger: { zone: 'post' }, run: 'ch2.letter' },
-      // 20일: 북쪽 길 어귀의 루에게 가면 장이 끝난다
-      { id: 'ch2.depart', when: { ifFlag: 'rank.squire', minDay: 20 }, trigger: { near: 'lu', r: 3 }, run: 'ch2.end' },
+      // 20일: 정찰대를 겪고 나서 낮에 초소에 가면 장이 끝난다
+      { id: 'ch2.depart', when: { ifFlag: ['rank.squire', 'ch2.sei_eda'], minDay: 20, afterTime: '09:00', beforeTime: '18:00' }, trigger: { zone: 'post' }, run: 'ch2.end' },
     ],
   },
 
-  // 옆 마을. 길 맵에서 옆 마을 칸에 들어서면 온다(src/world/visits.js). 길 잃은 기사를 쓰러뜨려야 안개가 걷힌다
+  // 옆 마을. 길 맵에서 옆 마을 칸에 들어서면 온다(src/world/visits.js). 길을 막은 빈 갑옷을 쓰러뜨려야 들어갈 수 있다
   neighbor: {
     map: 'neighbor',
     visit: true,

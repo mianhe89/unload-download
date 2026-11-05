@@ -26,7 +26,7 @@ export const POOLS = {
 export const BOSSES = {
   // 2장: 옆 마을로 가는 길을 지키는 빈 갑옷
   'surface:5,10': {
-    enemies: ['lostknight'], when: { ifFlag: 'ch2.started' }, flag: 'ch2.knight_beaten',
+    enemies: ['lostknight'], when: { ifFlag: 'rank.squire' }, flag: 'ch2.knight_beaten',
     note: '안개 속에서 녹슨 갑옷이 일어선다. 투구 안이 텅 비어 있다.',
   },
   'surface:8,2': { enemies: ['sweeper'], note: '빗자루를 든 거대한 그림자가 성문 앞을 쓸고 있다.' },

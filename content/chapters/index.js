@@ -25,8 +25,8 @@ const withPlaces = (c) => ({
 
 export const chapters = {
   prologue: { title: '수확제 다음 날', phases: prologue.phases, firstPhase: prologue.firstPhase, script: prologueScript },
-  chapter1: withPlaces({ title: '지워진 이름들', phases: chapter1.phases, firstPhase: chapter1.firstPhase, script: chapter1Script }),
-  chapter2: withPlaces({ title: '안개 너머', phases: chapter2.phases, firstPhase: chapter2.firstPhase, script: chapter2Script }),
+  chapter1: withPlaces({ title: '견습 모집', phases: chapter1.phases, firstPhase: chapter1.firstPhase, script: chapter1Script }),
+  chapter2: withPlaces({ title: '옆 마을 가는 길', phases: chapter2.phases, firstPhase: chapter2.firstPhase, script: chapter2Script }),
   chapter3: withPlaces({ title: '겨울 준비', phases: chapter3.phases, firstPhase: chapter3.firstPhase, script: chapter3Script }),
   chapter4: withPlaces({ title: '소집 가는 길', phases: chapter4.phases, firstPhase: chapter4.firstPhase, script: chapter4Script }),
 };
