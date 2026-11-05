@@ -323,7 +323,7 @@ export default class FieldScene extends Phaser.Scene {
     }
     if (this.shops.onTalk(npc.id)) return; // 가게 주인이면 가게 창
     // 대화는 줄 목록이거나, 지금 상태(지워진 사람 등)를 보고 줄을 만드는 함수다
-    const convos = (TALK[npc.id]?.[this.phaseId] ?? []).map((c) => (typeof c === 'function' ? c(this.ctx()) : c)).filter((c) => c?.length);
+    const convos = (TALK[npc.id]?.[this.phaseId] ?? TALK[npc.id]?.['*'] ?? []).map((c) => (typeof c === 'function' ? c(this.ctx()) : c)).filter((c) => c?.length);
     if (convos?.length) { this.runTalk(npc.id, convos); return; }
     const lines = characters[npc.id].bubbles?.[this.phaseId] ?? ['…'];
     this.bubble(npc.id, lines[Math.floor(Math.random() * lines.length)]);

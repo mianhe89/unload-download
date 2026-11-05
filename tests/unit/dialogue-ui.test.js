@@ -117,6 +117,7 @@ describe('말 걸기 대화', async () => {
   for (const ch of Object.values(chapters)) for (const [pid, ph] of Object.entries(ch.phases)) phases[pid] = new Set([...(phases[pid] ?? []), ...Object.keys(ph.npcs ?? {})]);
   it('대화가 있는 인물은 그 페이즈에 실제로 있다 (배치 또는 일과)', () => {
     for (const [id, byPhase] of Object.entries(TALK)) for (const pid of Object.keys(byPhase)) {
+      if (pid === '*') { expect(characters[id].schedule, `${id}: '*' 대화는 일과를 사는 사람만`).toBeTruthy(); continue; }
       expect(phases[pid], pid).toBeTruthy();
       // 페이즈가 직접 세우거나, 하루 일과(schedule)로 그 맵에 사는 사람
       expect(phases[pid].has(id) || Boolean(characters[id].schedule), `${pid}:${id}`).toBe(true);
@@ -124,7 +125,7 @@ describe('말 걸기 대화', async () => {
   });
   it('화자는 등장인물이거나 내레이션, 태그는 알려진 것만', () => {
     const ctx = { isErased: () => false, flag: () => false, loads: () => 0, erasedCount: () => 0 };
-    for (const byPhase of Object.values(TALK)) for (const convos of Object.values(byPhase)) for (const c of convos.map((x) => (typeof x === 'function' ? x(ctx) : x))) for (const line of c) {
+    for (const byPhase of Object.values(TALK)) for (const convos of Object.values(byPhase)) for (const c of convos.map((x) => (typeof x === 'function' ? x(ctx) : x)).filter(Boolean)) for (const line of c) {
       const [who, text] = typeof line === 'string' ? [null, line] : line;
       if (who) expect(characters[who], who).toBeTruthy();
       expect(plain(text), text).not.toMatch(/\[\/?(y|r|b|g|shake|wave|big|mood|w|i|q)\b/);

@@ -7,8 +7,8 @@ export default makeTown({
   dirt: [[18, 0, 4, 28], [8, 10, 26, 6], [26, 12, 14, 4], [6, 18, 12, 3]],
   objects: [
     O('shop', 9, 5, { name: '생선 가게', residents: ['nell'] }),
-    O('house_plain', 24, 4, { name: '항구지기 사무소' }),
-    O('house_wood', 28, 18, { name: '어부의 집', residents: ['marlo'] }),
+    O('house_plain', 24, 4, { name: '항구지기 사무소', residents: ['harald', 'jan', 'sven'] }),
+    O('house_wood', 28, 18, { name: '어부의 집', residents: ['marlo', 'oda', 'pim'] }),
     O('house_orange', 5, 21, { name: '선원 여관' }),
     O('boat', 23, 21), O('barrel', 14, 9), O('barrel', 15, 9), O('crate', 16, 16), O('crate', 17, 16), O('crate', 24, 10),
     O('cart', 30, 9), O('sea_rock', 32, 22), O('signpost', 22, 6), O('well', 12, 17),

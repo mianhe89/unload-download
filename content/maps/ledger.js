@@ -8,7 +8,7 @@ export default makeTown({
   dirt: [[17, 8, 4, 20], [0, 12, 17, 3], [10, 8, 18, 10]],
   objects: [
     O('house_tall', 15, 1, { name: '기록관', residents: ['scribe'] }),
-    O('house_plain', 4, 4), O('house_wood', 27, 4), O('house_orange', 4, 19), O('house_red', 27, 19), O('house_stone', 23, 21),
+    O('house_plain', 4, 4, { name: '아가테네 집', residents: ['agathe', 'rudi'] }), O('house_wood', 27, 4, { name: '로렌츠의 집', residents: ['lorenz'] }), O('house_orange', 4, 19), O('house_red', 27, 19), O('house_stone', 23, 21),
     // 명부 판: 광장 가운데 표지와 룬돌
     O('signpost', 18, 12), O('signpost', 20, 12), O('runestone', 16, 13), O('runestone2', 22, 13),
     O('crate', 12, 10), O('barrel', 13, 10), O('bench', 12, 16), O('well', 25, 14),

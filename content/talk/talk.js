@@ -7,6 +7,7 @@
 
 import { TALK_ROADS } from './roads.js';
 import { FOLK } from '../characters/folk.js';
+import { RESIDENTS } from '../characters/residents.js';
 
 export const TALK = {
   // ── 히로인 ───────────────────────────────────────────────
@@ -195,6 +196,9 @@ for (const [id, byPhase] of Object.entries(TALK_ROADS)) TALK[id] = { ...TALK[id]
 
 // 다른 도시 사람들의 대화(content/characters/folk.js의 lines): 그 도시에 들르는 페이즈(trade·magic)에서
 for (const f of Object.values(FOLK)) TALK[f.id] = { ...TALK[f.id], [f.home]: f.lines };
+
+// 마을마다 사는 사람들(content/characters/residents.js의 lines): 그 사람이 서 있는 어느 페이즈에서나('*')
+for (const r of Object.values(RESIDENTS)) TALK[r.id] = { ...TALK[r.id], '*': r.lines };
 
 // 처음 들을 때 오르는 호감도 (인물별로 바꾸고 싶으면 여기)
 export const TALK_AFF = 1;

@@ -7,9 +7,9 @@ export default makeTown({
   id: 'mill', name: '물레방아 마을', W: 38, H: 28, theme: 'grass',
   dirt: [[0, 13, 38, 3], [13, 9, 12, 10], [28, 4, 3, 9]],
   objects: [
-    O('house_plain', 26, 1, { name: '방앗간', residents: ['tobin'] }),
+    O('house_plain', 26, 1, { name: '방앗간', residents: ['tobin', 'ruprecht'] }),
     O('house_wood', 7, 6, { name: '알마의 집', residents: ['alma'] }),
-    O('house_orange', 8, 19), O('house_red', 26, 18), O('house_stone', 18, 21),
+    O('house_orange', 8, 19, { name: '로테의 집', residents: ['lotte'] }), O('house_red', 26, 18), O('house_stone', 18, 21),
     // 빗자루 제단: 광장 가운데 룬돌 셋, 앞에 짚단
     O('runestone', 17, 10), O('runestone2', 19, 9), O('runestone', 21, 10), O('haystack', 19, 12),
     O('well', 14, 16), O('cart', 23, 15), O('barrel', 31, 12), O('crate', 32, 12), O('bench', 14, 18),

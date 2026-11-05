@@ -7,9 +7,9 @@ export default makeTown({
   id: 'dwarf', name: '드워프 마을', W: 38, H: 28, theme: 'snow',
   dirt: [[17, 0, 4, 28], [6, 12, 26, 5], [0, 13, 6, 3], [32, 13, 6, 3], [24, 6, 8, 3]],
   objects: [
-    O('house_stone', 8, 6, { name: '대장간 「쇠망치와 맹세」', residents: ['brok'] }), O('forge', 12, 5),
-    O('house_stone', 26, 2, { name: '광부 숙소', residents: ['helga'] }),
-    O('house_tall', 26, 18, { name: '맹세의 전당' }),
+    O('house_stone', 8, 6, { name: '대장간 「쇠망치와 맹세」', residents: ['brok', 'korrim'] }), O('forge', 12, 5),
+    O('house_stone', 26, 2, { name: '광부 숙소', residents: ['helga', 'gurni', 'baldra'] }),
+    O('house_tall', 26, 18, { name: '맹세의 전당', residents: ['hjalma'] }),
     O('forge', 30, 9), O('rocks_grey', 4, 18), O('rocks_brown', 10, 20), O('rocks_grey', 31, 22),
     O('crate', 14, 11), O('barrel', 15, 11), O('barrel', 22, 17), O('cart', 22, 10), O('signpost', 21, 4),
     O('pines_snow', 33, 4), O('tree_snow', 6, 2),

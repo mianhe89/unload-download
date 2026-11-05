@@ -48,17 +48,17 @@ const O = (type, x, y, extra = {}) => ({ type, at: [x, y], ...extra });
 export const objects = [
   // 건물 (owner: 지워지면 바뀌는 집의 주인, residents: 그 집에 사는 사람 — 하루 일과의 home이 이 집 문으로 들어간다)
   O('belltower', 22, 3, { name: '종탑' }),
-  O('bakery', 14, 12, { owner: 'hort', name: '호르트네 빵집', nameGone: '빈 가게', residents: ['hort'] }),
+  O('bakery', 14, 12, { owner: 'hort', name: '호르트네 빵집', nameGone: '빈 가게', residents: ['hort', 'hanna', 'nils'] }),
   O('house_stone', 35, 12, { name: '에다의 대장간', nameGone: '빈 대장간', residents: ['eda'] }),
   O('forge', 38, 11),
-  O('house_tall', 34, 23, { owner: 'selena', name: '기사단 초소', residents: ['tom', 'selena', 'leon', 'bram', 'sonja'] }),
+  O('house_tall', 34, 23, { owner: 'selena', name: '기사단 초소', residents: ['tom', 'selena', 'leon', 'bram', 'sonja', 'fritz'] }),
   O('house_orange', 14, 24, { name: '우리 집', residents: ['me'] }),
-  O('house_plain', 12, 4, { owner: 'per', name: '페르의 하숙방', nameGone: '빈 하숙방', residents: ['per', 'rosa', 'ella'] }),
+  O('house_plain', 12, 4, { owner: 'per', name: '페르의 하숙방', nameGone: '빈 하숙방', residents: ['per', 'rosa', 'ella', 'ulrich'] }),
   O('house_red', 29, 4, { name: '리네의 꽃집', nameGone: '빈 꽃가게', residents: ['rine'] }),
-  O('house_wood', 27, 24, { name: '미아네 집', residents: ['mia'] }),
-  O('shop', 4, 11, { name: '그레타네 잡화점', residents: ['greta', 'wolf'] }),
+  O('house_wood', 27, 24, { name: '미아네 집', residents: ['mia', 'anna', 'gert'] }),
+  O('shop', 4, 11, { name: '그레타네 잡화점', residents: ['greta', 'wolf', 'leni'] }),
   // 가족들의 집
-  O('house_plain', 4, 19, { name: '목수 한스네 집', residents: ['hans', 'woman', 'kid'] }),
+  O('house_plain', 4, 19, { name: '목수 한스네 집', residents: ['hans', 'woman', 'kid', 'gottfried'] }),
   O('house_wood', 43, 24, { name: '사냥꾼 이반의 집', residents: ['hunter', 'kai'] }),
   O('house_orange', 39, 7, { name: '마르타 할머니 댁', residents: ['granny', 'teo'] }),
   // 가게 앞 진열 (팩 TilesetHouse): 빵집 앞 빵 상자, 꽃집 앞 화분
@@ -78,7 +78,7 @@ export const objects = [
   O('sunflower', 26, 11), O('flower_red', 27, 10), O('sunflower', 29, 11), O('flower_red', 30, 10), O('sunflower', 31, 11),
 
   // 동쪽 들판: 울타리(문은 큰길 자리), 다 벤 밀밭의 건초 더미와 허수아비, 채소밭 상자, 농가
-  O('house_wood', 57, 21, { name: '오토네 농가', residents: ['farmer', 'berta', 'lili'] }),
+  O('house_wood', 57, 21, { name: '오토네 농가', residents: ['farmer', 'berta', 'lili', 'jakob', 'magda'] }),
   O('haystack', 53, 6), O('haystack', 55, 6), O('haystack', 54, 9), O('haystack', 56, 10), O('haystack', 53, 11),
   O('scarecrow', 49, 12), O('cart', 52, 13),
   O('crate_radish', 47, 28), O('basket_greens', 49, 28), O('crate_radish', 56, 26),

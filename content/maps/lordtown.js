@@ -9,8 +9,8 @@ export default makeTown({
   objects: [
     // 성: 높은 건물 셋을 나란히 (가운데가 성관, 양옆이 탑)
     O('house_tall', 13, 1, { name: '서쪽 탑' }), O('house_tall', 19, 0, { name: '영주의 성', residents: ['oswin'] }), O('house_tall', 25, 1, { name: '동쪽 탑' }),
-    O('house_stone', 6, 9, { name: '병영' }), O('house_plain', 30, 9, { name: '여관' }),
-    O('house_orange', 7, 20, { name: '시장 상인의 집', residents: ['mara'] }), O('house_red', 28, 21), O('house_wood', 12, 24),
+    O('house_stone', 6, 9, { name: '병영', residents: ['konrad'] }), O('house_plain', 30, 9, { name: '여관', residents: ['greer'] }),
+    O('house_orange', 7, 20, { name: '시장 상인의 집', residents: ['mara', 'fenna'] }), O('house_red', 28, 21), O('house_wood', 12, 24),
     O('crate', 16, 13), O('crate', 17, 13), O('barrel', 25, 13), O('cart', 27, 15), O('well', 22, 19), O('bench', 14, 19),
     O('tree_big', 3, 4), O('tree_big', 36, 4), O('tree_round2', 34, 18), O('tree_round', 5, 15),
   ],
