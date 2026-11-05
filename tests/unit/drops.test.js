@@ -4,7 +4,7 @@ describe('이기면 떨어뜨리는 것', async () => {
   const { rollDrops } = await import('../../src/battle/encounters.js');
   const { DROPS } = await import('../../content/battles/encounters.js');
   const { ITEMS } = await import('../../content/items/items.js');
-  const { MONSTERS } = await import('../../content/battles/units.js');
+  const { FOES: MONSTERS } = await import('../../content/action/foes.js');
   it('떨구는 건 실제 아이템, 실제 몬스터, 한 줄 설명이 있다', () => {
     for (const [id, list] of Object.entries(DROPS)) {
       expect(MONSTERS[id], id).toBeTruthy();

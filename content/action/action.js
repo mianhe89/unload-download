@@ -1,4 +1,4 @@
-// 탑뷰 액션 전투 데이터 (보스전 2단계). 조작에 기대는 전투.
+// 탑뷰 액션 전투 데이터. 이 게임의 모든 전투가 이 방식이다(적 목록은 content/action/foes.js). 조작에 기대는 전투.
 //   이동 WASD(화살표도) · 기본 공격 마우스 클릭(조준 방향) · 스킬 4칸 · 퀵슬롯 1~8
 
 // 조작 키. 스킬 4칸(q w e r)에 어떤 키를 붙일지는 여기서 바꾼다.
@@ -84,23 +84,4 @@ export const SLOT_FITS = {
 export const ACTIVE_SLOTS = EQUIP_SLOTS.filter((k) => k !== 'weapon2'); // 무기 2는 예비: 바꿔 들기 전엔 효과가 없다
 export const EQUIP_DEFAULT = { weapon: 'woodSword', weapon2: null, armor: null, head: null, boots: null, gloves: null, acc1: null, acc2: null, necklace: null, backpack: null, offhand: null };
 
-// ── 보스 2단계 ──────────────────────────────────────────────
-//   attacks: 차례로 돈다. tell = 예고 시간(바닥에 빨간 표시), 그 뒤에 판정
-//   sweep: 부채꼴 쓸기 · ring: 둥글게 퍼지는 먼지 탄 · charge: 직선 돌진 · motes: 쫓아오는 먼지
-export const ACTION_BOSSES = {
-  sweeper: {
-    name: '정리자의 그림자', radius: 16, speed: 34, contact: 6,
-    phaseAt: 0.5,                 // 1단계(턴제)에서 체력이 이만큼 남으면 2단계로
-    enrageAt: 0.4,                // 2단계 체력이 이 아래면 예고가 빨라진다
-    attacks: [
-      { id: 'sweep', name: '쓸어내기', tell: 0.9, range: 54, arc: 140, dmg: 22 },
-      { id: 'ring', name: '먼지 털기', tell: 0.7, count: 14, speed: 70, dmg: 9, status: { id: 'slow', chance: 0.4 } },
-      { id: 'charge', name: '치우기', tell: 0.8, dist: 150, width: 18, dmg: 18, status: { id: 'stun', chance: 0.5 } },
-      { id: 'motes', name: '먼지 구름', tell: 0.5, count: 4, speed: 42, life: 4, dmg: 7, status: { id: 'poison', chance: 0.5 } },
-    ],
-    rest: 0.9,                    // 공격 사이 쉬는 시간
-    drops: ['twinEdge'],          // 처음 이기면 얻는 장비 (빈 칸이면 바로 낀다)
-  },
-};
-
-export const ARENA = { w: 320, h: 208 };
+export const ARENA = { w: 384, h: 240 };

@@ -163,7 +163,7 @@ export const script = {
     { flag: 'duel.accepted' },
     N('광장 가운데로 걸어 나갔다. 드워프들이 망치를 내려놓고 둘러섰다.'),
     T('leon', '…역시 나오는군.'),
-    { act: 'battle', enemies: ['leon_duel'], party: ['me'], note: '레온이 진검을 비스듬히 든다. 시험 때와 눈빛이 다르다.', winLine: '레온의 검이 바닥에 떨어졌다.', flag: 'duel.won' },
+    { act: 'battle', enemies: ['leon_duel'], note: '레온이 진검을 비스듬히 든다. 시험 때와 눈빛이 다르다.', winLine: '레온의 검이 바닥에 떨어졌다.', flag: 'duel.won' },
     T('leon', '…졌다.', { ifFlag: 'duel.won' }),
     T('leon', '사자들. 돌아가서 전해라. 서자는 아직 쓸모를 다 증명하지 못했다고.', { ifFlag: 'duel.won' }),
     T('envoy', '…후회할 거다.', { ifFlag: 'duel.won' }),

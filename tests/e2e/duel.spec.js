@@ -1,4 +1,4 @@
-// 레온의 결투: 드워프 마을 광장 가운데로 걸어 나가면 결투(사이드뷰 전투)가 시작된다
+// 레온의 결투: 드워프 마을 광장 가운데로 걸어 나가면 결투(탑뷰 액션)가 시작된다
 import { test, expect } from '@playwright/test';
 import { openGame, wipe, waitField, advanceUntil, teleport } from './game.js';
 
@@ -10,8 +10,8 @@ test('광장 가운데로 나가면 레온과 결투가 열린다', async ({ pag
   await advanceUntil(page, () => window.__ud.run.flags['duel.offered'], null, 60_000, '결투 제안');
   await advanceUntil(page, () => !window.__game.scene.getScene('Field').cutscene.busy, null, 30_000, '장면 끝');
   await teleport(page, 19, 14);
-  await advanceUntil(page, () => window.__game.scene.isActive('Battle'), null, 30_000, '결투');
-  const foes = await page.evaluate(() => window.__game.scene.getScene('Battle').battle.units.filter((u) => u.side === 'enemy').map((u) => u.id));
+  await advanceUntil(page, () => window.__game.scene.isActive('Action'), null, 30_000, '결투');
+  const foes = await page.evaluate(() => window.__game.scene.getScene('Action').engine.state.foes.map((f) => f.id));
   expect(foes).toEqual(['leon_duel']);
   expect(errors).toEqual([]);
 });

@@ -17,7 +17,7 @@ test('안개 길에 길 잃은 기사가 서 있고, 옆 마을 칸으로 가면
   await page.waitForFunction(() => window.__game.scene.isActive('Area') && window.__game.scene.getScene('Area').player);
   const enc = await page.evaluate(() => window.__game.scene.getScene('Area').encounter);
   expect(enc?.enemies).toEqual(['lostknight']);
-  expect(enc?.party).toEqual(['me', 'lu']);
+  expect(enc?.party).toBeUndefined(); // 동료 없이 혼자 싸운다
 
   // 보스를 이긴 셈 치고, 옆 마을 칸으로
   await start(page, () => {
@@ -34,16 +34,16 @@ test('안개 길에 길 잃은 기사가 서 있고, 옆 마을 칸으로 가면
   expect(errors).toEqual([]);
 });
 
-test('길 잃은 기사·레온 전투가 인물 도트로 그려진다', async ({ page }) => {
+test('길 잃은 기사·레온·토르크 싸움이 인물 도트로 그려진다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
-  for (const [enemies, party] of [[['lostknight'], ['me', 'lu']], [['leon'], ['me']], [['tork', 'orc'], ['me', 'selena', 'lu']]]) {
-    await start(page, ([en, pa]) => {
+  for (const enemies of [['lostknight'], ['leon'], ['tork', 'orc', 'orc']]) {
+    await start(page, (en) => {
       const g = window.__game, u = window.__ud;
-      u.startNew(); g.scene.stop('Title'); g.scene.stop('Battle');
-      g.scene.start('Battle', { enemies: en, party: pa, seed: 1, from: { layer: 'surface', at: [7, 9], key: 'surface:7,9', back: { chapter: 'chapter2', phase: 'fogroad', time: 'day' } } });
-    }, [enemies, party]);
-    await page.waitForFunction(() => window.__game.scene.getScene('Battle').panel?.visible, null, { timeout: 15_000 });
+      u.startNew(); g.scene.stop('Title'); g.scene.stop('Action');
+      g.scene.start('Action', { enemies: en, seed: 1, from: { layer: 'surface', at: [7, 9], key: 'surface:7,9', back: { chapter: 'chapter2', phase: 'fogroad', time: 'day' }, biome: 'lateAutumn' } });
+    }, enemies);
+    await page.waitForFunction(() => { const a = window.__game.scene.getScene('Action'); return a?.engine && !a.paused; }, null, { timeout: 15_000 });
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/battle-${enemies[0]}.png` });
   }
   expect(errors).toEqual([]);

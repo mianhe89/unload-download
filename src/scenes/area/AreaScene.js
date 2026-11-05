@@ -18,7 +18,7 @@ import { encounterAt } from '../../battle/encounters.js';
 import { trackWalk } from '../../life/track.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { BIOME_MUSIC, BIOME_AMBIENT, HUB_MUSIC } from '../../../content/audio/audio.js';
-import { MONSTERS } from '../../../content/battles/units.js';
+import { FOES } from '../../../content/action/foes.js';
 import { MONSTER_ART } from '../../../content/art/pack.js';
 import { doFarm, actionFor, freshFarm, elfVillageGone, meetsElf } from '../../farm/farm.js';
 import { FARM_TEXT, HIDDEN_SKILLS, ELF_LINES } from '../../../content/farm/farm.js';
@@ -97,15 +97,16 @@ export default class AreaScene extends Phaser.Scene {
     // (테스트용) dev.peace 플래그가 켜져 있으면 몬스터가 나오지 않는다
     this.encounter = flags0['dev.peace'] ? null : encounterAt(this.key, { kind: area.kind, biome: area.biome }, worldDate(WorldMemory.run), (k) => Boolean(flags0[`beat.${k}`]), (w) => passes(w, this.condCtx()));
     if (this.encounter) {
-      const lead = MONSTERS[this.encounter.enemies[0]];
+      const lead = FOES[this.encounter.enemies[0]];
       const c = area.spots.center;
       const mx = (c.x - 4) * 16, my = (c.y - 3) * 16;
       // 인물 도트를 쓰는 적(길 잃은 기사 등)은 그 인물 그림으로, 나머지는 팩의 몬스터 그림으로
-      const key = lead.char ? `char.${lead.char}` : `mon.${lead.sprite}`;
-      const anim = lead.char ? `${key}.down` : key;
+      const key = lead.art.char ? `char.${lead.art.char}` : `mon.${lead.art.mon}`;
+      const anim = lead.art.char ? `${key}.down` : key;
       this.monster = this.add.sprite(mx, my, key, 0).setOrigin(0.5, 0.9).setDepth(my);
       if (this.anims.exists(anim)) this.monster.play(anim);
-      if (lead.boss) this.monster.setScale(lead.char ? 1.2 : 1.4).setAlpha(0.85);
+      if (lead.tint) this.monster.setTint(lead.tint);
+      if (lead.boss) this.monster.setScale(lead.art.char ? 1.2 : 1.4).setAlpha(0.85);
       this.tweens.add({ targets: this.monster, x: mx + 20, duration: 1800 + Math.random() * 800, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     }
 
@@ -269,17 +270,17 @@ export default class AreaScene extends Phaser.Scene {
     }
   }
 
-  // 몬스터와 부딪혔다 → 사이드뷰 전투
+  // 몬스터와 부딪혔다 → 그 자리에서 싸움 (탑뷰 액션)
   fight() {
     this.leaving = true;
     this.ui.hud.showPrompt(null);
     softFlash(this, { alpha: 0.22, ms: 400 });
     this.cameras.main.shake(200, 0.006);
     Sound.sfx(this, 'heavy');
-    this.time.delayedCall(300, () => this.scene.start('Battle', {
+    this.time.delayedCall(300, () => this.scene.start('Action', {
       enemies: this.encounter.enemies, seed: this.encounter.seed, boss: this.encounter.boss, note: this.encounter.note,
-      party: this.encounter.party, winFlag: this.encounter.flag,
-      from: { layer: this.layerId, at: this.at, key: this.key, back: this.back },
+      winFlag: this.encounter.flag,
+      from: { layer: this.layerId, at: this.at, key: this.key, back: this.back, biome: this.area.biome },
     }));
   }
 

@@ -57,7 +57,7 @@ export class PauseMenu {
     f?.clock?.save?.();
     this.close();
     const sm = this.scene.scene;
-    for (const key of ['Field', 'Area', 'Battle']) if (sm.isActive(key) || sm.isSleeping(key)) sm.stop(key);
+    for (const key of ['Field', 'Area', 'Action']) if (sm.isActive(key) || sm.isSleeping(key)) sm.stop(key);
     sm.start('Title');
     sm.stop('UI');
   }

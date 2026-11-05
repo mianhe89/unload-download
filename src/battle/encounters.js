@@ -1,5 +1,6 @@
 // 마주침 규칙 (순수 함수 — 테스트 가능)
 import { ENCOUNTER_CHANCE, POOLS, BOSSES, DROPS } from '../../content/battles/encounters.js';
+import { dropBase } from '../../content/action/foes.js';
 
 const hash = (s) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
 export const dayOf = (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -9,7 +10,7 @@ export const dayOf = (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${d
 export function encounterAt(key, { kind, biome }, date = new Date(), beaten = () => false, ok = () => true) {
   const boss = BOSSES[key];
   if (boss && (!boss.when || ok(boss.when))) {
-    return beaten(`boss.${key}`) ? null : { enemies: boss.enemies, boss: true, note: boss.note, party: boss.party, flag: boss.flag, seed: Math.floor(hash(key) * 1e9) };
+    return beaten(`boss.${key}`) ? null : { enemies: boss.enemies, boss: true, note: boss.note, flag: boss.flag, seed: Math.floor(hash(key) * 1e9) };
   }
   if (kind === 'hub' || biome === 'sea' || biome === 'galaxy') return null;
   const day = dayOf(date);
@@ -28,7 +29,7 @@ export const beatKey = (key, boss, date = new Date()) => (boss ? `boss.${key}` :
 export function rollDrops(enemies, seed = 1, owned = () => false) {
   const out = [];
   enemies.forEach((id, i) => {
-    for (const d of DROPS[id] ?? []) {
+    for (const d of DROPS[dropBase(id)] ?? []) {
       if (d.once && (owned(d.item) || out.some((o) => o.item === d.item))) continue;
       if (hash(`drop|${seed}|${i}|${d.item}`) < d.p) out.push({ item: d.item, n: d.n ?? 1, text: d.text });
     }

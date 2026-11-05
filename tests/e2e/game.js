@@ -108,3 +108,23 @@ export async function waitBusy(page, timeout = 30_000) {
     return g.scene.isActive('Field') && g.scene.getScene('Field').cutscene.busy;
   }, null, { timeout });
 }
+
+// 액션 전투를 끝낸다: 적을 모두 체력 1로 주인공 앞에 모으고, 그쪽을 클릭해 벤다
+export async function winAction(page) {
+  await page.waitForFunction(() => window.__game.scene.isActive('Action') && !window.__game.scene.getScene('Action').paused, null, { timeout: 15_000 });
+  for (let round = 0; round < 40; round += 1) {
+    const left = await page.evaluate(() => {
+      const a = window.__game.scene.getScene('Action');
+      if (!a?.engine || a.engine.over) return 0;
+      const s = a.engine.state;
+      s.queue.length = 0;
+      for (const f of s.foes) if (f.hp > 0) { f.hp = 1; f.timer = 99; f.state = 'rest'; f.charge = null; f.x = s.p.x; f.y = s.p.y - 14; }
+      return s.foes.filter((f) => f.hp > 0).length;
+    });
+    if (!left) break;
+    const at = await page.evaluate(() => { const a = window.__game.scene.getScene('Action'); const p = a.engine.state.p; const r = a.game.canvas.getBoundingClientRect(); const k = r.width / a.scale.width; return { x: r.left + (a.ox + p.x * a.Z) * k, y: r.top + (a.oy + (p.y - 14) * a.Z) * k }; });
+    await page.mouse.click(at.x, at.y);
+    await page.waitForTimeout(450);
+  }
+  await page.waitForFunction(() => !window.__game.scene.isActive('Action') || window.__game.scene.getScene('Action').engine.over === 'win', null, { timeout: 10_000 });
+}

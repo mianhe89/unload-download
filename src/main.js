@@ -9,7 +9,6 @@ import TitleScene from './scenes/title/TitleScene.js';
 import FieldScene from './scenes/field/FieldScene.js';
 import UIScene from './scenes/field/UIScene.js';
 import AreaScene from './scenes/area/AreaScene.js';
-import BattleScene from './scenes/battle/BattleScene.js';
 import ActionScene from './scenes/battle/ActionScene.js';
 
 async function start() {
@@ -35,7 +34,7 @@ async function start() {
     pixelArt: true,
     roundPixels: true,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene: [BootScene, TitleScene, FieldScene, AreaScene, BattleScene, ActionScene, UIScene],
+    scene: [BootScene, TitleScene, FieldScene, AreaScene, ActionScene, UIScene],
     callbacks: { preBoot: (game) => { game.registry.set('manifest', manifest); game.registry.set('audio', audio); } },
   });
   document.title = platform.isDesktop ? 'DOWNLOAD' : 'UNLOAD';

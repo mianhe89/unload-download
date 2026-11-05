@@ -2,29 +2,31 @@
 // 마을·바다엔 없다. 보스는 정해진 자리에 늘 있다.
 export const ENCOUNTER_CHANCE = 0.35;
 
-// 기후별 무리 후보
+// 기후별 무리 후보 (content/action/foes.js의 적). 한 번에 다섯까지 나오고, 쓰러지면 남은 무리가 들어온다.
+// 사는 땅이 생김새를 바꾼다: 화산엔 불씨 슬라임, 눈밭엔 서리 슬라임과 눈 올빼미, 사막엔 바위 두더지
+const n = (id, k) => Array(k).fill(id);
 export const POOLS = {
-  temperate: [['slime'], ['slime', 'slime'], ['beast']],
-  lateAutumn: [['beast'], ['slime', 'owl']],
-  deepForest: [['owl'], ['owl', 'beast']],
-  frost: [['skull'], ['owl', 'skull']],
-  snow: [['skull'], ['skull', 'mole']],
-  blackSnow: [['skull', 'skull']],
-  dry: [['mole'], ['beast', 'mole']],
-  desert: [['mole', 'mole'], ['beast']],
-  coast: [['slime'], ['slime', 'beast']],
-  volcano: [['beast', 'beast']],
-  cave: [['mole'], ['mole', 'skull']],
-  deepCave: [['skull', 'mole']],
-  lava: [['beast', 'skull']],
-  ancientHall: [['skull', 'skull']],
+  temperate: [n('slime', 4), [...n('slime', 4), 'wolf', 'wolf'], n('wolf', 4)],
+  lateAutumn: [[...n('wolf', 3), 'beast'], ['beast', ...n('slime', 3), 'owl', 'owl']],
+  deepForest: [[...n('owl', 3), 'wolf', 'wolf'], [...n('wolf', 5), 'beast']],
+  frost: [[...n('slime_frost', 3), 'owl_snow', 'owl_snow'], [...n('skull', 2), ...n('wolf', 3)]],
+  snow: [[...n('owl_snow', 3), ...n('slime_frost', 3)], [...n('skull', 3), 'mole']],
+  blackSnow: [[...n('skull', 3), ...n('skull_ash', 3)]],
+  dry: [[...n('mole', 3), 'beast'], [...n('beast', 2), ...n('wolf', 3)]],
+  desert: [[...n('mole_rock', 2), ...n('mole', 2)], n('beast', 4)],
+  coast: [n('slime', 6), [...n('slime', 3), 'beast', 'beast']],
+  volcano: [[...n('slime_ember', 4), ...n('beast', 2)]],
+  cave: [[...n('mole', 3), 'skull'], [...n('mole_rock', 2), ...n('skull', 2)]],
+  deepCave: [[...n('skull', 3), ...n('mole', 3)]],
+  lava: [[...n('slime_ember', 4), 'beast', 'skull_ash']],
+  ancientHall: [[...n('skull', 4), ...n('skull_ash', 2)]],
 };
 
-// 보스 자리. when: 나타나는 조건(대본 조건 문법), party: 같이 싸우는 사람, flag: 이기면 켜지는 플래그
+// 보스 자리. when: 나타나는 조건(대본 조건 문법), flag: 이기면 켜지는 플래그. 동료 없이 혼자 싸운다
 export const BOSSES = {
-  // 2장: 옆 마을로 가는 안개 길을 지키는 빈 갑옷. 루와 둘이서 싸운다
+  // 2장: 옆 마을로 가는 길을 지키는 빈 갑옷
   'surface:5,10': {
-    enemies: ['lostknight'], when: { ifFlag: 'ch2.started' }, party: ['me', 'lu'], flag: 'ch2.knight_beaten',
+    enemies: ['lostknight'], when: { ifFlag: 'ch2.started' }, flag: 'ch2.knight_beaten',
     note: '안개 속에서 녹슨 갑옷이 일어선다. 투구 안이 텅 비어 있다.',
   },
   'surface:8,2': { enemies: ['sweeper'], note: '빗자루를 든 거대한 그림자가 성문 앞을 쓸고 있다.' },

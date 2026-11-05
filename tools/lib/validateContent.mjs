@@ -12,7 +12,7 @@ import { EventDirector } from '../../src/field/EventDirector.js';
 import { CG, TINTS, PORTRAITS } from '../../content/cg.js';
 import { doorStep } from '../../src/field/systems/Schedules.js';
 import { RAIDS } from '../../content/raids.js';
-import { MONSTERS, PARTY } from '../../content/battles/units.js';
+import { FOES } from '../../content/action/foes.js';
 import { QUESTS } from '../../content/quests/index.js';
 import { HUBS } from '../../content/world/world.js';
 
@@ -44,7 +44,7 @@ export function validateContent() {
     const rm = MAPS[r.map ?? 'village'];
     if (!rm) { err(`습격 ${r.id}: 맵 없음 ${r.map}`); continue; }
     const solid = (x, y) => rm.isSolidTile(x, y);
-    for (const id of r.party ?? []) if (!PARTY[id]) err(`습격 ${r.id}: 같이 싸울 사람의 전투 능력치 없음 ${id}`);
+    if (r.party) err(`습격 ${r.id}: 동료는 없다 — party를 지운다`);
     if (solid(...r.target)) err(`습격 ${r.id}: 목표가 막힌 칸 ${r.target}`);
     for (const b of r.band) {
       if (!characters[b.id]) err(`습격 ${r.id}: 인물 없음 ${b.id}`);
@@ -172,7 +172,7 @@ export function validateContent() {
       if (n.act === 'spawnNpc' && !characters[n.id]) err(`${at} 인물 없음 ${n.id}`);
       if (n.ask && !(Array.isArray(n.options) && n.options.length >= 2 && n.options.length <= 4)) err(`${at} 질문의 선택지는 2~4개`);
       if (n.ask && nodes[0]?.mode === 'walk') err(`${at} 질문은 걷는 대사(WALK)에 둘 수 없다`);
-      if (n.act === 'battle') for (const id of n.enemies ?? []) if (!MONSTERS[id]) err(`${at} 전투 상대 없음 ${id}`);
+      if (n.act === 'battle') for (const id of n.enemies ?? []) if (!FOES[id]) err(`${at} 전투 상대 없음 ${id}`);
     });
     // 페이즈
     for (const [pid, ph] of Object.entries(ch.phases)) {
