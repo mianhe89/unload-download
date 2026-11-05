@@ -51,12 +51,16 @@ export const objects = [
   O('bakery', 14, 12, { owner: 'hort', name: '호르트네 빵집', nameGone: '빈 가게', residents: ['hort'] }),
   O('house_stone', 35, 12, { name: '에다의 대장간', nameGone: '빈 대장간', residents: ['eda'] }),
   O('forge', 38, 11),
-  O('house_tall', 34, 23, { owner: 'selena', name: '기사단 초소', residents: ['tom', 'selena', 'leon'] }),
+  O('house_tall', 34, 23, { owner: 'selena', name: '기사단 초소', residents: ['tom', 'selena', 'leon', 'bram', 'sonja'] }),
   O('house_orange', 14, 24, { name: '우리 집', residents: ['me'] }),
-  O('house_plain', 12, 4, { name: '페르의 하숙방', nameGone: '빈 하숙방', residents: ['per'] }),
+  O('house_plain', 12, 4, { owner: 'per', name: '페르의 하숙방', nameGone: '빈 하숙방', residents: ['per', 'rosa', 'ella'] }),
   O('house_red', 29, 4, { name: '리네의 꽃집', nameGone: '빈 꽃가게', residents: ['rine'] }),
   O('house_wood', 27, 24, { name: '미아네 집', residents: ['mia'] }),
-  O('shop', 4, 11, { name: '잡화점' }),
+  O('shop', 4, 11, { name: '그레타네 잡화점', residents: ['greta', 'wolf'] }),
+  // 가족들의 집
+  O('house_plain', 4, 19, { name: '목수 한스네 집', residents: ['hans', 'woman', 'kid'] }),
+  O('house_wood', 43, 24, { name: '사냥꾼 이반의 집', residents: ['hunter', 'kai'] }),
+  O('house_orange', 39, 7, { name: '마르타 할머니 댁', residents: ['granny', 'teo'] }),
   // 가게 앞 진열 (팩 TilesetHouse): 빵집 앞 빵 상자, 꽃집 앞 화분
   O('crate_bread', 13, 16), O('crate_loaves', 17, 16),
   O('plant_pot', 28, 8),
@@ -74,13 +78,13 @@ export const objects = [
   O('sunflower', 26, 11), O('flower_red', 27, 10), O('sunflower', 29, 11), O('flower_red', 30, 10), O('sunflower', 31, 11),
 
   // 동쪽 들판: 울타리(문은 큰길 자리), 다 벤 밀밭의 건초 더미와 허수아비, 채소밭 상자, 농가
-  O('house_wood', 57, 21, { name: '오토네 농가', residents: ['farmer'] }),
+  O('house_wood', 57, 21, { name: '오토네 농가', residents: ['farmer', 'berta', 'lili'] }),
   O('haystack', 53, 6), O('haystack', 55, 6), O('haystack', 54, 9), O('haystack', 56, 10), O('haystack', 53, 11),
   O('scarecrow', 49, 12), O('cart', 52, 13),
   O('crate_radish', 47, 28), O('basket_greens', 49, 28), O('crate_radish', 56, 26),
 
   // 마을 안 나무
-  O('tree_big', 6, 6), O('tree_big', 39, 6), O('tree_big_autumn', 4, 21),
+  O('tree_big', 6, 6), O('tree_big', 44, 3),
   O('tree_round', 33, 19), O('tree_round2', 20, 8), O('tree_round', 9, 8),
   O('tree_big_autumn', 40, 20), O('tree_round2', 24, 27), O('tree_big', 30, 27),
   O('bush', 12, 16), O('bush2', 31, 13), O('bush', 33, 16), O('bush2', 21, 22), O('stump', 41, 24),

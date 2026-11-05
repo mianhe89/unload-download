@@ -17,7 +17,7 @@ describe('작은 지도 건물 휘장', () => {
     expect(names['종탑']).toBe('bell');
     expect(names['호르트네 빵집']).toBe('bread');
     expect(names['에다의 대장간']).toBe('forge');
-    expect(names['잡화점']).toBe('potion');
+    expect(names['그레타네 잡화점']).toBe('potion');
     expect(names['리네의 꽃집']).toBe('flower');
     expect(names['기사단 초소']).toBe('helmet');
     for (const v of Object.values(MAP_ICONS)) expect(v).toBeTruthy();

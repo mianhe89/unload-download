@@ -46,8 +46,19 @@ import scribe from './scribe.js';
 import envoy from './envoy.js';
 import noel from './noel.js';
 import herald from './herald.js';
+import berta from './berta.js';
+import lili from './lili.js';
+import hans from './hans.js';
+import kai from './kai.js';
+import teo from './teo.js';
+import greta from './greta.js';
+import wolf from './wolf.js';
+import rosa from './rosa.js';
+import ella from './ella.js';
+import bram from './bram.js';
+import sonja from './sonja.js';
 
-export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, leon, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant, elf, orc, tork, sei, elder, lostknight, brenna, gord, yuna, marlo, nell, brok, helga, sylwen, alma, tobin, oswin, mara, scribe, envoy, noel, herald };
+export const characters = { me, mia, selena, lu, eda, hort, tom, rine, per, keeper, leon, chief, granny, kid, farmer, hunter, monk, woman, oldman, spirit, wanderer, merchant, elf, orc, tork, sei, elder, lostknight, brenna, gord, yuna, marlo, nell, brok, helga, sylwen, alma, tobin, oswin, mara, scribe, envoy, noel, herald, berta, lili, hans, kai, teo, greta, wolf, rosa, ella, bram, sonja };
 
 // 로드 시 지워질 수 있는 사람(동점일 때 이 순서)
 export const ERASE_ORDER = ['hort', 'tom', 'rine', 'per', 'elder'];

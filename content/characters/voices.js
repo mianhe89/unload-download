@@ -7,6 +7,17 @@
 export const DEFAULT_VOICE = { pitch: 330, wave: 'square', spread: 0.12, speed: 30, every: 1 };
 
 export const VOICES = {
+  berta:     { pitch: 380, wave: 'triangle', spread: 0.1, speed: 30 },
+  lili:      { pitch: 720, wave: 'square', spread: 0.2, speed: 22, every: 2 },
+  hans:      { pitch: 210, wave: 'triangle', spread: 0.08, speed: 34 },
+  kai:       { pitch: 300, wave: 'square', spread: 0.1, speed: 28 },
+  teo:       { pitch: 680, wave: 'square', spread: 0.2, speed: 22, every: 2 },
+  greta:     { pitch: 440, wave: 'square', spread: 0.12, speed: 24, every: 2 },
+  wolf:      { pitch: 160, wave: 'sawtooth', spread: 0.06, speed: 36 },
+  rosa:      { pitch: 460, wave: 'sine', spread: 0.1, speed: 28 },
+  ella:      { pitch: 740, wave: 'sine', spread: 0.18, speed: 26 },
+  bram:      { pitch: 260, wave: 'square', spread: 0.12, speed: 26 },
+  sonja:     { pitch: 500, wave: 'square', spread: 0.1, speed: 26 },
   me:       { pitch: 240, wave: 'triangle', spread: 0.08, speed: 30 },
   mia:      { pitch: 620, wave: 'square', spread: 0.18, speed: 24, every: 2 },   // 통통 튀는
   selena:   { pitch: 300, wave: 'square', spread: 0.05, speed: 32 },             // 짧고 단정

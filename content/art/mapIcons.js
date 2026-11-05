@@ -40,7 +40,7 @@ export const MAP_ICONS = {
 const RULES = [
   [/종탑/, 'bell'], [/빵/, 'bread'], [/대장간/, 'forge'], [/잡화|상점|상인/, 'potion'], [/꽃/, 'flower'],
   [/초소|병영|망루|경비/, 'helmet'], [/우리 집/, 'home'], [/여관|하숙|숙소/, 'bed'], [/사당/, 'star'],
-  [/생선|어부/, 'fish'], [/성$|탑|대청/, 'castle'], [/기록/, 'book'], [/방앗|창고/, 'wheat'], [/활/, 'bow'],
+  [/생선|어부/, 'fish'], [/성$|탑|대청/, 'castle'], [/기록/, 'book'], [/방앗|창고/, 'wheat'], [/활|사냥꾼/, 'bow'],
   [/항구지기|선착/, 'anchor'], [/전당|회관/, 'hall'],
 ];
 export const iconFor = (name) => (name ? RULES.find(([re]) => re.test(name))?.[1] ?? null : null);
