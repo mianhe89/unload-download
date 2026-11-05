@@ -1,4 +1,4 @@
-// 줄등: 축제 날 광장에 걸리는 등불 줄(미아가 걸었다). 기둥 사이에 처진 줄, 줄마다 색 등이 매달려 있고 밤엔 불이 들어온다.
+// 줄등: 축제 날 광장에 걸리는 등불 줄(미아가 걸었다). 나무 기둥을 세우고 그 사이에 줄을 처지게 건다. 줄마다 색 등이 매달려 있고 밤엔 불이 들어온다.
 // 맵의 garlands: [[x1, y1, x2, y2], …] (칸). 페이즈의 festive가 켜진 날, 그리고 garlandsWhen 조건(대본 조건)이 맞을 때만.
 import { TILE } from '../../../content/maps/village.js';
 
@@ -11,6 +11,17 @@ export class Garlands {
     const lines = field.mapDef.garlands ?? [];
     const when = field.phase.garlandsWhen;
     if (!field.phase.festive || !lines.length || (when && !field.world().passes(when))) return;
+    // 나무 기둥: 줄 끝마다 하나씩 (발 위치가 깊이 — 기둥 뒤로 걸어가면 가려진다)
+    const posts = new Set(lines.flatMap(([x1, y1, x2, y2]) => [`${x1},${y1}`, `${x2},${y2}`]));
+    for (const k0 of posts) {
+      const [x, y] = k0.split(',').map(Number);
+      const px = x * TILE + 8, foot = y * TILE + 12, top = y * TILE - 12;
+      const pg = field.add.graphics().setDepth(foot);
+      pg.fillStyle(0x000000, 0.25).fillEllipse(px, foot, 8, 3);
+      pg.fillStyle(0x141b1b, 1).fillRect(px - 2, top - 1, 4, foot - top + 1);
+      pg.fillStyle(0x8a5a34, 1).fillRect(px - 1, top, 2, foot - top - 1);
+      pg.fillStyle(0xb8844a, 1).fillRect(px - 1, top, 1, foot - top - 1);
+    }
     const g = field.add.graphics().setDepth(2000);
     let k = 0;
     for (const [x1, y1, x2, y2] of lines) {

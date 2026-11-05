@@ -14,7 +14,6 @@ export default makeTown({
     O('crate', 16, 13), O('crate', 17, 13), O('barrel', 25, 13), O('cart', 27, 15), O('well', 22, 19), O('bench', 14, 19),
     O('tree_big', 3, 4), O('tree_big', 36, 4), O('tree_round2', 34, 18), O('tree_round', 5, 15),
   ],
-  animated: [{ type: 'flag_red', at: [18, 4] }, { type: 'flag_blue', at: [23, 4] }],
   ring: { types: ['tree_grove', 'tree_grove2', 'tree_pines'], gaps: { s: [19, 22] } },
   exits: [{ dir: 's', from: 19, to2: 23, to: 'surface:13,8', at: [13, 8] }],
   entry: { s: [21, 27] },

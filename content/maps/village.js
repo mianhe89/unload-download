@@ -90,7 +90,7 @@ export const objects = [
 const ring = [];
 for (let x = 2; x < W - 4; x += 4) {
   if (x !== 34) ring.push(O(x % 8 ? 'tree_grove' : 'tree_grove2', x, 2)); // 34: 북쪽 길 자리
-  ring.push(O(x % 8 ? 'tree_grove2' : 'tree_pines', x, H - 6));
+  ring.push(O(x % 8 ? 'tree_grove2' : 'tree_pines', x, H - 5)); // 남쪽 숲은 한 칸 아래: 우물가·집 앞 줄(y 28)이 나무 그림에 묻히지 않게
 }
 for (let y = 5; y < H - 6; y += 3) {
   ring.push(O(y % 2 ? 'tree_pines' : 'tree_grove', 0, y));
@@ -111,14 +111,11 @@ export const crops = [
 ];
 
 // 움직이는 장식 (지나갈 수 있음)
-// 줄등: 광장 둘레의 깃대 사이와 모닥불 쪽으로 (축제 날에만, field/systems/Garlands)
+// 줄등: 광장 둘레의 나무 기둥 사이와 모닥불 쪽으로 (축제 날에만 기둥째 세운다, field/systems/Garlands)
 export const garlands = [[18, 13, 22, 13], [22, 13, 26, 13], [26, 13, 30, 13], [18, 13, 24, 17], [30, 13, 24, 17], [18, 21, 30, 21]];
 
-// 축제 깃발(festive): 축제 날에만 걸린다 (수확제 전날·수확제·첫눈 축제)
-export const animated = [
-  { type: 'flag_red', at: [18, 13], festive: true }, { type: 'flag_yellow', at: [22, 13], festive: true },
-  { type: 'flag_blue', at: [26, 13], festive: true }, { type: 'flag_red', at: [30, 13], festive: true },
-];
+// 움직이는 장식은 없다 (광장 깃발은 뺐다. 축제 날 줄등은 나무 기둥에 건다 — field/systems/Garlands)
+export const animated = [];
 
 // ── 충돌 ───────────────────────────────────────────────
 export const solids = objects
