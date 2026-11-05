@@ -48,12 +48,12 @@ export const SFX = {
 };
 
 // 이야기 페이즈 → 음악
-export const PHASE_MUSIC = { prep: 'morning', festival: 'festival', morning: 'morning', night: 'night', aftermath: 'aftermath', fogroad: 'aftermath', neighbor: 'forest', ruin: 'empty', frost: 'frost', harbor: 'road', dwarf: 'cave', elf: 'forest', muster: 'aftermath', neighbor4: 'forest', mill: 'road', lordtown: 'road', ledger4: 'road', dwarf4: 'cave', icecastle4: 'snow', winter: 'frost', snowfest: 'festival' };
+export const PHASE_MUSIC = { prep: 'morning', festival: 'festival', morning: 'morning', night: 'night', aftermath: 'aftermath', fogroad: 'aftermath', neighbor: 'forest', ruin: 'empty', frost: 'frost', harbor: 'road', dwarf: 'cave', elf: 'forest', muster: 'aftermath', neighbor4: 'forest', mill: 'road', lordtown: 'road', ledger4: 'road', dwarf4: 'cave', icecastle4: 'snow', winter: 'frost', snowfest: 'festival', trade: 'festival', magic: 'snow' };
 
 // 길 맵 기후 → 음악, 깔리는 소리
 export const BIOME_MUSIC = {
   temperate: 'road', lateAutumn: 'road', coast: 'road', deepForest: 'forest', dry: 'empty',
-  frost: 'frost', harbor: 'road', dwarf: 'cave', elf: 'forest', muster: 'aftermath', neighbor4: 'forest', mill: 'road', lordtown: 'road', ledger4: 'road', dwarf4: 'cave', icecastle4: 'snow', snow: 'snow', blackSnow: 'castle', desert: 'ruins', volcano: 'lava',
+  frost: 'frost', harbor: 'road', dwarf: 'cave', elf: 'forest', muster: 'aftermath', neighbor4: 'forest', mill: 'road', lordtown: 'road', ledger4: 'road', dwarf4: 'cave', icecastle4: 'snow', trade: 'festival', magic: 'snow', snow: 'snow', blackSnow: 'castle', desert: 'ruins', volcano: 'lava',
   sea: 'sea', cave: 'cave', deepCave: 'cave', lava: 'lava', ancientHall: 'ruins', galaxy: 'galaxy',
 };
 export const BIOME_AMBIENT = { frost: 'wind', snow: 'wind', blackSnow: 'wind', coast: 'wave', sea: 'wave' };

@@ -34,6 +34,8 @@ export const HUBS = {
   ancient:   { at: [14, 13], name: '고대 유적',  kind: 'ancient', note: '사막에 묻힌 석상들. 이 세계보다 오래된 글자가 새겨져 있다' },
   volcano:   { at: [13, 2],  name: '불의 산',    kind: 'volcano', note: '북쪽인데도 땅이 뜨겁다. 드워프의 대장간 불씨가 여기서 온다' },
   harbor:    { at: [8, 15],  name: '항구',        kind: 'village', note: '배를 타면 바다로 나갈 수 있다', field: 'harbor' },
+  trade:     { at: [9, 13],  name: '로웬',        kind: 'village', note: '분수 광장의 교역 도시. 우리 마을·빈 마을·항구 사이의 장터', field: 'trade' },
+  magic:     { at: [1, 8],   name: '아스테라',    kind: 'village', note: '엘프 마을 너머 깊은 숲 속의 마법 도시. 마법사의 탑과 대서고', field: 'magic' },
   seaRuins:  { at: [10, 18], name: '바다 유적',  kind: 'seaRuins', note: '물에 잠긴 고대 도시. 썰물 때만 지붕이 보인다' },
   mineGate:  { layer: 'under', at: [4, 0], name: '갱도 입구',     kind: 'mine',  note: '드워프 마을 바로 아래' },
   lavaDepths:{ layer: 'under', at: [2, 5], name: '용암 지대',     kind: 'lava',  note: '지하 가장 깊은 곳. 땅속 불의 강' },
@@ -62,6 +64,10 @@ export const ROUTES = {
   'frost-dwarf':    { path: [[7, 6], [8, 6], [9, 6], [10, 6], [10, 5], [11, 5]] },
   'dwarf-volcano':  { path: [[11, 5], [12, 5], [12, 4], [12, 3], [13, 3], [13, 2]] },
   'home-harbor':    { path: [[7, 11], [7, 12], [7, 13], [8, 13], [8, 14], [8, 15]] },
+  // 로웬: 빈 마을 가는 길에서 남쪽으로 갈라진다
+  'home-trade':     { path: [[7, 11], [8, 11], [9, 11], [9, 12], [9, 13]] },
+  // 아스테라: 엘프 마을에서 서리 마을 가는 옛길을 따라가다 서쪽 깊은 숲으로
+  'elf-magic':      { path: [[2, 12], [2, 11], [2, 10], [1, 10], [1, 9], [1, 8]] },
   'harbor-seaRuins': { by: 'boat', path: [[8, 15], [8, 16], [9, 16], [9, 17], [10, 17], [10, 18]] },
   // 엘프 마을에서 서리 마을로 바로 가는 옛길 (얼어붙은 숲, 길고 춥다)
   'elf-frost':      { path: [[2, 12], [2, 11], [2, 10], [2, 9], [3, 9], [3, 8], [4, 8], [4, 7], [5, 7], [5, 6], [6, 6], [7, 6]] },

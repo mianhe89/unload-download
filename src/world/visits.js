@@ -7,7 +7,8 @@ import { passes } from '../core/script/ScriptRunner.js';
 import { elfVillageGone } from '../farm/farm.js';
 
 // 거점마다 따로 있는 문턱: 엘프 마을은 깊은 숲을 지나치게 베면 보이지 않는다(그 칸은 그루터기만 남은 길 맵)
-const GATES = { elf: (run) => !elfVillageGone(run?.farm) };
+// 숲을 지나치게 벤 사람에게는 숲 속 마을들이 길을 열어 주지 않는다 (엘프 마을, 그 너머의 아스테라)
+const GATES = { elf: (run) => !elfVillageGone(run?.farm), magic: (run) => !elfVillageGone(run?.farm) };
 
 // 칸 키 → 이야기 필드가 있는 거점 id (고향 제외)
 export function fieldHubAt(key) {

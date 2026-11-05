@@ -6,6 +6,7 @@
 // 이야기 진행용 대화(talk.<페이즈>.<인물> 컷신)가 있으면 그게 먼저 한 번 나온다.
 
 import { TALK_ROADS } from './roads.js';
+import { FOLK } from '../characters/folk.js';
 
 export const TALK = {
   // ── 히로인 ───────────────────────────────────────────────
@@ -191,6 +192,9 @@ export const TALK = {
 
 // 2~4장·길 위의 마을들의 대화(content/talk/roads.js)를 인물·페이즈별로 합친다
 for (const [id, byPhase] of Object.entries(TALK_ROADS)) TALK[id] = { ...TALK[id], ...byPhase };
+
+// 다른 도시 사람들의 대화(content/characters/folk.js의 lines): 그 도시에 들르는 페이즈(trade·magic)에서
+for (const f of Object.values(FOLK)) TALK[f.id] = { ...TALK[f.id], [f.home]: f.lines };
 
 // 처음 들을 때 오르는 호감도 (인물별로 바꾸고 싶으면 여기)
 export const TALK_AFF = 1;

@@ -185,6 +185,68 @@ function buildBellTower() {
   return img;
 }
 
+// 그림 둘레를 외곽선으로 (팩처럼 어두운 테두리)
+function outline(img) {
+  const { width: W, height: H } = img;
+  const a = (x, y) => x >= 0 && y >= 0 && x < W && y < H && img.data[(y * W + x) * 4 + 3] > 0;
+  const edge = [];
+  for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) if (a(x, y) && (!a(x - 1, y) || !a(x + 1, y) || !a(x, y - 1) || !a(x, y + 1))) edge.push([x, y]);
+  for (const [x, y] of edge) setPx(img, x, y, '141b1b');
+  return img;
+}
+
+// 광장 분수 (48×48, 두 장: 물줄기가 오르내린다). 팩에 둥근 분수가 없어 팩 색으로 찍었다
+function buildFountain() {
+  const W = 96, H = 48;
+  const img = { width: W, height: H, data: Buffer.alloc(W * H * 4) };
+  for (const f of [0, 1]) {
+    const ox = f * 48;
+    const P = { s1: 'e0d4b8', s2: 'c4b494', s3: 'a08c70', w1: '6ac0e8', w2: '3a8ac8', w3: 'b8e8f8', f: 'ffffff' };
+    const px = (x, y, c) => { if (x >= 0 && y >= 0 && x < 48 && y < H) setPx(img, ox + x, y, P[c] ?? c); };
+    const ell = (cx, cy, rx, ry, c) => { for (let y = -ry; y <= ry; y += 1) for (let x = -rx; x <= rx; x += 1) if ((x * x) / (rx * rx) + (y * y) / (ry * ry) <= 1) px(cx + x, cy + y, c); };
+    // 바깥 돌 테두리와 물
+    ell(24, 36, 22, 10, 's3'); ell(24, 35, 22, 10, 's2'); ell(24, 34, 21, 9, 's1');
+    ell(24, 34, 18, 7, 'w2'); ell(24, 33, 17, 6, 'w1');
+    for (let i = 0; i < 6; i += 1) px(12 + i * 5 + f * 2, 31 + (i % 3), 'w3');
+    // 가운데 기둥과 위 그릇
+    for (let y = 18; y < 34; y += 1) for (let x = 21; x < 27; x += 1) px(x, y, x < 23 ? 's1' : x < 25 ? 's2' : 's3');
+    ell(24, 18, 8, 3, 's2'); ell(24, 17, 7, 2, 'w1');
+    // 물줄기 (프레임마다 높이가 다르다)
+    const top = f ? 3 : 6;
+    for (let y = top; y < 17; y += 1) { px(23, y, 'w3'); px(24, y, 'f'); px(25, y, 'w1'); }
+    for (let k = 0; k < 6; k += 1) { const t = k / 5; const x = Math.round(16 - t * 4 - f), y = Math.round(18 + t * t * 12); px(x, y, 'w3'); px(48 - x, y, 'w3'); }
+    px(24, top - 1, 'f'); px(22, top + 2, 'w3'); px(26, top + 3, 'w3');
+  }
+  return outline(img);
+}
+
+// 마법사의 탑 (48×96): 돌 탑신, 빛나는 창, 보랏빛 고깔 지붕, 꼭대기의 수정
+function buildMageTower() {
+  const W = 48, H = 96;
+  const img = { width: W, height: H, data: Buffer.alloc(W * H * 4) };
+  const P = { s1: 'c8c0d8', s2: 'a8a0bc', s3: '8a82a0', s4: '6a6280', r1: 'a070e0', r2: '7a4ac0', r3: '5a3090', g: 'f8e080', c1: 'b8f0ff', c2: '6ad0f0', d: '2a2236', w: '6a4226' };
+  const px = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) setPx(img, x, y, P[c] ?? c); };
+  const rect = (x, y, w, h, c) => { for (let j = y; j < y + h; j += 1) for (let i = x; i < x + w; i += 1) px(i, j, c); };
+  // 탑신 (y 40~95)
+  rect(8, 40, 32, 56, 's2');
+  for (let y = 40; y < 96; y += 4) for (let x = 8 + ((y / 4) % 2) * 4; x < 40; x += 8) rect(x, y, Math.min(7, 40 - x), 3, (x + y) % 3 ? 's1' : 's2');
+  rect(8, 40, 3, 56, 's3'); rect(37, 40, 3, 56, 's4');
+  // 문과 빛나는 창
+  rect(19, 80, 10, 16, 'd'); rect(20, 79, 8, 1, 'd'); rect(23, 82, 2, 2, 'g');
+  for (const y of [50, 64]) { rect(21, y, 6, 8, 'd'); rect(22, y + 1, 4, 6, 'g'); px(22, y + 1, 'ffffff'); }
+  // 처마 띠
+  rect(4, 37, 40, 4, 's3'); rect(4, 40, 40, 1, 's4');
+  // 고깔 지붕 (y 8~37)
+  for (let y = 8; y < 38; y += 1) {
+    const half = Math.round(((y - 8) / 29) * 21) + 1;
+    for (let x = 24 - half; x < 24 + half; x += 1) px(x, y, x < 24 - half / 3 ? 'r1' : x < 24 + half / 3 ? 'r2' : 'r3');
+    if (y % 5 === 0) for (let x = 24 - half + 1; x < 24 + half - 1; x += 3) px(x, y, 'g');
+  }
+  // 꼭대기 수정
+  for (let y = 0; y < 9; y += 1) { const h2 = y < 4 ? y : 8 - y; for (let x = 24 - h2; x <= 24 + h2; x += 1) px(x, y, x < 24 ? 'c1' : 'c2'); }
+  return outline(img);
+}
+
 // ── 빌드 ─────────────────────────────────────────────────
 export function buildAssets({ quiet = false } = {}) {
   const log = (...a) => { if (!quiet) console.log(...a); };
@@ -225,6 +287,10 @@ export function buildAssets({ quiet = false } = {}) {
   }
   writePng(join(OUT, 'sheets', 'belltower.png'), buildBellTower());
   manifest.sheets['gen:belltower'] = 'sheets/belltower.png';
+  writePng(join(OUT, 'sheets', 'fountain.png'), buildFountain());
+  manifest.sheets['gen:fountain'] = 'sheets/fountain.png';
+  writePng(join(OUT, 'sheets', 'magetower.png'), buildMageTower());
+  manifest.sheets['gen:magetower'] = 'sheets/magetower.png';
   writePng(join(OUT, 'sheets', 'furniture.png'), buildFurniture());
   manifest.sheets['gen:furniture'] = 'sheets/furniture.png';
 

@@ -9,6 +9,8 @@ export const SHEETS = {
   nature: 'Backgrounds/Tilesets/TilesetNature.png',
   element: 'Backgrounds/Tilesets/TilesetElement.png',
   water: 'Backgrounds/Tilesets/TilesetWater.png',
+  desert: 'Backgrounds/Tilesets/TilesetDesert.png',
+  towers: 'Backgrounds/Tilesets/TilesetTowers.png',
 };
 
 // 흙길 자동 타일: 바닥 시트의 '풀 위의 흙' 블록 (타일 좌표). 8×8 사분면 단위로 조합한다.
@@ -70,6 +72,13 @@ export const OBJECTS = {
   forge: { sheet: 'house', rect: [464, 64, 48, 64], foot: [4, 30, 40, 34] },
   // 종탑: 큰 목조 회관을 바탕으로 박공 창에 종을 그려 넣은 변형본 (npm run assets가 만든다)
   belltower: { sheet: 'gen:belltower', rect: [0, 0, 48, 112], foot: [4, 96, 40, 16] }, // 팩 색으로 찍은 돌 종탑 (tools/build-assets.mjs)
+  // 도시: 광장 분수(팩 색으로 찍음, 물줄기 두 장 중 첫 장), 사자 머리 벽 분수, 장터 천막, 마법사의 탑, 마력 수정
+  fountain: { sheet: 'gen:fountain', rect: [0, 0, 48, 48], foot: [3, 26, 42, 20] },
+  lion_fountain: { sheet: 'desert', rect: [0, 96, 32, 48], foot: [2, 30, 28, 16] },
+  stall_red: { sheet: 'desert', rect: [32, 160, 32, 32], foot: [2, 18, 28, 12] },
+  stall_yellow: { sheet: 'desert', rect: [64, 160, 32, 32], foot: [2, 18, 28, 12] },
+  mage_tower: { sheet: 'gen:magetower', rect: [0, 0, 48, 96], foot: [8, 80, 32, 16] },
+  crystal: { sheet: 'towers', rect: [288, 64, 32, 32], foot: [8, 20, 16, 10] },
   // 집 안 가구 (팩의 TilesetElement). flat: 바닥에 깔려 사람이 밟고 지나간다(언제나 사람 아래)
   bed: { sheet: 'gen:furniture', rect: [0, 0, 16, 28], foot: [1, 4, 14, 22] },   // 침대: 팩에 없어 팩 색으로 찍었다
   bookshelf: { sheet: 'element', rect: [48, 112, 16, 32], foot: [0, 20, 16, 12] },

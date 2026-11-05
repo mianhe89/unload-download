@@ -5,6 +5,8 @@ import * as neighbor from './neighbor.js';
 import ruin from './ruin.js';
 import frost from './frost.js';
 import harbor from './harbor.js';
+import trade from './trade.js';
+import magic from './magic.js';
 import dwarf from './dwarf.js';
 import elf from './elf.js';
 import mill from './mill.js';
@@ -13,5 +15,5 @@ import myhome from './myhome.js';
 import ledger from './ledger.js';
 import icecastle from './icecastle.js';
 
-export const MAPS = { village, neighbor, ruin, frost, harbor, dwarf, elf, mill, lordtown, myhome, ledger, icecastle };
+export const MAPS = { village, neighbor, ruin, frost, harbor, dwarf, elf, mill, lordtown, myhome, ledger, icecastle, trade, magic };
 export const mapOf = (phase) => MAPS[phase?.map ?? 'village'];
