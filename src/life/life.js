@@ -45,6 +45,14 @@ export function act(life, id, now = Date.now()) {
   return n;
 }
 
+// 먹기: 가방의 먹을 것을 직접 먹는다 (content/items.js의 kcal). 배가 차면 피로도 조금 풀린다
+export function eat(life, kcal) {
+  const n = structuredClone(life);
+  n.weight = round(clamp(n.weight + kcal / 1000 * 0.12, 40, 130));
+  n.fatigue = clamp(n.fatigue - Math.round(kcal / 100), 0, 100);
+  return n;
+}
+
 // 걷기: 걸은 만큼 조금씩 빠진다
 export function walk(life, tiles) {
   const n = { ...life, walked: life.walked + tiles };

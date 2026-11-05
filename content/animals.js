@@ -3,11 +3,11 @@
 //   SPECIES_INFO[종] = { name, sounds, bored, likes: [아이템], fed: { liked, other } }
 //   ANIMALS[맵 id] = [{ id, species, at: [x, y], radius? }]   id는 그 맵에서 하나
 export const SPECIES_INFO = {
-  cat: { name: '고양이', sounds: ['야옹.', '냐아~', '(꼬리를 바닥에 탁탁 친다)', '(빵 냄새 쪽을 본다)'], likes: ['honeybread'], fed: { liked: '(정신없이 먹는다. 다 먹고 다리에 몸을 비빈다)', other: '(킁킁… 먹긴 먹는다)' } },
-  dog: { name: '개', sounds: ['멍!', '멍멍!', '(꼬리를 세차게 흔든다)', '(발치에 앉아 올려다본다)'], likes: ['honeybread', 'chestnut'], fed: { liked: '(한입에 삼키고 꼬리를 흔든다) 멍!', other: '(킁킁댄다)' } },
-  chicken: { name: '닭', sounds: ['꼬꼬.', '꼬끼오!', '(땅을 콕콕 쫀다)', '(고개를 갸웃한다)'], likes: ['chestnut'], fed: { liked: '(부스러기를 콕콕 쪼아 먹는다)', other: '(쳐다보지도 않는다)' } },
+  cat: { name: '고양이', sounds: ['야옹.', '냐아~', '(꼬리를 바닥에 탁탁 친다)', '(빵 냄새 쪽을 본다)'], likes: ['fish', 'churu', 'jerky'], fed: { liked: '(정신없이 먹는다. 다 먹고 다리에 몸을 비빈다)', other: '(킁킁… 먹긴 먹는다)' } },
+  dog: { name: '개', sounds: ['멍!', '멍멍!', '(꼬리를 세차게 흔든다)', '(발치에 앉아 올려다본다)'], likes: ['jerky', 'honeybread', 'chestnut'], fed: { liked: '(한입에 삼키고 꼬리를 흔든다) 멍!', other: '(킁킁댄다)' } },
+  chicken: { name: '닭', sounds: ['꼬꼬.', '꼬끼오!', '(땅을 콕콕 쫀다)', '(고개를 갸웃한다)'], likes: ['chestnut', 'apple'], fed: { liked: '(부스러기를 콕콕 쪼아 먹는다)', other: '(쳐다보지도 않는다)' } },
   pig: { name: '돼지', sounds: ['꿀꿀.', '꿀꿀꿀!', '(코를 벌름거린다)', '(진흙에 몸을 비빈다)'], likes: ['honeybread', 'chestnut'], fed: { liked: '(순식간에 먹어 치운다) 꿀꿀!', other: '(그것도 먹는다)' } },
-  cow: { name: '소', sounds: ['음매.', '음메에~', '(천천히 되새김질한다)', '(꼬리로 파리를 쫓는다)'], likes: [], fed: { liked: '음매.', other: '(냄새만 맡고 고개를 돌린다)' } },
+  cow: { name: '소', sounds: ['음매.', '음메에~', '(천천히 되새김질한다)', '(꼬리로 파리를 쫓는다)'], likes: ['apple'], fed: { liked: '음매.', other: '(냄새만 맡고 고개를 돌린다)' } },
 };
 export const BORED = '(관심이 없는 듯하다…)';
 

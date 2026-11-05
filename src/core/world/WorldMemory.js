@@ -40,6 +40,11 @@ export const WorldMemory = {
     SaveRepository.update((d) => { d.run.bag = bag; });
   },
 
+  // 주머니와 가게 기록 (src/shop/shop.js)
+  setShop(shop) {
+    SaveRepository.update((d) => { d.run.shop = shop; });
+  },
+
   setHome(home) {
     SaveRepository.update((d) => { d.run.home = home; });
   },

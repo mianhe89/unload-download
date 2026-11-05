@@ -27,7 +27,7 @@ export const FOLK = {
   ida: P('ida', '이다', '폴의 아내', 35, '#d0a0b0', 'trade', S('Villager2', 'woman', { '4a5270': '8a5a6a', '548789': 'b88a9a' }, [{ type: 'headband', color: 'f0c0d0' }]),
     [['미로가 분수에 빠질 뻔했어요. [mood=angry]세 번째예요, 이번 달만.']]),
   miro: P('miro', '미로', '폴과 이다의 아들', 8, '#f0c060', 'trade', S('Child', 'kid', { '5f7160': '4a8ac0' }, [{ type: 'feather' }]),
-    [['분수 물 마셔 봤어? [mood=laugh]차가워!'], ['[mood=smile]형 기사야? 칼 보여 줘!']]),
+    [['분수 물 마셔 봤어? [mood=laugh]차가워!'], ['[mood=smile]기사야? 칼 보여 줘!']]),
   heda: P('heda', '헤다', '꽃 파는 할머니', 70, '#e0a0c0', 'trade', S('OldWoman', 'granny', { a5608b: 'c87aa0', d3a2c0: 'f0c0d8', '548789': '6a8a4a', '2d697b': '4a6a3a' }, [{ type: 'crown' }]),
     [['꽃 한 송이 사 가. [mood=smile]고향에 두고 온 사람 주라고.'], ['[mood=sad]우리 영감은 [y]꽃 이름[/y]을 다 외웠는데. 난 반밖에 몰라.']]),
 

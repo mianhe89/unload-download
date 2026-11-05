@@ -39,6 +39,7 @@ import { Animals } from '../../field/systems/Animals.js';
 import { Signs } from '../../field/systems/Signs.js';
 import { Xray } from '../../field/systems/Xray.js';
 import { Garlands } from '../../field/systems/Garlands.js';
+import { Shops } from '../../field/systems/Shops.js';
 import { resolveGoal, hubOfMap } from '../../field/goals.js';
 import { worldNow } from '../../core/util/worldTime.js';
 import { HUBS } from '../../../content/world/world.js';
@@ -116,6 +117,7 @@ export default class FieldScene extends Phaser.Scene {
 
     this.pickups = new Pickups(this);
     this.garlands = new Garlands(this);
+    this.shops = new Shops(this); // 가게 주인에게 말을 걸면 가게 창
     this.lighting = new Lighting(this, {
       time: this.phase.time, lights: this.roomId ? this.mapDef.lights : this.phase.lights, erasedCount: WorldMemory.world.erased.length,
       spots: this.mapDef.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
@@ -319,6 +321,7 @@ export default class FieldScene extends Phaser.Scene {
       this.cutscene.play(label);
       return;
     }
+    if (this.shops.onTalk(npc.id)) return; // 가게 주인이면 가게 창
     // 대화는 줄 목록이거나, 지금 상태(지워진 사람 등)를 보고 줄을 만드는 함수다
     const convos = (TALK[npc.id]?.[this.phaseId] ?? []).map((c) => (typeof c === 'function' ? c(this.ctx()) : c)).filter((c) => c?.length);
     if (convos?.length) { this.runTalk(npc.id, convos); return; }

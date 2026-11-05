@@ -4,6 +4,7 @@
 import { freshLife } from '../../life/life.js';
 import { freshBag } from '../../life/bag.js';
 import { freshFarm } from '../../farm/farm.js';
+import { freshShop } from '../../shop/shop.js';
 //
 // save = {
 //   version,
@@ -18,6 +19,7 @@ import { freshFarm } from '../../farm/farm.js';
 //     life: { weight, muscle, fatigue, mind, walked, last },  // 생활 → 체형·마음가짐 (src/life/life.js)
 //     farm: { counts, items, skills, felled, forestChops },    // 행동 파밍: 횟수·재료·히든 스킬·베어낸 나무 (src/farm/farm.js)
 //     bag: { items: { id: n }, gifted: { 인물: 날짜 } },        // 가방과 선물 (src/life/bag.js, content/items.js)
+//     shop: { purse, sold: { '가게.아이템': { day, n } } },     // 주머니(닢)와 가게에서 그날 산 수 (src/shop/shop.js)
 //     flags: {},           //   이벤트 진행 표시
 //     quests: { [id]: { state: 'active'|'done', step } },  // 퀘스트 (content/quests, src/field/systems/Quests.js)
 //     clues: [id],         //   수첩에 적힌 단서 (content/clues.js). 한 번 적히면 남는다
@@ -28,7 +30,7 @@ import { freshFarm } from '../../farm/farm.js';
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 11;
+export const VERSION = 12;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -46,6 +48,7 @@ export const freshRun = (chapter = 'prologue', phase = 'prep') => ({
   life: freshLife(),
   farm: freshFarm(),
   bag: freshBag(),
+  shop: freshShop(),
   look: {},
   flags: {},
   quests: {},
@@ -87,6 +90,8 @@ const MIGRATIONS = {
   },
   // v11: 의장(겉모습만 정하는 칸)
   10: (s) => ({ ...s, version: 11, run: s.run ? { ...s.run, look: s.run.look ?? {} } : null }),
+  // v12: 주머니와 가게
+  11: (s) => ({ ...s, version: 12, run: s.run ? { ...s.run, shop: s.run.shop ?? freshShop() } : null }),
 };
 
 export function migrate(raw) {

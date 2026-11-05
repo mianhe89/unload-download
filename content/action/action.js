@@ -66,6 +66,13 @@ export const EQUIPMENT = {
   },
   wanderCoat:  { name: '나그네 외투', slot: 'armor', rarity: 'uncommon', def: 0.05, desc: '받는 피해 -5%. 눈길에서 얻은 두꺼운 외투.', look: { body: ['b89a6a', '6a5236'] } },
   oldHelm:     { name: '빈 기사의 투구', slot: 'head', rarity: 'rare', def: 0.06, desc: '받는 피해 -6%. 길 잃은 기사의 투구. 안쪽에 영주 기사단의 옛 문장이 있다.' },
+  // 가게에서 파는 것 (content/shop/shops.js)
+  leatherBoots: { name: '가죽 신발', slot: 'boots', rarity: 'uncommon', def: 0.03, desc: '받는 피해 -3%. 그레타네 잡화점의 질긴 소가죽 신발. 밑창에 징이 박혀 있다.' },
+  leatherVest: { name: '가죽 조끼', slot: 'armor', rarity: 'uncommon', def: 0.06, desc: '받는 피해 -6%. 두 겹으로 덧댄 사냥꾼용 조끼.', look: { body: ['9a6a3a', '5a3a1e'] } },
+  ironSword: { name: '철검', slot: 'weapon', rarity: 'uncommon', atk: 2, desc: '드워프 대장간에서 막 벼린 철검. 목검보다 무겁고 정직하다.', look: { blade: 'a8b0bc' } },
+  dwarfBlade: { name: '드워프 장검', slot: 'weapon', rarity: 'rare', atk: 5, desc: '브로크가 산의 불로 벼린 장검. 날에 룬이 희미하게 새겨져 있다.', look: { blade: 'e8c870' } },
+  frostCloak: { name: '서리 망토', slot: 'armor', rarity: 'rare', def: 0.09, desc: '받는 피해 -9%. 서리 마을 사람들이 겨울을 나는 털 망토.', look: { body: ['e8eef4', '7a8aa0'] } },
+  crystalCharm: { name: '수정 부적', slot: 'accessory', rarity: 'rare', def: 0.04, desc: '받는 피해 -4%. 아스테라의 마력 수정 조각. 쥐면 손이 서늘하다.' },
   orcGloves:   { name: '오크 가죽 장갑', slot: 'gloves', rarity: 'uncommon', atk: 2, desc: '거칠게 무두질한 가죽 장갑. 손에 힘이 잘 실린다.' },
   emberCharm:  { name: '불씨 부적', slot: 'accessory', rarity: 'uncommon', mods: [{ skill: 'atk', status: { id: 'burn', chance: 0.2 } }], desc: '기본 공격이 20% 확률로 화상을 입힌다.' },
 };

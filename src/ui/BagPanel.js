@@ -3,6 +3,7 @@
 //   ←→↑↓(WASD) 칸 옮기기, Enter: 먹을 것은 곁에 있는 사람에게 건네기, 장비는 입기/벗기. I·Esc 닫기
 // 선택창이 아니라 가방이다. 건넬지는 플레이어가 사람 곁에 가서 정한다. 열려 있는 동안 주인공은 멈춘다.
 import Phaser from 'phaser';
+import { josa } from '../core/util/josa.js';
 import { COLORS, frame, text, scaleOf, titleBand } from './kit.js';
 import { WorldMemory } from '../core/world/WorldMemory.js';
 import { listBag, toggleEquip, swapWeapons, toggleLook } from '../life/bag.js';
@@ -10,7 +11,10 @@ import { RARITY } from '../../content/items/items.js';
 import { EQUIP_DEFAULT, ACTIVE_SLOTS } from '../../content/action/action.js';
 import { ITEMS } from '../../content/items.js';
 import { equipSkin } from '../art/equipLook.js';
-import { skinOf } from '../life/life.js';
+import { skinOf, eat } from '../life/life.js';
+import { takeItem } from '../life/bag.js';
+import { COIN } from '../../content/shop/shops.js';
+import { Sound } from '../core/audio/Sound.js';
 
 const TABS = [
   { id: 'all', label: '전체' }, { id: 'food', label: '먹을 것' }, { id: 'battle', label: '전투' },
@@ -45,6 +49,7 @@ export class BagPanel {
     on('ENTER', () => this.use());
     on('X', () => this.swap());
     on('V', () => this.dress());
+    on('U', () => this.eatPicked());
     on('ESC', () => this.close());
   }
 
@@ -81,6 +86,20 @@ export class BagPanel {
     if (!f?.giveItem) return;
     this.close();
     f.giveItem(it.id);
+  }
+
+  // U: 먹을 것을 직접 먹는다 (몸에 붙는다)
+  eatPicked() {
+    const it = this.list()[this.pick];
+    if (!it || it.def.kind !== 'food') return;
+    const run = WorldMemory.run;
+    WorldMemory.setBag(takeItem(run.bag, it.id));
+    const life = eat(run.life, it.def.kcal ?? 100);
+    WorldMemory.setLife(life);
+    Sound.sfx(this.scene, 'heal', { volume: 0.25 });
+    const f = this.field();
+    this.close();
+    if (f?.player) this.scene.bubbles?.narrate(f.player, `${josa(it.def.name, '을/를')} 먹었다.  (${life.weight.toFixed(1)}kg)`, 2200);
   }
 
   // 무기 1·2 바꿔 들기
@@ -130,6 +149,12 @@ export class BagPanel {
     frame(g, x0, y0, W, H, s, { corners: 'diamond', sheen: false });
     box.add(g);
     box.add(titleBand(sc, g, width / 2, y0, '가방', s));
+    // 주머니
+    const coinX = x0 + 34 * s, coinY = y0 + H - 22 * s;
+    g.fillStyle(0x7a4e1a, 1).fillCircle(coinX, coinY + 1.5 * s, 7 * s);
+    g.fillStyle(0xf0c050, 1).fillCircle(coinX, coinY, 7 * s);
+    g.fillStyle(0x7a4e1a, 1).fillRect(coinX - 2 * s, coinY - 2 * s, 4 * s, 4 * s);
+    box.add(text(sc, coinX + 12 * s, coinY, `${WorldMemory.run.shop?.purse ?? 0}${COIN}`, { size: 12, bold: true, color: COLORS.accent }).setOrigin(0, 0.5));
 
     // ── 왼쪽: 장비 칸 ─────────────────────────────
     const lx = x0 + 24 * s, lw = 270 * s;
@@ -192,9 +217,9 @@ export class BagPanel {
       const dressed = WorldMemory.run?.look?.armor === it.id;
       const canDress = it.def.kind === 'gear' && toggleLook({}, it.id).armor === it.id;
       const gearHint = `${it.worn ? '입고 있다' : '입을 수 있다'}${canDress ? (dressed ? ' · 의장으로 보인다 (V 벗기)' : ' · V 의장으로') : ''}`;
-      const hint = { food: '곁에 있는 사람에게 건넬 수 있다', gear: gearHint, battle: '보스와 맞설 때 꺼내 쓴다' }[it.def.kind];
+      const hint = { food: 'Enter 곁의 사람에게 건네기 · U 먹기', gear: gearHint, battle: '보스와 맞설 때 꺼내 쓴다' }[it.def.kind];
       if (hint) box.add(text(sc, rx + rw - 12 * s, y0 + H - 46 * s, hint, { size: 10, color: COLORS.sub }).setOrigin(1, 0.5));
     }
-    box.add(text(sc, x0 + W - 24 * s, y0 + H - 16 * s, 'Q·E 탭   방향키 고르기   Enter 건네기·입기   V 의장   X 무기 바꿔 들기   I 닫기', { size: 10, color: COLORS.dim }).setOrigin(1, 0.5));
+    box.add(text(sc, x0 + W - 24 * s, y0 + H - 16 * s, 'Q·E 탭   방향키 고르기   Enter 건네기·입기   U 먹기   V 의장   X 무기 바꿔 들기   I 닫기', { size: 10, color: COLORS.dim }).setOrigin(1, 0.5));
   }
 }

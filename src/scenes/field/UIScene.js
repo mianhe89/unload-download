@@ -8,6 +8,7 @@ import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
 import { WorldMapPanel } from '../../ui/WorldMapPanel.js';
 import { BagPanel } from '../../ui/BagPanel.js';
+import { ShopPanel } from '../../ui/ShopPanel.js';
 import { ChoiceBox } from '../../ui/ChoiceBox.js';
 import { PauseMenu } from '../../ui/PauseMenu.js';
 import { Minimap } from '../../ui/Minimap.js';
@@ -26,7 +27,7 @@ export default class UIScene extends Phaser.Scene {
     // 이 판단을 가장 먼저 등록해서, 창들이 스스로 닫히기 전의 상태를 본다
     this.input.keyboard.on('keydown-ESC', () => {
       if (this.pause?.open) { this.pause.back(); return; }
-      if (this.bag?.open || this.notebook?.open || this.status?.open || this.worldmap?.open || this.dialog?.open || this.choice?.open) return;
+      if (this.bag?.open || this.shop?.open || this.notebook?.open || this.status?.open || this.worldmap?.open || this.dialog?.open || this.choice?.open) return;
       if (!['Field', 'Area'].some((k) => this.scene.isActive(k))) return;
       this.pause.show();
     });
@@ -36,17 +37,18 @@ export default class UIScene extends Phaser.Scene {
     this.hud = new Hud(this);
     this.status = new StatusPanel(this);
     this.worldmap = new WorldMapPanel(this); // M: 전체 지도
-    this.input.keyboard.on('keydown-C', () => this.status.toggle());
+    this.input.keyboard.on('keydown-C', () => { if (!this.shop?.open) this.status.toggle(); });
     this.input.keyboard.on('keydown-TAB', (e) => { e.preventDefault?.(); this.status.toggle(); });
     this.notebook = new NotebookPanel(this);
-    this.input.keyboard.on('keydown-J', () => this.notebook.toggle());
+    this.input.keyboard.on('keydown-J', () => { if (!this.shop?.open) this.notebook.toggle(); });
     this.bag = new BagPanel(this);
+    this.shop = new ShopPanel(this); // 가게 주인에게 말을 걸면 (field/systems/Shops.js)
     this.choice = new ChoiceBox(this);
     this.pause = new PauseMenu(this);
     this.minimap = new Minimap(this);
     this.sign = new SignPlate(this);
     this.names = new NameTags(this);
-    this.input.keyboard.on('keydown-I', () => this.bag.toggle());
+    this.input.keyboard.on('keydown-I', () => { if (!this.shop.open) this.bag.toggle(); });
     this.toasts = [];
     // 휴대폰: 조이스틱과 E·C 버튼. E는 대화가 떠 있으면 넘기고, 아니면 살펴보기
     if (wantsTouch(this.game)) {

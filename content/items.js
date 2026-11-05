@@ -9,7 +9,7 @@ import { CONSUMABLES, EQUIPMENT } from './action/action.js';
 // 마음은 숫자로 보여 주지 않는다. 반응은 말풍선과 눈치 문장으로만.
 export const ITEMS = {
   honeybread: {
-    name: '꿀빵', kind: 'food', rarity: 'common', desc: '호르트네 빵집 꿀빵. 종이에 싸 두면 한나절은 따뜻하다.', base: 1,
+    name: '꿀빵', kind: 'food', rarity: 'common', kcal: 500, desc: '호르트네 빵집 꿀빵. 종이에 싸 두면 한나절은 따뜻하다.', base: 1,
     likes: { mia: 2, tom: 2, kid: 2, lu: 1, selena: 1, hort: -1, sei: 2 },
     lines: {
       mia: '꿀빵! …나 주려고 산 거야? 반 나눠 먹자.',
@@ -21,7 +21,7 @@ export const ITEMS = {
     },
   },
   chestnut: {
-    name: '군밤', kind: 'food', rarity: 'uncommon', desc: '겨울 장 북쪽 상인에게 산 군밤. 껍질째 따뜻하다.', base: 1,
+    name: '군밤', kind: 'food', rarity: 'uncommon', kcal: 250, desc: '겨울 장 북쪽 상인에게 산 군밤. 껍질째 따뜻하다.', base: 1,
     likes: { mia: 2, lu: 2, per: 2, granny: 2, selena: 0 },
     lines: {
       mia: '군밤이다! 장에서 사 왔어? 손 시렵지 않았어?',
@@ -29,6 +29,32 @@ export const ITEMS = {
       per: '허허, 군밤에는 노래가 따라오는 법이지. ♪',
       selena: '근무 중이다. …하나만.',
     },
+  },
+  // 가게에서 사는 먹을 것 (content/shop/shops.js). kcal: 직접 먹으면(가방에서 U) 그만큼 몸에 붙는다
+  apple: {
+    name: '사과', kind: 'food', rarity: 'common', kcal: 90, desc: '로웬 장터의 남쪽 과수원 사과. 한 입 베어 물면 물이 흐른다.', base: 1,
+    likes: { kid: 2, lili: 2, miro: 2, teo: 2, rine: 2, mia: 1, granny: 1 },
+    lines: { kid: '사과다! [mood=laugh]받은 거 자랑해야지.', rine: '[mood=smile]빨갛다. 꽃밭 옆에 두면 예쁘겠어. …먹을게.', lili: '[mood=shy]고마워요. 엄마한테 반 줄래요.' },
+  },
+  jerky: {
+    name: '말린 고기', kind: 'food', rarity: 'common', kcal: 380, desc: '소금에 절여 말린 고기. 길 떠나는 사람들이 꼭 챙긴다.', base: 0,
+    likes: { tom: 2, hunter: 2, kai: 2, brenna: 2, bram: 2, mia: 0, rine: -1 },
+    lines: { tom: '[mood=laugh]이거야말로 경비병의 양식이지!', hunter: '좋은 고기군. 누가 말렸나? 소금을 아끼지 않았어.', brenna: '…쓸 만한 걸 들고 다니는군.' },
+  },
+  fish: {
+    name: '말린 생선', kind: 'food', rarity: 'common', kcal: 220, desc: '항구에서 넬이 말린 고등어. 냄새가 고양이를 부른다.', base: 0,
+    likes: { marlo: 1, granny: 1, gord: 2, nell: -1 },
+    lines: { nell: '내가 판 걸 나한테 주면 어떡해요. [mood=laugh]…고마워요, 그래도.', gord: '오, 국 끓이기 딱이군!' },
+  },
+  pie: {
+    name: '고기 파이', kind: 'food', rarity: 'uncommon', kcal: 650, desc: '서리 마을 여관의 두툼한 파이. 식어도 든든하다.', base: 1,
+    likes: { tom: 2, brenna: 2, per: 2, hort: 1, selena: 1, lu: 1 },
+    lines: { hort: '남의 집 파이라… [mood=neutral]껍질이 제법이군. 비결을 물어봐야겠다.', per: '허허, 이런 건 노래 한 곡 값이지. ♪' },
+  },
+  churu: {
+    name: '짜 먹는 간식', kind: 'food', rarity: 'epic', kcal: 20, desc: '로웬 상인 조합이 "바다 건너 왔다"며 파는 가느다란 봉지. 겉에 아무도 못 읽는 글자가 적혀 있다. 고양이가 미친 듯이 좋아한다.', base: 0,
+    likes: { lu: 1 },
+    lines: { lu: '[mood=neutral]…이 봉지, 어디서 났어? [w=300]이상하다. 처음 보는데 이름을 알 것 같아.' },
   },
   wood: { name: '목재', kind: 'material', rarity: 'common', desc: '길 맵의 작은 나무를 베어 얻었다.', farm: true },
   stone: { name: '돌', kind: 'material', rarity: 'common', desc: '바위 무더기에서 캐냈다.', farm: true },

@@ -15,6 +15,8 @@ import { characters } from '../../../content/characters/index.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { beatKey, rollDrops } from '../../battle/encounters.js';
+import { BOUNTY, COIN } from '../../../content/shop/shops.js';
+import { earn } from '../../shop/shop.js';
 import { act, freshLife, skinOf, battleStats } from '../../life/life.js';
 import { freshFarm, applySkills } from '../../farm/farm.js';
 import { equipSkin, bladeColor } from '../../art/equipLook.js';
@@ -427,7 +429,7 @@ export default class ActionScene extends Phaser.Scene {
       if (from.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss, worldDate(WorldMemory.run))}`);
       if (this.data0.winFlag) WorldMemory.setFlag(this.data0.winFlag);
       this.message(this.data0.winLine ?? (this.bossId === 'sweeper' ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : '이겼다.'), '#ffd27a');
-      const n = this.loot() + this.bossLoot();
+      const n = this.loot() + this.bossLoot() + this.bounty();
       this.time.delayedCall(1500 + n * 700, () => this.leave('win'));
       return;
     }
@@ -440,6 +442,22 @@ export default class ActionScene extends Phaser.Scene {
       .setOrigin(0.5).setDepth(60).setShadow(1, 1, '#000', 0).setInteractive({ useHandCursor: true }).on('pointerdown', o.act));
     this.input.keyboard.once('keydown-R', () => this.retry());
     this.input.keyboard.once('keydown-ESC', () => this.leave('lose'));
+  }
+
+  // 싸움의 대가: 쓰러뜨린 무리가 지니던 동전 (보스는 따로). 되돌려 다시 싸운 판에도 받는다 — 세계가 그만큼 비었으니까
+  bounty() {
+    if (!WorldMemory.run) return 0;
+    const n = (this.data0.enemies ?? []).length;
+    const coins = (this.bossId ? BOUNTY.boss : 0) + Math.max(0, n - (this.bossId ? 1 : 0)) * BOUNTY.foe;
+    if (!coins) return 0;
+    WorldMemory.setShop(earn(WorldMemory.run.shop, coins));
+    const { width: W, height: H } = this.scale;
+    this.time.delayedCall(300, () => {
+      const t = this.add.text(W / 2, H * 0.5 + 30 * this.s, `동전 +${coins}${COIN}`, { fontFamily: FONT, fontSize: `${14 * this.s}px`, color: '#ffd27a' }).setOrigin(0.5).setShadow(1, 1, '#000', 0).setAlpha(0).setDepth(60);
+      this.tweens.add({ targets: t, alpha: 1, y: t.y - 8 * this.s, duration: 260 });
+      Sound.sfx(this, 'pickup');
+    });
+    return 1;
   }
 
   // 무리가 떨군 것 (content/battles/encounters.js의 DROPS): 같은 씨앗이면 같은 결과. 주운 수를 돌려준다
