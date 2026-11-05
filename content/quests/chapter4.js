@@ -12,6 +12,7 @@ export const quests = [
       { text: '성에 들어가 영주에게 인사한다', done: { flag: 'rank.regent' }, goal: [{ zone: 'castle' }, { place: 'lordtown' }] },
       { text: '영주의 성 북쪽, 기록하는 마을로 간다', done: { flag: 'visited.surface:14,4' }, goal: { place: 'ledger' } },
       { text: '광장의 명부 판을 본다', done: { flag: 'ledger.board' }, goal: [{ zone: 'board' }, { place: 'ledger' }] },
+      { text: '기록하는 마을에서 밤을 보낸다', done: { flag: 'ch4.demons' }, goal: { place: 'ledger' } },
       { text: '서쪽 드워프 마을로 간다', done: { flag: 'duel.offered' }, goal: { place: 'dwarf' } },
       { text: '레온의 결투 — 광장 가운데로 나간다', done: { flag: 'ch4.duel_done' }, goal: [{ zone: 'plaza' }, { place: 'dwarf' }] },
       { text: '서리 마을 북서쪽, 얼음성에 들른다', done: { flag: 'ice.offered' }, goal: [{ npc: 'noel' }, { place: 'icecastle' }] },

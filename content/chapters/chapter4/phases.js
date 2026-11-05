@@ -72,12 +72,19 @@ export const phases = {
     events: [
       { id: 'ledger.board', trigger: { zone: 'board' }, run: 'ledger.board' },
       { id: 'ledger.letters', when: { ifFlag: 'ledger.board' }, trigger: { afterFlag: 'ledger.board', delay: 3 }, run: 'ledger.letters' },
+      // 그날 밤 악마가 온다. 루가 나를 감싸다 다친다
+      { id: 'ledger.demons', when: { ifFlag: 'ch4.ledger_done' }, trigger: { afterFlag: 'ch4.ledger_done', delay: 4 }, run: 'ledger.demons' },
+      // 다친 루 곁에 가만히 머물면 (묻지 않고)
+      {
+        id: 'ledger.lu_watch', when: { ifFlag: 'ch4.lu_hurt' }, run: 'ledger.lu_watch',
+        trigger: { dwell: 'lu', r: 2, seconds: 10, ticks: [{ at: 4, bubble: { who: 'lu', text: '…' } }] },
+      },
     ],
   },
 
   dwarf4: {
     map: 'dwarf', visit: true, keepTime: true, place: '드워프 마을', time: 'day', clock: true,
-    when: { ifFlag: 'ch4.ledger_done', unlessFlag: 'ch4.duel_done' },
+    when: { ifFlag: 'ch4.demons', unlessFlag: 'ch4.duel_done' },
     player: { at: [19, 23], face: 'up' },
     npcs: { ...party({ selena: [14, 16], lu: [24, 16], sei: [16, 18] }), leon: { at: [19, 13], mode: 'idle', face: 'down' }, envoy: { at: [19, 10], mode: 'idle', face: 'down' } },
     onEnter: 'dwarf4.envoys',

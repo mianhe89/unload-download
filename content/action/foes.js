@@ -69,6 +69,14 @@ export const FOES = {
       { id: 'rocks', kind: 'ring', name: '돌 튀기기', tell: 0.6, count: 8, speed: 70, dmg: 5 },
     ],
   },
+  // ── 악마: 치우다 만 것들이 엉겨 붙은 검은 안개(2부). 곡식도 사람도 가져가지 않고, 지나간 자리를 비운다 ──
+  demon: {
+    name: '악마', art: { mon: 'GiantSpirit' }, tint: 0x6a6478, hp: 40, radius: 8, speed: 30, contact: 6, rest: 1.2,
+    attacks: [
+      { id: 'grasp', kind: 'sweep', name: '움켜쥐기', reach: 30, tell: 0.5, range: 30, arc: 110, dmg: 11, status: { id: 'vuln', chance: 0.3 } },
+      { id: 'hollow', kind: 'motes', name: '빈 숨', tell: 0.6, count: 2, speed: 36, life: 3.5, dmg: 6, status: { id: 'slow', chance: 0.4 } },
+    ],
+  },
   // ── 습격의 오크 (content/raids.js). 굶주린 전사들: 오래 버티지 못하고 한꺼번에 몰려든다 ──
   orc: {
     name: '오크 전사', art: { char: 'orc' }, hp: 46, radius: 7, speed: 36, contact: 6, rest: 1.0,
