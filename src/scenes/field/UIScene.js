@@ -6,6 +6,7 @@ import { SpeechBubbles } from '../../ui/SpeechBubbles.js';
 import { Hud } from '../../ui/Hud.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { StatusPanel } from '../../ui/StatusPanel.js';
+import { WorldMapPanel } from '../../ui/WorldMapPanel.js';
 import { BagPanel } from '../../ui/BagPanel.js';
 import { ChoiceBox } from '../../ui/ChoiceBox.js';
 import { PauseMenu } from '../../ui/PauseMenu.js';
@@ -25,7 +26,7 @@ export default class UIScene extends Phaser.Scene {
     // 이 판단을 가장 먼저 등록해서, 창들이 스스로 닫히기 전의 상태를 본다
     this.input.keyboard.on('keydown-ESC', () => {
       if (this.pause?.open) { this.pause.back(); return; }
-      if (this.bag?.open || this.notebook?.open || this.status?.open || this.dialog?.open || this.choice?.open) return;
+      if (this.bag?.open || this.notebook?.open || this.status?.open || this.worldmap?.open || this.dialog?.open || this.choice?.open) return;
       if (!['Field', 'Area'].some((k) => this.scene.isActive(k))) return;
       this.pause.show();
     });
@@ -34,6 +35,7 @@ export default class UIScene extends Phaser.Scene {
     this.bubbles = new SpeechBubbles(this);
     this.hud = new Hud(this);
     this.status = new StatusPanel(this);
+    this.worldmap = new WorldMapPanel(this); // M: 전체 지도
     this.input.keyboard.on('keydown-C', () => this.status.toggle());
     this.input.keyboard.on('keydown-TAB', (e) => { e.preventDefault?.(); this.status.toggle(); });
     this.notebook = new NotebookPanel(this);

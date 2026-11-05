@@ -368,7 +368,7 @@ export default class FieldScene extends Phaser.Scene {
     const life = WorldMemory.run.life ?? freshLife();
     const a = ACTIONS[spot.action];
     this.cooldown = 0.5;
-    // 시계가 도는 날엔 잠자리에 들면 언제든 다음 날 아침 6시로 (피로도 풀린다)
+    // 시계가 도는 날엔 잠자리에 들면 12시간이 흐른다 (피로도 풀린다)
     const now = worldNow(WorldMemory.run);
     // 시계가 없는 이야기의 날: 그 날이 정해 둔 잠(sleepTo)이 있으면 하루가 지난다(수확제 전날 → 수확제 저녁)
     if (spot.action === 'sleep' && !this.clock.running && this.phase.sleepTo) {
@@ -615,13 +615,13 @@ export default class FieldScene extends Phaser.Scene {
     return `${step.text} (${done}/${need})${names.length && done < need ? ` — ${names.join(' · ')}` : ''}`;
   }
 
-  // 잠자리에 든다: 다음 날 아침 6시, 같은 하루(또는 phase.next)를 새로 시작한다
+  // 잠자리에 든다: 12시간이 흐른다. 날이 바뀌었으면 그 하루(또는 phase.next)를 새로 시작한다
   sleep() {
     this.setFrozen(true);
     this.cameras.main.fadeOut(900, 0, 0, 0);
     this.time.delayedCall(950, () => {
-      this.clock.sleepUntil('06:00');
-      this.scene.restart({ chapter: this.chapterId, phase: this.phase.next ?? this.phaseId });
+      const newDay = this.clock.sleepFor();
+      this.scene.restart({ chapter: this.chapterId, phase: (newDay && this.phase.next) || this.phaseId });
     });
   }
 

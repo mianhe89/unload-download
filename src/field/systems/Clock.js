@@ -7,6 +7,8 @@ import { SECONDS_PER_MINUTE, DAY, toMinute, toHHMM, nightness, dayLabel } from '
 const START_BY_TIME = { day: '09:00', dusk: '17:30', night: '20:00' };
 const SAVE_EVERY = 10; // 게임 10분마다 저장
 
+export const SLEEP_MINUTES = 12 * 60; // 한 번 자면 흐르는 시간
+
 export class Clock {
   constructor(field) {
     this.field = field;
@@ -41,11 +43,13 @@ export class Clock {
     if (this.sinceSave >= SAVE_EVERY) this.save();
   }
 
-  // 잠자리에 들기: 다음 날 아침으로
-  sleepUntil(hhmm = '06:00') {
-    this.day += 1;
-    this.minute = toMinute(hhmm);
+  // 잠자리에 들기: 12시간이 흐른다 (자정을 넘기면 다음 날). 날이 바뀌었는지 돌려준다
+  sleepFor(minutes = SLEEP_MINUTES) {
+    const day = this.day;
+    this.minute += minutes;
+    while (this.minute >= DAY) { this.minute -= DAY; this.day += 1; }
     this.save();
+    return this.day !== day;
   }
 
   save() {

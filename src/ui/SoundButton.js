@@ -1,5 +1,5 @@
 // 소리 끄기/켜기 버튼. 게임 화면 오른쪽 위 구석에 늘 떠 있다(타이틀·필드·전투 어디서나, 휴대폰에서도 누를 수 있게).
-// 캔버스 위에 얹은 HTML 버튼이라 장면이 바뀌어도 그대로 있다. M 키로 바꿔도 모양이 따라 바뀐다.
+// 캔버스 위에 얹은 HTML 버튼이라 장면이 바뀌어도 그대로 있다. ESC 메뉴의 옵션으로 바꿔도 모양이 따라 바뀐다.
 import { Sound } from '../core/audio/Sound.js';
 
 const ICON = {
@@ -23,7 +23,7 @@ export function mountSoundButton(parent = document.body) {
 
   const render = (muted) => {
     btn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${muted ? ICON.off : ICON.on}</svg>`;
-    const label = muted ? '소리 켜기 (M)' : '소리 끄기 (M)';
+    const label = muted ? '소리 켜기' : '소리 끄기';
     btn.title = label;
     btn.setAttribute('aria-label', label);
     btn.style.opacity = muted ? '0.75' : '1';

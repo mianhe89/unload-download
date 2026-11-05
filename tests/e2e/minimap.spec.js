@@ -18,3 +18,18 @@ test('작은 지도가 보이고 확대·축소된다', async ({ page }) => {
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/minimap.png` });
   expect(errors).toEqual([]);
 });
+
+test('M: 전체 지도가 열리고 닫힌다 (열린 동안 주인공은 멈춘다)', async ({ page }) => {
+  const errors = await openGame(page);
+  await wipe(page);
+  await page.evaluate(() => { const g = window.__game, u = window.__ud; u.startNew(); u.checkpoint('chapter1', 'aftermath'); g.scene.stop('Title'); g.scene.start('Field', { chapter: 'chapter1', phase: 'aftermath' }); });
+  await waitField(page, 'aftermath');
+  await skipDialog(page);
+  await page.keyboard.press('m');
+  await page.waitForFunction(() => window.__game.scene.getScene('UI').worldmap.open);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/worldmap.png` });
+  expect(await page.evaluate(() => window.__game.scene.getScene('Field').frozen ?? true)).toBeTruthy();
+  await page.keyboard.press('m');
+  await page.waitForFunction(() => !window.__game.scene.getScene('UI').worldmap.open);
+  expect(errors).toEqual([]);
+});

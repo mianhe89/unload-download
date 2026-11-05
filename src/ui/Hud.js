@@ -5,7 +5,7 @@
 import { COLORS, frame, text } from './kit.js';
 import { Sound } from '../core/audio/Sound.js';
 
-const KEYS = [['WASD', '이동'], ['E', '살펴보기'], ['I', '가방'], ['J', '수첩'], ['C', '상태'], ['+−', '지도'], ['M', '소리'], ['ESC', '메뉴']];
+const KEYS = [['WASD', '이동'], ['E', '살펴보기'], ['I', '가방'], ['J', '수첩'], ['C', '상태'], ['+−', '확대'], ['M', '지도'], ['ESC', '메뉴']];
 
 // 키캡 하나: 밝은 윗면 + 어두운 아랫단(눌리는 키처럼)
 function keycap(scene, g, x, y, label, s) {
@@ -52,13 +52,13 @@ export class Hud {
     this.controls.removeAll(true);
     const g = sc.add.graphics();
     this.controls.add(g);
-    const items = KEYS.map(([k, label]) => [k, k === 'M' && Sound.muted ? '소리 꺼짐' : label]);
+    const items = KEYS;
     // 오른쪽부터 거꾸로 채운다
     let x = width - 18 * s;
     const y = height - 30 * s;
     const parts = [];
     for (const [k, label] of [...items].reverse()) {
-      const l = text(sc, 0, y + 8.5 * s, label, { size: 10, color: k === 'M' && Sound.muted ? COLORS.dim : COLORS.text }).setOrigin(1, 0.5);
+      const l = text(sc, 0, y + 8.5 * s, label, { size: 10, color: COLORS.text }).setOrigin(1, 0.5);
       l.setShadow(1, 1, '#000', 0);
       l.x = x;
       x -= l.width + 5 * s;
@@ -77,8 +77,8 @@ export class Hud {
       const { t } = keycap(sc, g, kx, y, k, s);
       this.controls.add([t, l]);
       if (k === 'M') {
-        // 소리 키캡은 마우스로도 누른다
-        for (const o of [t, l]) o.setInteractive({ useHandCursor: true }).on('pointerdown', (p, lx, ly, e) => { e?.stopPropagation(); Sound.toggleMute(); });
+        // 지도 키캡은 마우스로도 누른다
+        for (const o of [t, l]) o.setInteractive({ useHandCursor: true }).on('pointerdown', (p, lx, ly, e) => { e?.stopPropagation(); sc.worldmap?.toggle(); });
       }
     }
   }
