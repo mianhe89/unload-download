@@ -8,6 +8,7 @@
 //   rest: 공격 사이 쉬는 시간. boss: 화면 위에 이름과 큰 체력 막대. enrageAt: 이 체력 비율 아래면 빨라진다
 //   base: 전리품(content/battles/encounters.js의 DROPS)을 이 적의 것으로 친다(같은 갈래의 변종)
 //   drops: 보스를 처음 이기면 얻는 장비
+//   split: 쓰러지면 그 자리에서 나오는 적 (큰 슬라임 → 슬라임 둘)
 // 같은 그림에 색만 바꾼 변종이 많다: 팩에 몬스터 그림이 다섯 가지뿐이라, 사는 땅이 바꾼 생김새로 갈래를 낸다.
 export const FOES = {
   // ── 들판·바닷가 ──
@@ -36,22 +37,22 @@ export const FOES = {
   },
   // ── 숲·설원 ──
   owl: {
-    name: '바람 올빼미', art: { mon: 'Owl' }, hp: 20, radius: 6, speed: 48, contact: 3, keep: 72, rest: 1.2,
+    name: '바람 올빼미', art: { mon: 'Owl' }, hp: 20, radius: 6, speed: 48, contact: 3, keep: 72, rest: 1.7,
     attacks: [{ id: 'feather', kind: 'shot', name: '깃털 날리기', reach: 150, tell: 0.45, count: 3, spread: 0.28, speed: 95, dmg: 5 }],
   },
   owl_snow: {
-    name: '눈 올빼미', art: { mon: 'Owl' }, tint: 0xe8f0ff, base: 'owl', hp: 22, radius: 6, speed: 44, contact: 3, keep: 76, rest: 1.3,
+    name: '눈 올빼미', art: { mon: 'Owl' }, tint: 0xe8f0ff, base: 'owl', hp: 22, radius: 6, speed: 44, contact: 3, keep: 76, rest: 1.8,
     attacks: [{ id: 'feather', kind: 'shot', name: '얼음 깃털', reach: 150, tell: 0.5, count: 3, spread: 0.3, speed: 90, dmg: 5, status: { id: 'slow', chance: 0.4 } }],
   },
   skull: {
-    name: '떠도는 해골', art: { mon: 'Skull' }, hp: 28, radius: 6, speed: 32, contact: 5, keep: 46, rest: 1.2,
+    name: '떠도는 해골', art: { mon: 'Skull' }, hp: 28, radius: 6, speed: 32, contact: 5, keep: 46, rest: 1.5,
     attacks: [
       { id: 'bite', kind: 'sweep', name: '물기', reach: 26, tell: 0.4, range: 22, arc: 90, dmg: 9 },
       { id: 'wisp', kind: 'motes', name: '도깨비불', tell: 0.6, count: 1, speed: 38, life: 3, dmg: 6, status: { id: 'weak', chance: 0.35 } },
     ],
   },
   skull_ash: {
-    name: '재 해골', art: { mon: 'Skull' }, tint: 0xa89a90, base: 'skull', hp: 32, radius: 6, speed: 30, contact: 5, keep: 52, rest: 1.2,
+    name: '재 해골', art: { mon: 'Skull' }, tint: 0xa89a90, base: 'skull', hp: 32, radius: 6, speed: 30, contact: 5, keep: 52, rest: 1.5,
     attacks: [
       { id: 'wisp', kind: 'motes', name: '잿빛 불', tell: 0.6, count: 1, speed: 38, life: 3, dmg: 5, status: { id: 'poison', chance: 0.35 } },
       { id: 'bite', kind: 'sweep', name: '물기', reach: 26, tell: 0.4, range: 22, arc: 90, dmg: 9 },
@@ -71,12 +72,73 @@ export const FOES = {
   },
   // ── 악마: 치우다 만 것들이 엉겨 붙은 검은 안개(2부). 곡식도 사람도 가져가지 않고, 지나간 자리를 비운다 ──
   demon: {
-    name: '악마', art: { mon: 'GiantSpirit' }, tint: 0x6a6478, hp: 40, radius: 8, speed: 30, contact: 6, rest: 1.2,
+    name: '악마', art: { mon: 'GiantSpirit' }, tint: 0x6a6478, hp: 36, radius: 8, speed: 30, contact: 6, rest: 1.4,
     attacks: [
       { id: 'grasp', kind: 'sweep', name: '움켜쥐기', reach: 30, tell: 0.5, range: 30, arc: 110, dmg: 11, status: { id: 'vuln', chance: 0.3 } },
-      { id: 'hollow', kind: 'motes', name: '빈 숨', tell: 0.6, count: 2, speed: 36, life: 3.5, dmg: 6, status: { id: 'slow', chance: 0.4 } },
+      { id: 'hollow', kind: 'motes', name: '빈 숨', tell: 0.7, count: 1, speed: 34, life: 3.5, dmg: 6, status: { id: 'slow', chance: 0.4 } },
     ],
   },
+  // ── 덩치·습성이 다른 갈래 (같은 그림, 다른 크기와 버릇) ──
+  slime_big: {
+    name: '큰 슬라임', art: { mon: 'Slime' }, scale: 2.2, base: 'slime', hp: 54, radius: 11, speed: 18, contact: 8, rest: 1.6, split: ['slime', 'slime'],
+    attacks: [{ id: 'slam', kind: 'lunge', name: '덮치기', reach: 60, tell: 0.7, dist: 50, width: 22, dmg: 10 }],
+  },
+  slime_poison: {
+    name: '독 슬라임', art: { mon: 'Slime' }, tint: 0x9ad06a, base: 'slime', hp: 20, radius: 6, speed: 26, contact: 5, rest: 1.7,
+    attacks: [{ id: 'spit', kind: 'shot', name: '독 뱉기', reach: 110, tell: 0.5, count: 1, speed: 80, dmg: 5, status: { id: 'poison', chance: 0.6 } }],
+  },
+  wolf_alpha: {
+    name: '우두머리 들개', art: { mon: 'Beast' }, tint: 0x7a7068, scale: 1.6, base: 'beast', hp: 60, radius: 9, speed: 62, contact: 6, rest: 0.8,
+    attacks: [
+      { id: 'bite', kind: 'sweep', name: '물어뜯기', reach: 30, tell: 0.35, range: 30, arc: 100, dmg: 11, status: { id: 'bleed', chance: 0.4 } },
+      { id: 'leap', kind: 'lunge', name: '덮쳐 오르기', reach: 100, tell: 0.5, dist: 90, width: 16, dmg: 12 },
+    ],
+  },
+  owl_dark: {
+    name: '밤 올빼미', art: { mon: 'Owl' }, tint: 0x8a6ab0, base: 'owl', hp: 22, radius: 6, speed: 52, contact: 3, keep: 80, rest: 2.0,
+    attacks: [{ id: 'hex', kind: 'motes', name: '홀리는 깃털', tell: 0.6, count: 1, speed: 50, life: 3, dmg: 5, status: { id: 'weak', chance: 0.4 } }],
+  },
+  skull_knight: {
+    name: '해골 기사', art: { mon: 'Skull' }, tint: 0xb8c0d0, scale: 1.7, base: 'skull', hp: 70, radius: 9, speed: 26, contact: 7, rest: 1.3,
+    attacks: [
+      { id: 'cleave', kind: 'sweep', name: '녹슨 칼', reach: 34, tell: 0.6, range: 36, arc: 140, dmg: 14 },
+      { id: 'charge', kind: 'lunge', name: '돌진', reach: 120, tell: 0.7, dist: 110, width: 18, dmg: 13 },
+    ],
+  },
+  skull_mage: {
+    name: '해골 주술사', art: { mon: 'Skull' }, tint: 0x6ab0a0, base: 'skull', hp: 26, radius: 6, speed: 28, contact: 4, keep: 90, rest: 2.1,
+    attacks: [{ id: 'nova', kind: 'ring', name: '뼛가루', tell: 0.75, count: 8, speed: 60, dmg: 5, status: { id: 'slow', chance: 0.3 } }],
+  },
+  mole_ice: {
+    name: '얼음 두더지', art: { mon: 'Mole' }, tint: 0xb0d8f0, base: 'mole', hp: 42, radius: 7, speed: 22, contact: 6, rest: 1.5,
+    attacks: [{ id: 'dig', kind: 'lunge', name: '얼음 파고들기', reach: 110, tell: 0.7, dist: 90, width: 14, dmg: 11, status: { id: 'freeze', chance: 0.25 } }],
+  },
+  beast_ash: {
+    name: '잿빛 짐승', art: { mon: 'Beast' }, tint: 0x8a8a8a, scale: 1.3, base: 'beast', hp: 44, radius: 8, speed: 40, contact: 7, rest: 1.1,
+    attacks: [
+      { id: 'claw', kind: 'sweep', name: '할퀴기', reach: 28, tell: 0.4, range: 26, arc: 110, dmg: 10 },
+      { id: 'ember', kind: 'shot', name: '잿불 뱉기', reach: 120, tell: 0.5, count: 3, spread: 0.25, speed: 85, dmg: 5, status: { id: 'burn', chance: 0.3 } },
+    ],
+  },
+  orc_archer: {
+    name: '오크 사냥꾼', art: { char: 'orc' }, tint: 0xd8c0a0, base: 'orc', hp: 34, radius: 7, speed: 34, contact: 4, keep: 90, rest: 1.7,
+    attacks: [{ id: 'arrow', kind: 'shot', name: '화살', reach: 170, tell: 0.55, count: 1, speed: 130, dmg: 9 }],
+  },
+  orc_brute: {
+    name: '오크 장정', art: { char: 'orc' }, scale: 1.4, base: 'orc', hp: 80, radius: 9, speed: 30, contact: 8, rest: 1.2,
+    attacks: [
+      { id: 'smash', kind: 'sweep', name: '내려찍기', reach: 34, tell: 0.65, range: 38, arc: 130, dmg: 16, status: { id: 'stun', chance: 0.3 } },
+      { id: 'rush', kind: 'lunge', name: '몸통 박치기', reach: 90, tell: 0.6, dist: 80, width: 18, dmg: 12 },
+    ],
+  },
+  demon_large: {
+    name: '큰 악마', art: { mon: 'GiantSpirit' }, tint: 0x4a4458, hp: 75, radius: 12, speed: 26, contact: 8, rest: 1.3,
+    attacks: [
+      { id: 'grasp', kind: 'sweep', name: '움켜쥐기', reach: 40, tell: 0.6, range: 42, arc: 140, dmg: 15, status: { id: 'vuln', chance: 0.4 } },
+      { id: 'void', kind: 'ring', name: '빈 숨', tell: 0.7, count: 12, speed: 55, dmg: 6, status: { id: 'slow', chance: 0.3 } },
+    ],
+  },
+
   // ── 습격의 오크 (content/raids.js). 굶주린 전사들: 오래 버티지 못하고 한꺼번에 몰려든다 ──
   orc: {
     name: '오크 전사', art: { char: 'orc' }, hp: 46, radius: 7, speed: 36, contact: 6, rest: 1.0,

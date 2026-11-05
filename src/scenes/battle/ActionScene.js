@@ -95,13 +95,13 @@ export default class ActionScene extends Phaser.Scene {
     let spr;
     if (d.art.char) {
       const key = `char.${d.art.char}`;
-      spr = this.add.sprite(f.x, f.y, this.textures.exists(key) ? key : '__DEFAULT', 0).setOrigin(0.5, 0.75).setScale(d.scale ?? 1);
+      spr = this.add.sprite(f.x, f.y, this.textures.exists(key) ? key : '__DEFAULT', 0).setOrigin(0.5, 0.75).setScale((d.scale ?? 1) * 1.15);
     } else {
       const key = `mon.${d.art.mon}`;
       spr = this.add.sprite(f.x, f.y, this.textures.exists(key) ? key : '__DEFAULT', 0).setOrigin(0.5, 0.7);
       if (this.anims.exists(key)) spr.play(key);
       const h = spr.height || 16;
-      spr.setScale(d.art.mon === 'GiantSpirit' ? (d.radius * 2.6) / h : (d.scale ?? 1));
+      spr.setScale(d.art.mon === 'GiantSpirit' ? (d.radius * 2.6) / h : (d.scale ?? 1) * 1.4); // 팩 몬스터는 16px이라 조금 키워 그린다
     }
     if (d.tint) spr.setTint(d.tint);
     const shadow = this.add.ellipse(f.x, f.y + d.radius * 0.7, d.radius * 2, Math.max(3, d.radius * 0.6), 0x000000, 0.35);

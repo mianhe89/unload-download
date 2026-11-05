@@ -12,8 +12,8 @@ const start = (page, enemies, boss = false) => page.evaluate(([en, b]) => {
 test('무리와 싸워 이기면 길 맵으로 돌아가고, 그날은 다시 안 나오며 피로가 쌓인다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
-  await start(page, ['slime', 'slime', 'slime', 'wolf', 'wolf', 'wolf', 'wolf']);
-  await page.waitForFunction(() => window.__game.scene.getScene('Action')?.engine?.state.foes.length === 5);
+  await start(page, ['slime', 'slime', 'slime', 'slime_big', 'wolf', 'wolf', 'wolf_alpha', 'slime_poison', 'owl']);
+  await page.waitForFunction(() => window.__game.scene.getScene('Action')?.engine?.state.foes.length === 6);
   const fatigue0 = await page.evaluate(() => window.__ud.run.life.fatigue);
   if (process.env.SHOTS) { await page.waitForTimeout(2200); await page.screenshot({ path: `${process.env.SHOTS}/action.png` }); }
   await winAction(page);

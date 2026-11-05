@@ -8,7 +8,7 @@ import { FOES } from '../../content/action/foes.js';
 
 export const PLAYER = { radius: 6, speed: 78, maxHp: 120 };
 const SKILL_KEYS = ['atk', 'q', 'w', 'e', 'r'];
-export const MAX_ALIVE = 5;
+export const MAX_ALIVE = 6;
 
 const rngOf = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -150,6 +150,14 @@ function hurtFoe(s, f, dmg, ev, opts = {}) {
     f.charge = null;
     s.tells = s.tells.filter((t) => t.uid !== f.uid);
     ev.push({ type: 'kill', uid: f.uid, id: f.id, x: f.x, y: f.y });
+    // 갈라지는 적: 그 자리에서 작은 것들이 나온다
+    for (const [k, id] of (f.def.split ?? []).entries()) {
+      const c = makeFoe(s, id, clamp(f.x + (k ? 10 : -10), 8, ARENA.w - 8), f.y);
+      c.timer = 0.9;
+      s.foes.push(c);
+      s.total += 1;
+      ev.push({ type: 'spawn', uid: c.uid, id, x: c.x, y: c.y });
+    }
     if (!alive(s).length && !s.queue.length) { s.over = 'win'; ev.push({ type: 'win' }); }
   }
 }

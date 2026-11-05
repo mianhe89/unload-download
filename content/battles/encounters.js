@@ -2,24 +2,24 @@
 // 마을·바다엔 없다. 보스는 정해진 자리에 늘 있다.
 export const ENCOUNTER_CHANCE = 0.35;
 
-// 기후별 무리 후보 (content/action/foes.js의 적). 한 번에 다섯까지 나오고, 쓰러지면 남은 무리가 들어온다.
+// 기후별 무리 후보 (content/action/foes.js의 적). 한 번에 여덟까지 나오고, 쓰러지면 남은 무리가 가장자리에서 들어온다.
 // 사는 땅이 생김새를 바꾼다: 화산엔 불씨 슬라임, 눈밭엔 서리 슬라임과 눈 올빼미, 사막엔 바위 두더지
 const n = (id, k) => Array(k).fill(id);
 export const POOLS = {
-  temperate: [n('slime', 4), [...n('slime', 4), 'wolf', 'wolf'], n('wolf', 4)],
-  lateAutumn: [[...n('wolf', 3), 'beast'], ['beast', ...n('slime', 3), 'owl', 'owl']],
-  deepForest: [[...n('owl', 3), 'wolf', 'wolf'], [...n('wolf', 5), 'beast']],
-  frost: [[...n('slime_frost', 3), 'owl_snow', 'owl_snow'], [...n('skull', 2), ...n('wolf', 3)]],
-  snow: [[...n('owl_snow', 3), ...n('slime_frost', 3)], [...n('skull', 3), 'mole']],
-  blackSnow: [[...n('skull', 3), ...n('skull_ash', 3)]],
-  dry: [[...n('mole', 3), 'beast'], [...n('beast', 2), ...n('wolf', 3)]],
-  desert: [[...n('mole_rock', 2), ...n('mole', 2)], n('beast', 4)],
-  coast: [n('slime', 6), [...n('slime', 3), 'beast', 'beast']],
-  volcano: [[...n('slime_ember', 4), ...n('beast', 2)]],
-  cave: [[...n('mole', 3), 'skull'], [...n('mole_rock', 2), ...n('skull', 2)]],
-  deepCave: [[...n('skull', 3), ...n('mole', 3)]],
-  lava: [[...n('slime_ember', 4), 'beast', 'skull_ash']],
-  ancientHall: [[...n('skull', 4), ...n('skull_ash', 2)]],
+  temperate: [[...n('slime', 8), 'slime_big', 'slime_big'], [...n('wolf', 7), 'wolf_alpha'], [...n('slime', 5), ...n('slime_poison', 3), ...n('wolf', 3)]],
+  lateAutumn: [[...n('wolf', 6), 'wolf_alpha', ...n('beast', 2)], ['beast', ...n('slime', 6), ...n('owl', 2), 'slime_big']],
+  deepForest: [[...n('owl', 3), 'owl_dark', ...n('wolf', 5)], [...n('wolf', 8), 'wolf_alpha', 'beast']],
+  frost: [[...n('slime_frost', 6), ...n('owl_snow', 2), 'slime_big'], [...n('skull', 3), ...n('wolf', 5)]],
+  snow: [[...n('owl_snow', 3), ...n('slime_frost', 6), ...n('mole_ice', 2)], [...n('skull', 4), 'skull_knight', ...n('mole_ice', 3)]],
+  blackSnow: [[...n('skull', 4), ...n('skull_ash', 2), 'skull_knight', 'skull_mage'], [...n('demon', 5), 'demon_large']],
+  dry: [[...n('mole', 6), ...n('beast', 2), 'beast_ash'], [...n('beast', 3), ...n('wolf', 6), 'wolf_alpha']],
+  desert: [[...n('mole_rock', 4), ...n('mole', 5)], [...n('beast', 5), ...n('beast_ash', 3)]],
+  coast: [[...n('slime', 10), ...n('slime_big', 2)], [...n('slime', 6), ...n('slime_poison', 3), ...n('beast', 2)]],
+  volcano: [[...n('slime_ember', 8), ...n('beast', 3), ...n('beast_ash', 2)]],
+  cave: [[...n('mole', 6), ...n('skull', 2), 'skull_mage'], [...n('mole_rock', 4), ...n('skull', 3), 'skull_knight']],
+  deepCave: [[...n('skull', 3), ...n('mole', 6), 'skull_mage', 'skull_knight']],
+  lava: [[...n('slime_ember', 8), ...n('beast_ash', 3), ...n('skull_ash', 2)]],
+  ancientHall: [[...n('skull', 5), ...n('skull_ash', 2), 'skull_knight', 'skull_mage']],
 };
 
 // 보스 자리. when: 나타나는 조건(대본 조건 문법), flag: 이기면 켜지는 플래그. 동료 없이 혼자 싸운다
