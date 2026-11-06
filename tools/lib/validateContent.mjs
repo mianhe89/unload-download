@@ -191,6 +191,7 @@ export function validateContent() {
       for (const p of ph.props ?? []) {
       if (!PROP_NAMES.includes(p.prop) && !OBJECTS[p.prop]) err(`${at} 소품 없음 ${p.prop}`);
       if (solid(...p.at)) err(`${at} 소품이 막힌 칸에 있음 ${p.at}`);
+      if (p.run && !S[p.run]) err(`${at} 소품 ${p.prop}: 컷신 없음 ${p.run}`);
     }
       for (const e of ph.events ?? []) {
         if (!S[e.run]) err(`${at} 이벤트 ${e.id}: 컷신 없음 ${e.run}`);

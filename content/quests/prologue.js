@@ -5,8 +5,11 @@ export const quests = [
     id: 'q.prologue', title: '수확제 다음 날', kind: 'main',
     start: { auto: true, when: { unlessFlag: 'done.keeper' } },
     steps: [
+      // 에다는 꼭 거친다 (내일 밤 반지를 건네는 사람)
+      { text: '광장 동쪽 대장간, 에다에게 들른다', done: { when: { anyOf: [{ ifFlag: 'eda.asked' }, { ifFlag: 'ev.prep.eda' }] } }, goal: { npc: 'eda' } },
+      { text: '에다의 심부름 — 빵집에서 탄 빵을 받아다 준다', done: { flag: 'ev.prep.eda' }, goal: [{ npc: 'hort', unlessFlag: 'got.burnt' }, { npc: 'eda' }] },
       {
-        text: '마을 사람 셋의 축제 준비를 돕는다', done: { flag: 'prep.ready' },
+        text: '마을 사람들의 축제 준비를 돕는다', done: { flag: 'prep.ready' },
         count: { n: 3, of: { eda: 'ev.prep.eda', hort: 'ev.prep.hort', rine: 'ev.prep.rine', per: 'ev.prep.per', tom: 'ev.prep.tom', selena: 'ev.prep.selena' } },
       },
       { text: '광장의 미아에게 간다', done: { flag: 'done.prep.end' }, goal: { npc: 'mia' } },

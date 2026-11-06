@@ -44,6 +44,8 @@ async function sweep(page, label) {
     await page.keyboard.press('e');
     await page.waitForTimeout(300);
     await skipDialog(page);
+    // 가게 주인이면 가게 창이 열린다(그동안은 멈춰 있는 게 맞다) — 닫고 본다
+    if (await page.evaluate(() => window.__game.scene.getScene('UI').shop?.open)) await page.keyboard.press('Escape');
     const alive = await page.evaluate(async () => {
       const g = window.__game, f = g.scene.getScene('Field');
       const t0 = g.loop.frame; await new Promise((r) => setTimeout(r, 1000)); // 헤드리스(소프트웨어 렌더링)는 느리다: 1초에 몇 프레임이라도 흐르면 살아 있다

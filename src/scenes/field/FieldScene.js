@@ -114,7 +114,7 @@ export default class FieldScene extends Phaser.Scene {
       .map((l) => ({ ...l, x: l.at[0] * TILE + TILE / 2, y: l.at[1] * TILE + TILE / 2 }));
     for (const prop of (this.roomId ? this.mapDef.props : this.phase.props) ?? []) {
       if (prop.when && !passes(prop.when, this.ctx())) continue;
-      this.addProp(prop.prop, prop.at, prop.text);
+      this.addProp(prop.prop, prop.at, prop.text, prop.run);
     }
 
     this.pickups = new Pickups(this);
@@ -307,7 +307,7 @@ export default class FieldScene extends Phaser.Scene {
     for (const p of this.props) {
       if (!p.text) continue;
       const d = this.player.distTo(p.sprite.x, p.sprite.y);
-      if (d < bestD) { best = { prop: p, x: p.sprite.x, y: p.sprite.y, text: p.text, remnantOf: p.remnantOf }; bestD = d; }
+      if (d < bestD) { best = { prop: p, x: p.sprite.x, y: p.sprite.y, text: p.text, remnantOf: p.remnantOf, run: p.run }; bestD = d; }
     }
     return best;
   }
@@ -370,6 +370,11 @@ export default class FieldScene extends Phaser.Scene {
     }
     this.ui.closeDialog();
     this.setFrozen(false);
+    // 살펴본 뒤 이어지는 장면 (한 번만)
+    if (target.run && !WorldMemory.run.flags[`looked.${target.run}`]) {
+      WorldMemory.setFlag(`looked.${target.run}`);
+      this.cutscene.play(target.run);
+    }
   }
 
   // 생활 행동: 그 자리의 행동을 한다 (선택창 없음). 같은 행동은 쿨다운
@@ -646,14 +651,15 @@ export default class FieldScene extends Phaser.Scene {
   }
 
   // prop: 코드로 그린 소품(prop.<이름>) 또는 팩 물체(OBJECTS의 이름)
-  addProp(prop, at, text) {
+  // run: 살펴본 뒤 이어지는 장면(대본 라벨). 한 번만
+  addProp(prop, at, text, run) {
     const def = OBJECTS[prop];
     // dust: 준 사람이 지워진 물건의 자리 — 먼지 자국만 남는다
     if (prop === 'dust') { const sprite = this.add.ellipse(px(at[0]), px(at[1]) + 2, 11, 5, 0x6a5a4a, 0.35).setDepth(px(at[1]) - 4); this.props.push({ sprite, text }); return; }
     const sprite = def
       ? this.add.image(px(at[0]), px(at[1]) + TILE / 2, `sheet.${def.sheet}`, prop).setOrigin(0.5, 1).setDepth(px(at[1]) + TILE / 2)
       : this.add.image(px(at[0]), px(at[1]), `prop.${prop}`).setDepth(px(at[1]) - 4);
-    this.props.push({ sprite, text });
+    this.props.push({ sprite, text, run });
   }
 
   worldToScreen(x, y) {

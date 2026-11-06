@@ -68,10 +68,13 @@ export const phases = {
       },
       { id: 'prep.per', when: { unlessErased: 'per' }, trigger: { near: 'per', r: 3 }, run: 'prep.per' },
       { id: 'prep.selena', trigger: { near: 'selena', r: 3 }, run: 'prep.selena' },
+      // 에다를 아직 안 찾아갔으면, 대장간 쪽에서 쇠 소리가 난다(미아가 에다가 찾는다고 했다)
+      { id: 'prep.anvil', when: { unlessFlag: ['eda.asked', 'ev.prep.eda'] }, trigger: { timer: 100 }, run: 'prep.anvil' },
 
-      // 세 군데 이상 도왔으면(또는 시간이 꽤 지나면) 미아가 부른다 → 광장의 미아에게 가면 저녁
-      { id: 'prep.ready', when: { unlessFlag: 'prep.ready' }, trigger: { count: PREP_DONE, people: ['eda', 'hort', 'tom', 'rine', 'per', 'selena'], n: 3 }, run: 'prep.ready' },
-      { id: 'prep.ready_timer', when: { unlessFlag: 'prep.ready' }, trigger: { timer: 300 }, run: 'prep.ready' },
+      // 에다를 포함해 세 군데 이상 도왔으면(또는 에다를 도운 뒤 시간이 꽤 지나면) 미아가 부른다 → 광장의 미아에게 가면 저녁
+      // 에다는 꼭 거친다: 내일 밤 반지를 건네고 다음 날 사라지는 사람이라, 정이 붙을 틈이 있어야 한다
+      { id: 'prep.ready', when: { unlessFlag: 'prep.ready', ifFlag: 'ev.prep.eda' }, trigger: { count: PREP_DONE, people: ['eda', 'hort', 'tom', 'rine', 'per', 'selena'], n: 3 }, run: 'prep.ready' },
+      { id: 'prep.ready_timer', when: { unlessFlag: 'prep.ready', ifFlag: 'ev.prep.eda' }, trigger: { timer: 300 }, run: 'prep.ready' },
       { id: 'prep.end', when: { ifFlag: 'prep.ready' }, trigger: { near: 'mia', r: 3 }, run: 'prep.evening' },
     ],
   },
@@ -158,13 +161,15 @@ export const phases = {
     props: [
       { prop: 'burntBread', at: [14, 16], when: { unlessErased: 'hort' }, text: '진열대 구석, 탄 빵만 따로 모아둔 바구니. 호르트 아저씨도 왜 모아뒀는지 모른다.' },
       { prop: 'ironCrown', at: [29, 14], when: { unlessErased: 'rine' }, text: '주인 없는 화관. 서툴게 두드린 쇠꽃이 하나 엮여 있다.' },
-      { prop: 'ring', at: [39, 17], text: '모루 옆, 쇠를 두드린 자국. 먼지가 손가락 한 마디만큼 쌓였는데, 자국만은 어제 것 같다.' },
+      { prop: 'ring', at: [39, 17], text: '모루 옆, 쇠를 두드린 자국. 먼지가 손가락 한 마디만큼 쌓였는데, 자국만은 어제 것 같다.', run: 'morning.anvil' },
     ],
     onEnter: 'morning.intro',
     events: [
       { id: 'chat.smithy', trigger: { near: 'oldman', r: 3 }, run: 'morning.chat_smithy' },
       { id: 'chat.bells', trigger: { near: 'kid', r: 2 }, run: 'morning.chat_bells' },
       { id: 'smithy', trigger: { zone: 'smithy' }, run: 'morning.smithy' },
+      // 모루를 살펴보지 않고 서성이기만 해도, 조금 뒤엔 광장의 나팔이 부른다
+      { id: 'horn', when: { ifFlag: 'smithy.entered', unlessFlag: 'smithy.seen' }, trigger: { afterFlag: 'smithy.entered', delay: 40 }, run: 'morning.horn' },
       { id: 'mia', when: { ifFlag: 'smithy.seen' }, trigger: { near: 'mia', r: 3 }, run: 'morning.mia' },
       { id: 'selena', when: { ifFlag: 'mia.talked' }, trigger: { zone: 'post' }, run: 'morning.selena' },
       { id: 'lu', when: { ifFlag: 'selena.done' }, trigger: { near: 'lu', r: 3 }, run: 'morning.lu' },

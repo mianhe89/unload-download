@@ -17,7 +17,7 @@ export const CLUES = [
   { id: 'clue.lu_spots', title: '루의 반점', when: { ifFlag: 'done.lu' },
     text: '우물가의 떠돌이 마법사 루. 얼굴에 검붉은 반점이 있어 사람들이 피한다. 에다를 아냐고 묻자 무언가 말하려다 반점이 번졌다. "그 얘긴 하지 마."' },
   { id: 'clue.keeper', title: '종탑 앞의 그림자', when: { ifFlag: 'done.keeper' },
-    text: '밤의 종탑 앞에서 빗자루를 든 그림자를 만났다. 쓸어 낸 먼지에서 대장간의 그을음 냄새가 났다. "누가 하나 더 들어오면, 제일 무거운 것부터 치워야 해." "나는 치울 뿐이야. 어지르는 건 내가 아니야."' },
+    text: '밤의 종탑 앞에서 빗자루를 든 그림자를 만났다. 쓸어 낸 먼지에서 대장간의 그을음 냄새가 났다. 무엇을 치웠냐고 묻자 "자리가 모자라서. 이 집은 좁거든." 에다의 이름을 대자 "이름을 아는 건 너뿐이잖아."' },
   { id: 'clue.burnt_bread', title: '탄 빵 바구니', when: { ifFlag: 'talked.prologue.morning.hort' },
     text: '호르트 아저씨는 탄 빵만 따로 모아 둔 바구니가 있다. 왜 모아 두는지 본인도 모른다. 에다는 아침마다 탄 쪽만 골라 갔다.' },
   { id: 'clue.iron_flower', title: '쇠꽃이 엮인 화관', when: { ifFlag: 'talked.prologue.morning.rine' },

@@ -10,7 +10,8 @@ test('호르트·리네가 없어도 수확제 전날을 넘긴다', async ({ pa
   await advanceUntil(page, () => !window.__game.scene.getScene('Field').cutscene.busy, null, 30_000, '도입 끝');
   const obj = await page.evaluate(() => window.__game.scene.getScene('UI').hud.objective.text);
   expect(obj).not.toContain('호르트');
-  for (const who of ['tom', 'per', 'selena']) {
+  // 에다는 꼭 거친다 (호르트가 없으면 빵 심부름 없이 바로 끝난다)
+  for (const who of ['eda', 'tom', 'per']) {
     await page.evaluate((id) => { const f = window.__game.scene.getScene('Field'); f.director.events.filter((e) => [e.trigger.near, e.trigger.dwell].includes(id)).forEach((e) => { e.trigger = { ...e.trigger, r: 0.3 }; }); const n = f.npcs[id]; f.player.sprite.x = n.x; f.player.sprite.y = n.y + 15; }, who);
     await page.waitForTimeout(200);
     await page.keyboard.down('e'); await page.waitForTimeout(120); await page.keyboard.up('e');

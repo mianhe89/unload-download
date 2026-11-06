@@ -2,12 +2,14 @@
 import { test, expect } from '@playwright/test';
 import { openGame, wipe, clickMenu, waitField, skipDialog } from './game.js';
 
-test('E로 호르트를 도우면 목표가 (1/3)이 되고 남은 사람 이름이 보인다', async ({ page }) => {
+test('에다를 먼저 거쳐야 하고, 그 뒤 E로 호르트를 도우면 목표가 (2/3)이 되고 남은 사람 이름이 보인다', async ({ page }) => {
   const errors = await openGame(page);
   await wipe(page);
   await clickMenu(page, 'START');
   await waitField(page, 'prep');
   await skipDialog(page);
+  expect(await page.evaluate(() => window.__game.scene.getScene('UI').hud.objective.text)).toContain('에다');
+  await page.evaluate(() => { window.__ud.setFlag('eda.asked'); window.__ud.setFlag('got.burnt'); window.__ud.setFlag('ev.prep.eda'); });
   // 이벤트 반경 밖(4칸)에서 다가가지 않고, 말 거는 거리까지만 붙여 세운 뒤 E
   await page.evaluate(() => { const f = window.__game.scene.getScene('Field'); f.director.events.filter((e) => e.trigger.near === 'hort').forEach((e) => { e.trigger = { ...e.trigger, r: 0.5 }; }); const n = f.npcs.hort; f.player.sprite.x = n.x; f.player.sprite.y = n.y + 15; });
   await page.waitForTimeout(200);
@@ -15,8 +17,8 @@ test('E로 호르트를 도우면 목표가 (1/3)이 되고 남은 사람 이름
   await page.waitForFunction(() => window.__ud.run.flags['ev.prep.hort'], null, { timeout: 30_000 });
   await page.waitForTimeout(700);
   const obj = await page.evaluate(() => window.__game.scene.getScene('UI').hud.objective.text);
-  expect(obj).toContain('(1/3)');
-  expect(obj).toContain('에다');
+  expect(obj).toContain('(2/3)');
+  expect(obj).toContain('리네');
   expect(obj).not.toContain('호르트');
   expect(errors).toEqual([]);
 });
