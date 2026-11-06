@@ -40,6 +40,8 @@ import { Signs } from '../../field/systems/Signs.js';
 import { Xray } from '../../field/systems/Xray.js';
 import { Garlands } from '../../field/systems/Garlands.js';
 import { Shops } from '../../field/systems/Shops.js';
+import { PlayTrace } from '../../field/systems/PlayTrace.js';
+import { PlayLog } from '../../core/playtest/PlayLog.js';
 import { resolveGoal, hubOfMap } from '../../field/goals.js';
 import { worldNow } from '../../core/util/worldTime.js';
 import { HUBS } from '../../../content/world/world.js';
@@ -118,6 +120,7 @@ export default class FieldScene extends Phaser.Scene {
     this.pickups = new Pickups(this);
     this.garlands = new Garlands(this);
     this.shops = new Shops(this); // 가게 주인에게 말을 걸면 가게 창
+    this.trace = new PlayTrace(this); // 플레이테스트 기록 (켜져 있을 때만)
     this.lighting = new Lighting(this, {
       time: this.phase.time, lights: this.roomId ? this.mapDef.lights : this.phase.lights, erasedCount: WorldMemory.world.erased.length,
       spots: this.mapDef.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
@@ -186,6 +189,7 @@ export default class FieldScene extends Phaser.Scene {
     const busy = this.cutscene.busy || this.ui.talking;
     this.elapsed += busy ? 0 : dt;
     this.cooldown = Math.max(0, this.cooldown - dt);
+    this.trace.update(dt, busy);
 
     const blocked = (x, y) => this.map.isSolidPx(x, y) || this.hitsNpc(x, y);
     this.player.update(dt, blocked);
@@ -309,6 +313,7 @@ export default class FieldScene extends Phaser.Scene {
   }
 
   talkTo(npc) {
+    PlayLog.log('talk', { npc: npc.id });
     npc.faceToward(this.player.x, this.player.y);
     if (this.quests.onTalk(npc.id)) return; // 퀘스트 단계의 대화, 또는 그 사람이 주는 퀘스트
     // 그 사람에게 걸린 이벤트가 아직 남아 있으면 말을 거는 순간 그걸로 (다가가며 놓친 일도 이어진다)
@@ -352,6 +357,7 @@ export default class FieldScene extends Phaser.Scene {
   }
 
   async examine(target) {
+    PlayLog.log('look', { what: target.remnantOf ?? target.text?.slice(0, 16) });
     this.setFrozen(true);
     await this.ui.say('', '#cfc9dd', target.text);
     if (target.remnantOf && !WorldMemory.run.flags[`found.${target.remnantOf}`]) {
@@ -368,6 +374,7 @@ export default class FieldScene extends Phaser.Scene {
 
   // 생활 행동: 그 자리의 행동을 한다 (선택창 없음). 같은 행동은 쿨다운
   doLife(spot) {
+    PlayLog.log('life', { act: spot.action });
     const life = WorldMemory.run.life ?? freshLife();
     const a = ACTIONS[spot.action];
     this.cooldown = 0.5;
@@ -439,6 +446,7 @@ export default class FieldScene extends Phaser.Scene {
   }
 
   onPicked(group) {
+    PlayLog.log('pick', { group });
     Sound.sfx(this, 'pickup');
     if (this.pickups.allPicked(group)) this.bubble('me', group === 'bread' ? '(다 주웠다)' : '(주웠다)');
   }

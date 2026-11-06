@@ -6,6 +6,7 @@
 import { WorldMemory } from '../core/world/WorldMemory.js';
 import { ScriptRunner } from '../core/script/ScriptRunner.js';
 import { characters } from '../../content/characters/index.js';
+import { PlayLog } from '../core/playtest/PlayLog.js';
 
 export class Cutscene {
   constructor(field, script, ctx) {
@@ -28,6 +29,7 @@ export class Cutscene {
     if (!this.walking) this.field.setFrozen(true);
     const ui = this.field.ui;
     this.runner.start(label);
+    PlayLog.log('scene', { label });
     for (;;) {
       // 장면이 다시 시작돼 새 컷신이 생겼으면 이 컷신은 조용히 멈춘다 (지난 페이즈의 대사가 새 페이즈에 새지 않게)
       if (this.field.cutscene !== this) return;
@@ -43,6 +45,7 @@ export class Cutscene {
         const i = await ui.choice.choose(node.options);
         WorldMemory.setFlag(`ask.${node.ask}`);
         WorldMemory.setFlag(`ask.${node.ask}.${i}`);
+        PlayLog.log('ask', { id: node.ask, pick: i });
       } else if (node.bubble) {
         this.field.bubble(node.bubble.who, node.bubble.text);
       } else if (node.fx) {
@@ -71,6 +74,7 @@ export class Cutscene {
     if (this.field.cutscene !== this) return;
     ui.closeDialog();
     await ui.cg.hide();
+    PlayLog.log('scene.end', { label });
     this.busy = false;
     this.walking = false;
     this.field.setFrozen(false);

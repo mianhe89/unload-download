@@ -20,6 +20,7 @@ import { platform } from '../../platform/index.js';
 import { chapters } from '../../../content/chapters/index.js';
 import { Sound } from '../../core/audio/Sound.js';
 import { skinOf } from '../../life/life.js';
+import { PlayLog } from '../../core/playtest/PlayLog.js';
 
 const px = (t) => t * TILE + TILE / 2;
 
@@ -29,6 +30,7 @@ export default class TitleScene extends Phaser.Scene {
   create() {
     const world = WorldMemory.world;
     const run = WorldMemory.run;
+    PlayLog.log('title', { loads: world.loads, erased: world.erased.map((e) => e.id) });
     const setup = (this.setup = titleSetup({
       started: Boolean(run), chapter: run?.chapter, phase: run?.phase,
       erased: world.erased.map((e) => e.id), loads: world.loads,

@@ -3,6 +3,7 @@ import 'galmuri/dist/galmuri.css';
 import { VIEW, FONT, FONT_TALK } from './config/game.js';
 import { platform } from './platform/index.js';
 import { SaveRepository } from './core/save/SaveRepository.js';
+import { PlayLog } from './core/playtest/PlayLog.js';
 import { mountSoundButton } from './ui/SoundButton.js';
 import BootScene from './scenes/BootScene.js';
 import TitleScene from './scenes/title/TitleScene.js';
@@ -14,6 +15,9 @@ import ActionScene from './scenes/battle/ActionScene.js';
 async function start() {
   // 세이브를 먼저 읽고(나중에 원격 DB여도 같은 흐름), 픽셀 폰트가 준비된 뒤 게임을 연다
   await SaveRepository.init();
+  // 플레이테스트 기록 (?playtest로 켠 브라우저에서만). 창을 닫을 때 마지막 자리를 남긴다
+  PlayLog.init();
+  addEventListener('pagehide', () => PlayLog.log('quit'));
   try { await Promise.all([document.fonts.load(`12px ${FONT}`), document.fonts.load(`bold 12px ${FONT}`), document.fonts.load(`15px ${FONT_TALK}`)]); } catch { /* 폰트 실패 시 기본 글꼴 */ }
   // 에셋 목록 (npm run assets가 만든다)
   const manifest = await fetch('assets/gen/manifest.json').then((r) => {

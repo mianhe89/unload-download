@@ -3,6 +3,7 @@
 // 그 사람에게 걸린 이야기(퀘스트·이벤트·처음 듣는 대화)가 먼저고, 가게는 그다음이다(FieldScene.talkTo).
 import { SHOPS } from '../../../content/shop/shops.js';
 import { isOpen } from '../../shop/shop.js';
+import { PlayLog } from '../../core/playtest/PlayLog.js';
 
 export class Shops {
   constructor(scene) {
@@ -21,6 +22,7 @@ export class Shops {
     const sc = this.scene, shop = SHOPS[id];
     const minute = sc.clock?.running ? sc.clock.minute : null;
     if (!isOpen(shop, minute)) { sc.bubble(npcId, shop.closed); return true; }
+    PlayLog.log('shop', { id });
     sc.ui.shop.show(id, { day: sc.clock?.day ?? 1, passes: (when) => sc.world().passes(when) });
     return true;
   }

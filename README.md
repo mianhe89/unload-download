@@ -13,6 +13,7 @@
 | [docs/스토리.md](docs/스토리.md) | 무슨 일이 어떤 순서로 일어나는가 — 막·날짜별 줄거리, 퀘스트, 인물 나이, 라이벌 |
 | [docs/구현.md](docs/구현.md) | 어떻게 만들었는가 — 구조, 규칙, 콘텐츠 추가 방법, 저장/확장 |
 | [docs/아트디렉션.md](docs/아트디렉션.md) | 그림 규칙 — 픽셀·일러스트·SD 세 겹, 캐릭터 시트, 타이틀 |
+| [docs/플레이테스트.md](docs/플레이테스트.md) | 남에게 시켜 보는 법 — 진행, 묻는 것, 기록 읽기, 프롤로그 측정 |
 | [docs/일러스트_프롬프트.md](docs/일러스트_프롬프트.md) | 캐릭터 일러스트를 Firefly로 뽑을 때 쓰는 프롬프트 |
 | [CREDITS.md](CREDITS.md) | 외부 그림·소리·글꼴 출처와 규약 |
 
@@ -55,6 +56,8 @@ EXE 빌드(Windows)는 [Rust](https://rustup.rs)와 Microsoft C++ Build Tools가
 npm run check      # 콘텐츠 검증 + 단위 테스트 + 빌드 (커밋 전에)
 npm run test:e2e   # 실제 게임을 헤드리스 브라우저로 완주 (처음 한 번: npx playwright install chromium)
 ```
+
+플레이테스트: 주소에 `?playtest`를 붙여 열면 그 브라우저에 플레이 기록이 남는다(ESC → 플레이 기록 저장). `node tools/playlog-report.mjs 파일.json`으로 읽는다. 자세한 건 [docs/플레이테스트.md](docs/플레이테스트.md).
 
 GitHub에 푸시하면 같은 검사가 자동으로 돈다(Actions 탭). 자세한 건 [docs/구현.md](docs/구현.md#테스트).
 

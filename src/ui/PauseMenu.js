@@ -1,9 +1,11 @@
 // ESC 메뉴: 옵션 / 처음으로 가기. 열려 있는 동안 필드는 멈춘다.
 // 다른 창(가방·수첩·상태)이 열려 있거나 대화 중이면 ESC는 그쪽이 쓴다 — UIScene이 가장 먼저 이 판단을 한다.
 //   옵션: 소리 켜기/끄기, 전체 화면
+//   플레이 기록 저장: ?playtest로 켠 브라우저에서만 보인다(core/playtest/PlayLog.js)
 //   처음으로 가기: 진행을 저장하고 타이틀로 (한 번 더 눌러 확인). 타이틀에서 CONTINUE는 로드다 — 네다섯 번에 한 번 누군가 지워진다
 import { COLORS, frame, text, scaleOf, titleBand } from './kit.js';
 import { Sound } from '../core/audio/Sound.js';
+import { PlayLog } from '../core/playtest/PlayLog.js';
 
 export class PauseMenu {
   constructor(scene) {
@@ -43,6 +45,8 @@ export class PauseMenu {
     }
     return [
       { label: '옵션', act: () => { this.page = 'options'; this.pick = 0; this.render(); } },
+      // 플레이테스트 기록이 켜진 브라우저에서만: 기록을 파일로 내려받는다
+      ...(PlayLog.enabled ? [{ label: '플레이 기록 저장', act: () => PlayLog.download() }] : []),
       { label: this.confirm ? '한 번 더 누르면 처음으로' : '처음으로 가기', act: () => this.toTitle() },
     ];
   }

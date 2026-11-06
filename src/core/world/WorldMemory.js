@@ -10,6 +10,7 @@ import { freshRun } from '../save/SaveSchema.js';
 import { chapters } from '../../../content/chapters/index.js';
 import { GlobalWorld } from './GlobalWorld.js';
 import { ERASE_ORDER, HEROINE_ORDER, HEROINES_FROM } from '../../../content/characters/index.js';
+import { PlayLog } from '../playtest/PlayLog.js';
 
 // 지워짐 사이의 로드 수: 4, 5, 4, 5 …
 export const ERASE_GAPS = [4, 5];
@@ -27,6 +28,7 @@ export const WorldMemory = {
   // RESET & START
   startNew() {
     SaveRepository.update((d) => { d.run = freshRun('prologue', chapters.prologue.firstPhase); });
+    PlayLog.log('reset');
     return this.run;
   },
 
@@ -112,6 +114,7 @@ export const WorldMemory = {
       if (victim) d.world.erased.push({ id: victim, atLoad: d.world.loads, at: Date.now() });
     });
     GlobalWorld.reportLoad({ victim });
+    PlayLog.log('load', { loads: this.world.loads, victim: victim ?? undefined });
     return { run: this.run, victim };
   },
 
@@ -129,3 +132,4 @@ function pickVictim(d) {
 
 // 개발용: 브라우저 콘솔에서 await __ud.wipeAll() 후 새로고침
 if (typeof window !== 'undefined') window.__ud = WorldMemory;
+if (typeof window !== 'undefined') window.__ud.playlog = () => PlayLog.download();

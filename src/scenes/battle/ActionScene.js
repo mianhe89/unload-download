@@ -24,6 +24,7 @@ import { worldDate, worldNow } from '../../core/util/worldTime.js';
 import { BattleArena } from './BattleArena.js';
 import { BattleHud } from './BattleHud.js';
 import { BattleFx } from './BattleFx.js';
+import { PlayLog } from '../../core/playtest/PlayLog.js';
 
 export default class ActionScene extends Phaser.Scene {
   constructor() { super('Action'); }
@@ -51,6 +52,7 @@ export default class ActionScene extends Phaser.Scene {
     this.engine = createAction({ enemies: this.data0.enemies ?? ['slime'], equip, bag: farm.items, quick: this.quick, seed: (this.data0.seed ?? 1) * 7 + 3, mods });
     const st = this.engine.state;
     this.bossId = (this.data0.enemies ?? []).find((id) => FOES[id]?.boss) ?? null;
+    if (!this.data0.seedRetry) PlayLog.log('battle', { foes: this.data0.enemies, boss: this.bossId ?? undefined });
 
     // 싸움터: 화면에 맞춰
     const Z = (this.Z = Math.min((W - 40 * s) / ARENA.w, (H - 130 * s) / ARENA.h));
@@ -302,6 +304,7 @@ export default class ActionScene extends Phaser.Scene {
   finish(result) {
     if (this.leaving || this.finished) return;
     this.finished = true;
+    PlayLog.log('battle.end', { result });
     const st = this.engine.state;
     st.shots.length = 0; st.tells.length = 0; // 끝난 싸움에 떠 있는 탄·예고는 걷는다
     // 쓴 소모품은 가방에서 빠지고, 싸움의 대가로 칼로리와 피로
@@ -402,10 +405,11 @@ export default class ActionScene extends Phaser.Scene {
   retry() {
     if (this.leaving) return;
     this.leaving = true;
+    PlayLog.log('battle.retry');
     const { victim } = WorldMemory.load();
     Sound.sfx(this, 'spirit', { detune: -1200 });
     this.cameras.main.flash(500, 230, 225, 240);
-    this.time.delayedCall(550, () => this.scene.restart({ ...this.data0, seed: (this.data0.seed ?? 1) + WorldMemory.world.loads, victim }));
+    this.time.delayedCall(550, () => this.scene.restart({ ...this.data0, seed: (this.data0.seed ?? 1) + WorldMemory.world.loads, victim, seedRetry: true }));
   }
 
   leave(result) {

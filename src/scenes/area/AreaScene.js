@@ -5,6 +5,7 @@ import { GRADE_RARITY } from '../../../content/items/items.js';
 import Phaser from 'phaser';
 import { ZOOM, TALK_RANGE } from '../../config/game.js';
 import { WorldMemory } from '../../core/world/WorldMemory.js';
+import { PlayLog } from '../../core/playtest/PlayLog.js';
 import { season } from '../../core/util/daily.js';
 import { HUBS, BIOMES, cellKey, biomeAt } from '../../../content/world/world.js';
 import { OBJECTS } from '../../../content/art/pack.js';
@@ -59,6 +60,7 @@ export default class AreaScene extends Phaser.Scene {
     if (!this.scene.isActive('UI')) this.scene.launch('UI');
     this.ui = this.scene.get('UI');
     WorldMemory.setWhere({ layer: this.layerId, at: this.at });
+    PlayLog.log('area', { at: `${this.layerId}:${this.at}` });
     const farm0 = WorldMemory.run.farm ?? freshFarm();
     const area = (this.area = buildArea(this.layerId, this.at, { season: season(worldDate(WorldMemory.run)), lowTide: lowTide(worldDate(WorldMemory.run)), felled: farm0.felled[cellKey(this.layerId, this.at)] ?? [], elfGone: elfVillageGone(farm0) }));
     this.key = area.key;
