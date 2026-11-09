@@ -17,11 +17,11 @@ export default {
   bubbles: {"festival": ["불 너무 키우지 마라!", "지루한 게 최고야."], "morning": ["이상 무.", "…이 얘기 아까 했나?"]},
   // 하루 일과. 초소 근무, 오전·오후 마을 한 바퀴, 밤 순찰 뒤 초소에서 잔다
   schedule: [
-    { from: '06:00', at: 'post', face: 'down', say: ['이상 무. 오늘도.'] },
+    { from: '06:00', at: 'postGate', face: 'down', say: ['이상 무. 오늘도.'] },
     { from: '10:00', at: 'plaza', mode: 'wander', radius: 3, say: ['순찰 중이다. 별일 없지?'] },
-    { from: '12:00', at: 'post', face: 'down' },
+    { from: '12:00', at: 'postGate', face: 'down' },
     { from: '16:00', at: 'well', mode: 'wander', radius: 2 },
-    { from: '18:00', at: 'post', face: 'down' },
+    { from: '18:00', at: 'postGate', face: 'down' },
     { from: '22:00', at: 'plaza', mode: 'wander', radius: 4, say: ['밤 순찰이다. 일찍 들어가라.'] },
     { from: '23:00', home: true },
   ],

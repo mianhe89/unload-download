@@ -160,7 +160,9 @@ export const spots = {
   smithyDoor: { x: 36, y: 15 },
   anvil: { x: 39, y: 16 },
   towerDoor: { x: 23.5, y: 10 },
-  post: { x: 36, y: 27 },
+  post: { x: 36, y: 27 },      // 초소 문 앞 (셀레나)
+  postGate: { x: 34, y: 28 },  // 초소 앞 왼쪽 (톰이 길을 보고 선다)
+  postYard: { x: 38, y: 28 },  // 초소 앞 오른쪽 (레온)
   well: { x: 10, y: 28 },
   playerHome: { x: 16, y: 28 },
   wheatField: { x: 50, y: 9 },

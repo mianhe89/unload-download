@@ -19,7 +19,7 @@ export default {
   // 하루 일과. 아침 광장 산책, 점심엔 빵집, 오후엔 꽃밭에서 리네와 수다, 저녁에 광장, 밤엔 미아네 집
   schedule: [
     { from: '07:30', at: 'plaza', mode: 'wander', radius: 3, say: ['좋은 아침! 오늘 뭐 해?'] },
-    { from: '11:30', at: 'bakeryStall', task: '(꿀빵을 하나 산다)' },
+    { from: '11:30', at: [16, 17], face: 'up', task: '(꿀빵을 하나 산다)' },
     { from: '13:00', at: 'flowerBed', mode: 'wander', radius: 1, say: ['리네 언니네 꽃, 오늘 예쁘다.'] },
     { from: '17:00', at: 'plaza', mode: 'wander', radius: 2 },
     { from: '20:00', home: true },

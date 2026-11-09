@@ -22,10 +22,10 @@ export default {
   // 2부: 소집으로 왕도에 가는 길에 함께 떠난다
   away: { ifFlag: 'ch4.departed' },
   schedule: [
-    { from: '06:30', at: 'post', face: 'down', say: ['점호다. …아직 아무도 안 나왔군.'], when: { ifFlag: 'leon.arrived' } },
+    { from: '06:30', at: 'postYard', face: 'down', say: ['점호다. …아직 아무도 안 나왔군.'], when: { ifFlag: 'leon.arrived' } },
     { from: '10:00', at: 'plaza', mode: 'wander', radius: 3, say: ['순찰 중이다. 길을 비켜라.'], when: { ifFlag: 'leon.arrived' } },
     { from: '13:00', at: 'well', mode: 'wander', radius: 2, say: ['이 마을에서 사라진 사람을 아나? …모른다라. 다들 그렇게 말하더군.'], when: { ifFlag: 'leon.arrived' } },
-    { from: '16:00', at: 'post', face: 'down', when: { ifFlag: 'leon.arrived' } },
+    { from: '16:00', at: 'postYard', face: 'down', when: { ifFlag: 'leon.arrived' } },
     { from: '20:00', at: [40, 27], face: 'left', task: '(혼자 검을 휘두른다)', when: { ifFlag: 'leon.arrived' } },
     { from: '20:05', at: [40, 27], face: 'left', when: { ifFlag: 'leon.arrived' } },
     { from: '22:00', home: true, when: { ifFlag: 'leon.arrived' } },

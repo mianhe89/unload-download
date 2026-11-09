@@ -19,9 +19,9 @@ export default {
   // 2부: 소집으로 왕도에 가는 길에 함께 떠난다
   away: { ifFlag: 'ch4.departed' },
   schedule: [
-    { from: '06:00', at: 'post', face: 'up', say: ['정렬. …아, 너 혼자구나.'] },
+    { from: '06:00', at: 'post', face: 'down', say: ['정렬. …아, 너 혼자구나.'] },
     { from: '14:00', at: 'plaza', mode: 'wander', radius: 2, say: ['오후 순찰이다.'] },
-    { from: '15:30', at: 'post', face: 'up' },
+    { from: '15:30', at: 'post', face: 'down' },
     { from: '22:30', at: 'post', task: '(명부를 덮고 초소 불을 낮춘다)' },
     { from: '23:00', home: true },
   ],

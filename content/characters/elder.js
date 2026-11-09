@@ -20,7 +20,7 @@ export default {
   schedule: [
     { from: '07:00', at: 'elderDoor', face: 'down', say: ['아침 바람이 차구먼.'] },
     { from: '10:00', at: 'plaza', mode: 'wander', radius: 2 },
-    { from: '15:00', at: 'shrine', face: 'up', say: ['…'] },
+    { from: '15:00', at: [21, 8], face: 'up', say: ['…'] },
     { from: '19:00', home: true },
   ],
   remnant: { prop: 'bench' },
