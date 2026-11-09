@@ -24,7 +24,7 @@ export const PRICES = {
   // 전투에 쓰는 것
   bandage: 4, herb: 7, antidote: 5, ointment: 8, potion: 45,
   // 장비
-  leatherBoots: 30, leatherVest: 48, ironSword: 55, dwarfBlade: 160, frostCloak: 120, crystalCharm: 110,
+  leatherBoots: 30, leatherVest: 48, ironSword: 55, dwarfBlade: 160, frostCloak: 120, crystalCharm: 110, furHat: 26, dwarfHelm: 44,
   wanderCoat: 60, orcGloves: 40,
   // 재료
   wood: 3, stone: 3,
@@ -70,7 +70,7 @@ export const SHOPS = {
     name: '브로크의 대장간', keeper: 'brok', map: 'dwarf', hours: ['06:00', '21:00'],
     greet: ['쇠를 보러 왔나. 만지는 건 공짜다.', '[mood=neutral]소집용 검을 벼리느라 손이 모자라. 그래도 [y]하나쯤[/y]은 내주지.'],
     closed: '불을 껐다. 아침에 다시 지핀다.',
-    stock: [{ item: 'ironSword', n: 1 }, { item: 'dwarfBlade', n: 1 }, { item: 'leatherBoots', n: 1 }, { item: 'bandage' }],
+    stock: [{ item: 'ironSword', n: 1 }, { item: 'dwarfBlade', n: 1 }, { item: 'leatherBoots', n: 1 }, { item: 'dwarfHelm', n: 1 }, { item: 'bandage' }],
     buys: ['gear', 'material'],
   },
   // 항구 넬의 생선 가게
@@ -86,7 +86,7 @@ export const SHOPS = {
     name: '서리 마을 여관', keeper: 'gord', map: 'frost', hours: ['06:00', '23:00'],
     greet: ['파이 막 구웠다! 오크 막아 주는 사람한텐 [y]값을 덜[/y] 받고 싶은데… 장사는 장사라.', '털 망토? 우리 마을 겨울을 나 본 사람은 하나씩 걸치지.'],
     closed: '오늘은 닫았다. 국은 내일 끓이마.',
-    stock: [{ item: 'pie' }, { item: 'jerky' }, { item: 'frostCloak', n: 1 }, { item: 'ointment' }],
+    stock: [{ item: 'pie' }, { item: 'jerky' }, { item: 'frostCloak', n: 1 }, { item: 'furHat', n: 1 }, { item: 'ointment' }],
     buys: ['food', 'material'],
   },
   // 아스테라 키라의 물약 가게

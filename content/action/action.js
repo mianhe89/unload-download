@@ -49,7 +49,8 @@ export const STARTER_KIT = { bandage: 5, herb: 3, potion: 1, antidote: 2, ointme
 //                     | backpack 배낭 | offhand 보조장비 | weapon 무기(1·2칸, 2는 예비 — 바꿔 들 수 있다)
 //   mods: 스킬을 바꾼다 — { skill, ...덮어쓸 값 } (form: 이름·모양까지 바꾸는 변형)
 //   set: 세트 이름
-//   look: 주인공 도트에 입힐 색 (장비 외형) — body: [밝은 색, 어두운 색] 옷 두 톤을 바꾼다, blade: 칼날 색(액션 전투에서 보인다)
+//   look: 주인공 도트에 입힐 색 (장비 외형) — body: [밝은 색, 어두운 색] 옷 두 톤을 바꾼다, head: [밝은, 어두운, 테두리] 머리 두 톤을 투구·모자 색으로(테두리는 이마 위 한 줄),
+//         blade: 칼날 색(액션 전투에서 보인다)
 export const EQUIPMENT = {
   woodSword:   { name: '목검', slot: 'weapon', rarity: 'common', atk: 0, desc: '허수아비를 치던 목검.' },
   knightBlade: { name: '기사단 장검', slot: 'weapon', rarity: 'rare', atk: 4, set: 'knight', desc: '셀레나가 쓰던 것과 같은 규격.', look: { blade: 'c8d0e0' } },
@@ -65,7 +66,9 @@ export const EQUIPMENT = {
     desc: '막기가 탄환·원거리 공격도 막고 되받아친다.',
   },
   wanderCoat:  { name: '나그네 외투', slot: 'armor', rarity: 'uncommon', def: 0.05, desc: '받는 피해 -5%. 눈길에서 얻은 두꺼운 외투.', look: { body: ['b89a6a', '6a5236'] } },
-  oldHelm:     { name: '빈 기사의 투구', slot: 'head', rarity: 'rare', def: 0.06, desc: '받는 피해 -6%. 길 잃은 기사의 투구. 안쪽에 영주 기사단의 옛 문장이 있다.' },
+  oldHelm:     { name: '빈 기사의 투구', slot: 'head', rarity: 'rare', def: 0.06, desc: '받는 피해 -6%. 길 잃은 기사의 투구. 안쪽에 영주 기사단의 옛 문장이 있다.', look: { head: ['c4cad2', '6a7280', '2e343c'] } },
+  furHat:      { name: '털모자', slot: 'head', rarity: 'uncommon', def: 0.03, desc: '받는 피해 -3%. 서리 마을 여관에서 파는 양털 모자. 귀까지 덮는다.', look: { head: ['ece4d4', 'a8987e', 'a83a3a'] } },
+  dwarfHelm:   { name: '드워프 철모', slot: 'head', rarity: 'uncommon', def: 0.05, desc: '받는 피해 -5%. 갱도에서 쓰는 둥근 철모. 머리 위로 떨어지는 돌을 막는다.', look: { head: ['b8904e', '7a5a2c', '3a2a18'] } },
   // 가게에서 파는 것 (content/shop/shops.js)
   leatherBoots: { name: '가죽 신발', slot: 'boots', rarity: 'uncommon', def: 0.03, desc: '받는 피해 -3%. 그레타네 잡화점의 질긴 소가죽 신발. 밑창에 징이 박혀 있다.' },
   leatherVest: { name: '가죽 조끼', slot: 'armor', rarity: 'uncommon', def: 0.06, desc: '받는 피해 -6%. 두 겹으로 덧댄 사냥꾼용 조끼.', look: { body: ['9a6a3a', '5a3a1e'] } },

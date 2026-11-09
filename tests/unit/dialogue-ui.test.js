@@ -180,6 +180,25 @@ describe('의장: 성능과 따로 겉모습만', async () => {
   it('겉모습이 없는 장비(무기 등)는 의장이 안 된다', () => {
     expect(toggleLook({}, 'twinEdge')).toEqual({});
   });
+  it('투구·모자는 머리 색을 바꾸고, 갑옷 의장과 따로 입는다', async () => {
+    const { headPalette, lookId, HAIR } = await import('../../src/art/equipLook.js');
+    expect(headPalette({})).toBe(null);
+    expect(headPalette({ head: 'oldHelm' })[HAIR[0]]).toBe('c4cad2');
+    const look = toggleLook(toggleLook({}, 'wanderCoat'), 'furHat');
+    expect(look).toEqual({ armor: 'wanderCoat', head: 'furHat' });
+    expect(lookId({ head: 'oldHelm' }, look)).toBe('wanderCoat+furHat');
+    expect(lookId({}, {})).toBe('');
+  });
+  it('머리 색은 칸의 위쪽에만 — 같은 갈색인 허리띠·신발은 그대로', async () => {
+    const { recolorPixels, HAIR, HEAD_ROWS } = await import('../../src/art/equipLook.js');
+    const hex = (h) => [0, 2, 4].map((k) => Number.parseInt(h.slice(k, k + 2), 16));
+    // 가로 1, 세로 16(한 칸): 모든 줄이 머리 갈색
+    const data = new Uint8ClampedArray(16 * 4);
+    for (let y = 0; y < 16; y += 1) data.set([...hex(HAIR[0]), 255], y * 4);
+    recolorPixels(data, 1, null, { [HAIR[0]]: 'ffffff' }, 16);
+    expect([...data.slice(0, 3)]).toEqual([255, 255, 255]);
+    expect([...data.slice(HEAD_ROWS * 4, HEAD_ROWS * 4 + 3)]).toEqual(hex(HAIR[0]));
+  });
 });
 
 describe('가방의 장비 수치', async () => {

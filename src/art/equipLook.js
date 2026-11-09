@@ -1,4 +1,4 @@
-// 장비 → 주인공 도트 외형. 옷 두 톤(밝은·어두운)을 갑옷 색으로 바꾼 시트를 실행 중에 만든다.
+// 장비 → 주인공 도트 외형. 옷 두 톤(밝은·어두운)을 갑옷 색으로, 머리 두 톤을 투구·모자 색으로 바꾼 시트를 실행 중에 만든다.
 // 체형 도트(me@thin 등)와 겹쳐도 된다: 체형 시트를 바탕으로 색만 바꾼다.
 import { EQUIPMENT } from '../../content/action/action.js';
 import { characters } from '../../content/characters/index.js';
@@ -11,10 +11,16 @@ const WorldMemoryLook = () => WorldMemory.run?.look ?? {};
 // 주인공 옷 색 (content/characters/me.js의 재채색 결과: 밝은 셔츠, 어두운 셔츠)
 const ME = characters.me.sprite.recolor;
 export const SHIRT = [ME.e3f1f5, ME['548789']];
+// 머리 두 톤 (밝은·어두운). 같은 갈색이 허리띠·신발에도 있어서 칸의 위쪽(HEAD_ROWS줄)만 바꾼다
+export const HAIR = [ME.d14b34, ME['965340']];
+export const HEAD_ROWS = 12;
+export const SKIN = 'ef914f';   // 얼굴 (팩 원본 그대로) — 바로 위의 머리 줄이 투구 테두리가 된다
+const OUTLINE = '141b1b';
 
 // 순수: 장비 → { 원래색: 바꿀색 } (없으면 null)
 // 의장(look): 성능과 따로 겉모습만 정하는 칸. look.armor가 있으면 입은 갑옷 대신 그 옷 색으로 보인다
 export const shownArmor = (equip = {}, look = {}) => look?.armor ?? equip?.armor ?? null;
+export const shownHead = (equip = {}, look = {}) => look?.head ?? equip?.head ?? null;
 
 export function equipPalette(equip = {}, look = {}) {
   const shown = shownArmor(equip, look);
@@ -23,13 +29,59 @@ export function equipPalette(equip = {}, look = {}) {
   return { [SHIRT[0]]: armor[0], [SHIRT[1]]: armor[1] };
 }
 
+// 순수: 투구·모자 → 머리 색 { 원래색: 바꿀색 } (없으면 null). 칸의 위쪽 HEAD_ROWS줄에만 쓴다
+export function headPalette(equip = {}, look = {}) {
+  const shown = shownHead(equip, look);
+  const head = shown && EQUIPMENT[shown]?.look?.head;
+  if (!head) return null;
+  return { [HAIR[0]]: head[0], [HAIR[1]]: head[1] };
+}
+export const headRim = (equip = {}, look = {}) => EQUIPMENT[shownHead(equip, look)]?.look?.head?.[2] ?? null;
+
+// 순수: 겉모습 이름 (텍스처 키에 쓴다) — 바뀌는 것이 없으면 ''
+export function lookId(equip = {}, look = {}) {
+  const parts = [];
+  if (equipPalette(equip, look)) parts.push(shownArmor(equip, look));
+  if (headPalette(equip, look)) parts.push(shownHead(equip, look));
+  return parts.join('+');
+}
+
+// 순수: RGBA 바이트 배열(가로 w)에 색을 바꾼다. head는 칸(frame)마다 위쪽 rows줄에만
+//   rim: 얼굴 바로 위 머리 칸을 이 색으로 (투구 테두리·모자 띠). 머리 모양 그대로면 회색 머리처럼 보여서
+//   투구는 맨 윗줄의 머리카락 틈도 메워 둥근 꼭대기로 만든다
+export function recolorPixels(data, w, body, head, frame = CHAR.frame, rows = HEAD_ROWS, rim = null) {
+  const num = (h) => Number.parseInt(h, 16);
+  const toMap = (pal) => pal && Object.fromEntries(Object.entries(pal).map(([a, b]) => [num(a), num(b)]));
+  const B = toMap(body), H = toMap(head);
+  const px = (i) => (data[i + 3] ? (data[i] << 16) | (data[i + 1] << 8) | data[i + 2] : -1);
+  const set = (i, to) => { data[i] = to >> 16; data[i + 1] = (to >> 8) & 255; data[i + 2] = to & 255; data[i + 3] = 255; };
+  const src = Uint8ClampedArray.from(data);
+  const at = (x, y) => { const i = (y * w + x) * 4; return src[i + 3] ? (src[i] << 16) | (src[i + 1] << 8) | src[i + 2] : -1; };
+  const h = data.length / 4 / w;
+  for (let i = 0; i < data.length; i += 4) {
+    const x = (i / 4) % w, y = Math.floor(i / 4 / w);
+    const c = px(i);
+    const inHead = H && y % frame < rows;
+    if (c < 0) {
+      // 투구 꼭대기: 맨 윗줄(머리 첫 줄)에서 양옆이 외곽선인 빈칸을 외곽선으로
+      if (inHead && rim && x > 0 && x < w - 1 && y + 1 < h && at(x - 1, y) === num(OUTLINE) && at(x + 1, y) === num(OUTLINE) && at(x, y + 1) === num(OUTLINE)) set(i, num(OUTLINE));
+      continue;
+    }
+    let to;
+    if (inHead && H[c] !== undefined) to = (rim && y + 1 < h && (y + 1) % frame < rows && at(x, y + 1) === num(SKIN)) ? num(rim) : H[c];
+    else to = B?.[c];
+    if (to !== undefined) set(i, to);
+  }
+  return data;
+}
+
 export const bladeColor = (equip = {}) => EQUIPMENT[equip.weapon]?.look?.blade ?? 'b08a5a'; // 목검은 나무색
 
 // 실행 중: base 스킨에 장비 색을 입힌 텍스처·걷기 애니메이션을 만들고 그 키(char.<id>의 id)를 돌려준다
 export function equipSkin(scene, baseSkin, equip, look = WorldMemoryLook()) {
-  const pal = equipPalette(equip, look);
-  if (!pal) return baseSkin;
-  const id = `${baseSkin}+${shownArmor(equip, look)}`;
+  const name = lookId(equip, look);
+  if (!name) return baseSkin;
+  const id = `${baseSkin}+${name}`;
   const key = `char.${id}`;
   if (!scene.textures.exists(key)) {
     const src = scene.textures.get(`char.${baseSkin}`).getSourceImage();
@@ -38,13 +90,7 @@ export function equipSkin(scene, baseSkin, equip, look = WorldMemoryLook()) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(src, 0, 0);
     const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const map = Object.fromEntries(Object.entries(pal).map(([a, b]) => [Number.parseInt(a, 16), Number.parseInt(b, 16)]));
-    for (let i = 0; i < img.data.length; i += 4) {
-      if (!img.data[i + 3]) continue;
-      const c = (img.data[i] << 16) | (img.data[i + 1] << 8) | img.data[i + 2];
-      const to = map[c];
-      if (to !== undefined) { img.data[i] = to >> 16; img.data[i + 1] = (to >> 8) & 255; img.data[i + 2] = to & 255; }
-    }
+    recolorPixels(img.data, canvas.width, equipPalette(equip, look), headPalette(equip, look), CHAR.frame, HEAD_ROWS, headRim(equip, look));
     ctx.putImageData(img, 0, 0);
     const tex = scene.textures.addCanvas(key, canvas);
     const F = CHAR.frame, cols = Math.floor(canvas.width / F);

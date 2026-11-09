@@ -5,7 +5,13 @@ import { ITEMS, GIFT_LINES, GIFT_AGAIN } from '../../content/items.js';
 import { EQUIPMENT } from '../../content/action/action.js';
 
 // 겉모습(옷 색)이 있는 장비
-const LOOKS = new Set(Object.entries(EQUIPMENT).filter(([, e]) => e.look?.body).map(([id]) => id));
+// 의장 칸: 겉모습이 있는 장비 → 그 칸 (갑옷은 옷 색, 투구·모자는 머리 색)
+export const lookSlot = (id) => {
+  const e = EQUIPMENT[id];
+  if (e?.look?.body) return 'armor';
+  if (e?.look?.head) return 'head';
+  return null;
+};
 
 export const MAX_STACK = 9;
 export const freshBag = () => ({ items: {}, gifted: {} });
@@ -78,11 +84,12 @@ export function swapWeapons(equip, defaults) {
   return e;
 }
 
-// 의장 입기·벗기 (순수): 겉모습이 있는 장비(갑옷)만. 같은 걸 다시 고르면 의장을 벗는다(입은 장비대로 보인다)
+// 의장 입기·벗기 (순수): 겉모습이 있는 장비(갑옷·투구)만. 같은 걸 다시 고르면 의장을 벗는다(입은 장비대로 보인다)
 export function toggleLook(look, id) {
   const def = ITEMS[id];
-  if (!def || def.kind !== 'gear' || !LOOKS.has(id)) return look ?? {};
+  const slot = lookSlot(id);
+  if (!def || def.kind !== 'gear' || !slot) return look ?? {};
   const l = { ...(look ?? {}) };
-  if (l.armor === id) delete l.armor; else l.armor = id;
+  if (l[slot] === id) delete l[slot]; else l[slot] = id;
   return l;
 }
