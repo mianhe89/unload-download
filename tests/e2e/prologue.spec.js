@@ -60,7 +60,7 @@ test('프롤로그 완주 → CONTINUE하면 가장 아낀 마을 사람이 지�
   await teleport(page, 36, 16);           // 대장간
   await waitFlag(page, 'smithy.entered');
   await skipDialog(page);
-  await teleport(page, 39, 18);           // 모루 옆 자국을 살펴본다 → 모루를 만지고, 나팔
+  await teleport(page, 39, 17.3);         // 모루 옆 자국 바로 위에서 살펴본다 → 모루를 만지고, 나팔
   await page.keyboard.press('e');
   await waitFlag(page, 'smithy.seen');
   await skipDialog(page);

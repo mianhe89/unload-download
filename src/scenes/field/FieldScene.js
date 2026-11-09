@@ -41,6 +41,7 @@ import { Xray } from '../../field/systems/Xray.js';
 import { Garlands } from '../../field/systems/Garlands.js';
 import { Shops } from '../../field/systems/Shops.js';
 import { PlayTrace } from '../../field/systems/PlayTrace.js';
+import { Crowd } from '../../field/systems/Crowd.js';
 import { PlayLog } from '../../core/playtest/PlayLog.js';
 import { resolveGoal, hubOfMap } from '../../field/goals.js';
 import { worldNow } from '../../core/util/worldTime.js';
@@ -52,6 +53,7 @@ import { PHASE_MUSIC } from '../../../content/audio/audio.js';
 import { softFlash } from '../../core/fx/softFlash.js';
 
 const px = (t) => t * TILE + TILE / 2;
+const PERSON_FIRST = 0.6;
 
 export default class FieldScene extends Phaser.Scene {
   constructor() { super('Field'); }
@@ -121,6 +123,7 @@ export default class FieldScene extends Phaser.Scene {
     this.garlands = new Garlands(this);
     this.shops = new Shops(this); // 가게 주인에게 말을 걸면 가게 창
     this.trace = new PlayTrace(this); // 플레이테스트 기록 (켜져 있을 때만)
+    this.crowd = Crowd.fromScene(this); // 사람에 부딪히면 비껴 돌고, 밀면 비켜 준다
     this.lighting = new Lighting(this, {
       time: this.phase.time, lights: this.roomId ? this.mapDef.lights : this.phase.lights, erasedCount: WorldMemory.world.erased.length,
       spots: this.mapDef.spots, width: this.map.width, height: this.map.height, clock: this.clock.running,
@@ -191,8 +194,7 @@ export default class FieldScene extends Phaser.Scene {
     this.cooldown = Math.max(0, this.cooldown - dt);
     this.trace.update(dt, busy);
 
-    const blocked = (x, y) => this.map.isSolidPx(x, y) || this.hitsNpc(x, y);
-    this.player.update(dt, blocked);
+    this.crowd.movePlayer(dt);
     for (const npc of Object.values(this.npcs)) {
       // 걸으며 듣는 대사 중에는 마을도 계속 움직인다 (미아도 따라온다)
       npc.update(dt, { player: this.player, paused: busy && !this.cutscene.walking, blocked: (x, y) => this.map.isSolidPx(x, y) });
@@ -258,10 +260,6 @@ export default class FieldScene extends Phaser.Scene {
     };
   }
 
-  hitsNpc(x, y) {
-    return Object.values(this.npcs).some((n) => n.mode !== 'follow' && Math.abs(n.x - x) < 6 && Math.abs(n.y - y) < 4);
-  }
-
   // E: 가장 가까운 인물/물건에 말 걸기·살펴보기
   updateInteraction() {
     // 창(메뉴·가방·수첩)이 열려 주인공이 멈춰 있는 동안엔 E가 사람에게 가지 않는다
@@ -292,12 +290,15 @@ export default class FieldScene extends Phaser.Scene {
     return t;
   }
 
+  // 사람이 곁에 있으면 사람이 먼저다: 동물·물건은 그 사람보다 훨씬(PERSON_FIRST배) 가까워야 E를 가져간다
+  // (사람 앞에서 E를 눌렀는데 지나가던 고양이를 쓰다듬지 않게)
   pickInteractable() {
     let best = null, bestD = TALK_RANGE;
     for (const npc of Object.values(this.npcs)) {
       const d = this.player.distTo(npc.x, npc.y);
       if (d < bestD) { best = { npc, x: npc.x, y: npc.y }; bestD = d; }
     }
+    if (best) bestD *= PERSON_FIRST;
     const animal = this.animals?.nearest(this.player.x, this.player.y, bestD);
     if (animal) { best = { animal, x: animal.x, y: animal.y }; bestD = this.player.distTo(animal.x, animal.y); }
     for (const l of this.lifeSpots ?? []) {

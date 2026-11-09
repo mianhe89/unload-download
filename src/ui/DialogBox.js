@@ -62,7 +62,9 @@ export class DialogBox {
     this.box.add([bg, this.faceCard, this.face, this.faceEmote, this.plate, this.nameTag, this.text.container, this.more]);
     this.resolve = null;
     this.speaker = undefined;
-    scene.events.on('update', (t) => this.text.update(t));
+    const onUpdate = (t) => this.text.update(t);
+    scene.events.on('update', onUpdate);
+    scene.events.once('shutdown', () => scene.events.off('update', onUpdate)); // 다시 열 때 쌓이지 않게
 
     // 일러스트: 발끝은 화면 밖, 얼굴은 대화창 위
     this.figureX = width / 2 + w / 2 - 150 * s;

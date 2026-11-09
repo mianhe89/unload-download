@@ -51,7 +51,7 @@ export const phases = {
     events: [
       { id: 'prep.eda', trigger: { near: 'eda', r: 3 }, run: 'prep.eda' },
       // 에다의 심부름: 호르트에게 탄 빵을 받아다 준다 (호르트가 지워졌으면 이 심부름은 없다)
-      { id: 'prep.eda_bread', when: { ifFlag: 'eda.asked', unlessErased: 'hort' }, trigger: { near: 'hort', r: 3 }, run: 'prep.eda_bread' },
+      { id: 'prep.eda_bread', when: { ifFlag: 'eda.asked', unlessFlag: 'got.burnt', unlessErased: 'hort' }, trigger: { near: 'hort', r: 3 }, run: 'prep.eda_bread' },
       { id: 'prep.eda_thanks', when: { ifFlag: 'got.burnt' }, trigger: { near: 'eda', r: 2 }, run: 'prep.eda_thanks' },
       { id: 'prep.hort', when: { unlessErased: 'hort' }, trigger: { near: 'hort', r: 3 }, run: 'prep.hort' },
       { id: 'prep.tom', when: { unlessErased: 'tom' }, trigger: { near: 'tom', r: 3 }, run: 'prep.tom' },

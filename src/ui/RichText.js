@@ -116,11 +116,19 @@ export class RichText {
       this.typer = { speed, onChar, resolve, wait: 0, tick };
       this.finishTyping = () => { this.stopTyping(); this.reveal(this.glyphs.length); resolve(); };
       this.scene.events.on('update', tick);
+      // 장면이 닫혀도 update 구독은 남는다. 닫히는 순간 끊지 않으면, 장면을 다시 열었을 때
+      // 이미 지운 글자에 찍으려다 게임 전체가 멈춘다(타이틀이 검게 굳던 버그)
+      this.scene.events.once('shutdown', this.typer.stop = () => this.stopTyping());
       this.typingStep();
     });
   }
 
-  stopTyping() { if (this.typer) this.scene.events.off('update', this.typer.tick); this.typer = null; }
+  stopTyping() {
+    if (!this.typer) return;
+    this.scene.events.off('update', this.typer.tick);
+    this.scene.events.off('shutdown', this.typer.stop);
+    this.typer = null;
+  }
   skip() { this.finishTyping?.(); }
   get typing() { return Boolean(this.typer); }
 
