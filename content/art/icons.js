@@ -100,6 +100,12 @@ const ICONS = {
   frostCloak: { pal: { a: '#e8eef4', b: '#7a8aa0', c: '#b8c8d8', f: '#ffffff' }, rows: [
     '................', '.....ffffff.....', '....fffffffff...', '...bcaaaaaacb...', '...baaaaaaaab...', '..bcaaaaaaaacb..', '..baaaaaaaaaab..', '..bcaaaaaaaacb..',
     '.bcaaaaaaaaaacb.', '.baaaaaaaaaaaab.', '.bbccccccccccbb.', '..bbbbbbbbbbbb..', '................', '................', '................', '................'] },
+  travelCape: { pal: { a: '#a0784a', b: '#5e4228', c: '#c09a68', f: '#d8c08a' }, rows: [
+    '................', '.....ffffff.....', '....fffffffff...', '...bcaaaaaacb...', '...baaaaaaaab...', '..bcaaaaaaaacb..', '..baaaaaaaaaab..', '..bcaaaaaaaacb..',
+    '.bcaaaaaaaaaacb.', '.baaaaaaaaaaaab.', '.bbccccccccccbb.', '..bbbbbbbbbbbb..', '................', '................', '................', '................'] },
+  redCape: { pal: { a: '#c84a3a', b: '#7a2420', c: '#e0705a', f: '#3a2a18' }, rows: [
+    '................', '.....ffffff.....', '....fffffffff...', '...bcaaaaaacb...', '...baaaaaaaab...', '..bcaaaaaaaacb..', '..baaaaaaaaaab..', '..bcaaaaaaaacb..',
+    '.bcaaaaaaaaaacb.', '.baaaaaaaaaaaab.', '.bbccccccccccbb.', '..bbbbbbbbbbbb..', '................', '................', '................', '................'] },
   crystalCharm: { pal: { k: '#5a3a24', a: '#b088e0', b: '#7a50b8', w: '#f0e0ff' }, rows: [
     '................', '.......k........', '......k.k.......', '.....k...k......', '......kkk.......', '.......a........', '......awa.......', '.....awaab......',
     '.....aaaab......', '.....aaabb......', '......abb.......', '.......b........', '................', '................', '................', '................'] },

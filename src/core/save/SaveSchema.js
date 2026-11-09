@@ -30,7 +30,7 @@ import { freshShop } from '../../shop/shop.js';
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 12;
+export const VERSION = 13;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -92,6 +92,15 @@ const MIGRATIONS = {
   10: (s) => ({ ...s, version: 11, run: s.run ? { ...s.run, look: s.run.look ?? {} } : null }),
   // v12: 주머니와 가게
   11: (s) => ({ ...s, version: 12, run: s.run ? { ...s.run, shop: s.run.shop ?? freshShop() } : null }),
+  // v13: 망토 칸. 갑옷 칸에 있던 서리 망토(털 망토)는 망토 칸으로, 의장도 같이
+  12: (s) => {
+    if (!s.run) return { ...s, version: 13 };
+    const equip = s.run.equip ? { ...s.run.equip } : undefined;
+    if (equip) { if (equip.armor === 'frostCloak') { equip.armor = null; equip.cape = 'frostCloak'; } else equip.cape = equip.cape ?? null; }
+    const look = { ...(s.run.look ?? {}) };
+    if (look.armor === 'frostCloak') { delete look.armor; look.cape = 'frostCloak'; }
+    return { ...s, version: 13, run: { ...s.run, ...(equip ? { equip } : {}), look } };
+  },
 };
 
 export function migrate(raw) {

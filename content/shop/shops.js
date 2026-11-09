@@ -24,7 +24,7 @@ export const PRICES = {
   // 전투에 쓰는 것
   bandage: 4, herb: 7, antidote: 5, ointment: 8, potion: 45,
   // 장비
-  leatherBoots: 30, leatherVest: 48, ironSword: 55, dwarfBlade: 160, frostCloak: 120, crystalCharm: 110, furHat: 26, dwarfHelm: 44,
+  leatherBoots: 30, leatherVest: 48, ironSword: 55, dwarfBlade: 160, frostCloak: 120, crystalCharm: 110, furHat: 26, dwarfHelm: 44, travelCape: 38, redCape: 90,
   wanderCoat: 60, orcGloves: 40,
   // 재료
   wood: 3, stone: 3,
@@ -61,7 +61,7 @@ export const SHOPS = {
     closed: '조합 문은 닫았네. 내일 오게.',
     stock: [
       { item: 'potion', n: 2 }, { item: 'herb' }, { item: 'ointment' }, { item: 'jerky' },
-      { item: 'churu', n: 2 }, { item: 'wanderCoat', n: 1 },
+      { item: 'churu', n: 2 }, { item: 'wanderCoat', n: 1 }, { item: 'travelCape', n: 1 },
     ],
     buys: ['food', 'battle', 'gear', 'material'],
   },

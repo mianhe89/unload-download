@@ -5,11 +5,12 @@ import { ITEMS, GIFT_LINES, GIFT_AGAIN } from '../../content/items.js';
 import { EQUIPMENT } from '../../content/action/action.js';
 
 // 겉모습(옷 색)이 있는 장비
-// 의장 칸: 겉모습이 있는 장비 → 그 칸 (갑옷은 옷 색, 투구·모자는 머리 색)
+// 의장 칸: 겉모습이 있는 장비 → 그 칸 (갑옷은 옷 색, 투구·모자는 머리 색, 망토는 덧그린 자락)
 export const lookSlot = (id) => {
   const e = EQUIPMENT[id];
   if (e?.look?.body) return 'armor';
   if (e?.look?.head) return 'head';
+  if (e?.look?.cape) return 'cape';
   return null;
 };
 

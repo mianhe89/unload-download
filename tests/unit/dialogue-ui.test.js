@@ -222,3 +222,29 @@ describe('가방의 장비 수치', async () => {
     }
   });
 });
+
+describe('망토', () => {
+  it('뒷모습은 어깨 아래 옷을 망토 색으로, 옆모습은 등 뒤로 자락이 나온다', async () => {
+    const { drawCape, SHIRT, CAPE_TOP } = await import('../../src/art/equipLook.js');
+    const hex = (h) => [0, 2, 4].map((k) => Number.parseInt(h.slice(k, k + 2), 16));
+    // 한 칸 16×16 넷(아래·위·왼·오). 각 칸 CAPE_TOP+2 줄의 x=6..9를 셔츠로
+    const w = 64, data = new Uint8ClampedArray(w * 16 * 4);
+    const y = CAPE_TOP + 2;
+    for (let c = 0; c < 4; c += 1) for (let x = 6; x <= 9; x += 1) data.set([...hex(SHIRT[0]), 255], (y * w + c * 16 + x) * 4);
+    drawCape(data, w, ['ff0000', '880000']);
+    const px = (x) => [...data.slice((y * w + x) * 4, (y * w + x) * 4 + 4)];
+    expect(px(16 + 7)).toEqual([0x88, 0, 0, 255]);        // 뒷모습: 옷이 망토로
+    expect(px(32 + 10)[3]).toBe(255);                      // 왼쪽을 보면 오른쪽(등) 바깥으로 자락
+    expect(px(48 + 5)[3]).toBe(255);                       // 오른쪽을 보면 왼쪽 바깥으로
+    expect(px(32 + 5)[3]).toBe(0);                         // 얼굴 쪽엔 없다
+  });
+  it('망토는 의장 칸이 따로 있고, 예전 세이브의 서리 망토(갑옷 칸)는 망토 칸으로 옮긴다', async () => {
+    const { migrate } = await import('../../src/core/save/SaveSchema.js');
+    const { toggleLook } = await import('../../src/life/bag.js');
+    expect(toggleLook({}, 'redCape')).toEqual({ cape: 'redCape' });
+    const s = migrate({ version: 12, world: { loads: 0, erased: [] }, run: { equip: { weapon: 'woodSword', armor: 'frostCloak' }, look: { armor: 'frostCloak' } }, meta: {} });
+    expect(s.run.equip.armor).toBe(null);
+    expect(s.run.equip.cape).toBe('frostCloak');
+    expect(s.run.look).toEqual({ cape: 'frostCloak' });
+  });
+});

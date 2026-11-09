@@ -20,14 +20,14 @@ const TABS = [
   { id: 'all', label: '전체' }, { id: 'food', label: '먹을 것' }, { id: 'battle', label: '전투' },
   { id: 'gear', label: '장비' }, { id: 'material', label: '재료' }, { id: 'key', label: '소중한 것' },
 ];
-// 장비 칸: 왼쪽 줄(투구·목걸이·갑옷·장갑·신발), 오른쪽 줄(무기 1·무기 2·보조장비·배낭), 아래(악세사리 1·2)
+// 장비 칸: 왼쪽 줄(투구·목걸이·갑옷·장갑·신발), 오른쪽 줄(무기 1·무기 2·보조장비·배낭·망토), 아래(악세사리 1·2)
 const SLOTS = [
   { id: 'head', label: '투구', col: 0, row: 0 }, { id: 'necklace', label: '목걸이', col: 0, row: 1 }, { id: 'armor', label: '갑옷', col: 0, row: 2 },
   { id: 'gloves', label: '장갑', col: 0, row: 3 }, { id: 'boots', label: '신발', col: 0, row: 4 },
   { id: 'weapon', label: '무기 1', col: 2, row: 0 }, { id: 'weapon2', label: '무기 2', col: 2, row: 1 }, { id: 'offhand', label: '보조', col: 2, row: 2 },
-  { id: 'backpack', label: '배낭', col: 2, row: 3 }, { id: 'acc1', label: '악세 1', col: 1, row: 5, dx: -1 }, { id: 'acc2', label: '악세 2', col: 1, row: 5, dx: 1 },
+  { id: 'backpack', label: '배낭', col: 2, row: 3 }, { id: 'cape', label: '망토', col: 2, row: 4 }, { id: 'acc1', label: '악세 1', col: 1, row: 5, dx: -1 }, { id: 'acc2', label: '악세 2', col: 1, row: 5, dx: 1 },
 ];
-const KIND_SLOT = { head: '투구', armor: '갑옷', boots: '신발', gloves: '장갑', accessory: '악세사리', necklace: '목걸이', backpack: '배낭', offhand: '보조장비', weapon: '무기' };
+const KIND_SLOT = { head: '투구', armor: '갑옷', cape: '망토', boots: '신발', gloves: '장갑', accessory: '악세사리', necklace: '목걸이', backpack: '배낭', offhand: '보조장비', weapon: '무기' };
 const COLS = 7, ROWS = 4;
 const hex = (c) => Number.parseInt(String(c).replace('#', ''), 16);
 

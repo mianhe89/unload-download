@@ -45,11 +45,11 @@ export const QUICK_DEFAULT = ['bandage', 'herb', 'potion', 'antidote', 'ointment
 export const STARTER_KIT = { bandage: 5, herb: 3, potion: 1, antidote: 2, ointment: 1 };
 
 // ── 장비 ────────────────────────────────────────────────────
-//   slot(장비의 종류): head 투구 | armor 갑옷 | boots 신발 | gloves 장갑 | accessory 악세사리(1·2칸) | necklace 목걸이
+//   slot(장비의 종류): head 투구 | armor 갑옷 | cape 망토 | boots 신발 | gloves 장갑 | accessory 악세사리(1·2칸) | necklace 목걸이
 //                     | backpack 배낭 | offhand 보조장비 | weapon 무기(1·2칸, 2는 예비 — 바꿔 들 수 있다)
 //   mods: 스킬을 바꾼다 — { skill, ...덮어쓸 값 } (form: 이름·모양까지 바꾸는 변형)
 //   set: 세트 이름
-//   look: 주인공 도트에 입힐 색 (장비 외형) — body: [밝은 색, 어두운 색] 옷 두 톤을 바꾼다, head: [밝은, 어두운, 테두리] 머리 두 톤을 투구·모자 색으로(테두리는 이마 위 한 줄),
+//   look: 주인공 도트에 입힐 색 (장비 외형) — body: [밝은 색, 어두운 색] 옷 두 톤을 바꾼다, head: [밝은, 어두운, 테두리] 머리 두 톤을 투구·모자 색으로(테두리는 이마 위 한 줄), cape: [밝은, 어두운] 망토,
 //         blade: 칼날 색(액션 전투에서 보인다)
 export const EQUIPMENT = {
   woodSword:   { name: '목검', slot: 'weapon', rarity: 'common', atk: 0, desc: '허수아비를 치던 목검.' },
@@ -74,7 +74,9 @@ export const EQUIPMENT = {
   leatherVest: { name: '가죽 조끼', slot: 'armor', rarity: 'uncommon', def: 0.06, desc: '받는 피해 -6%. 두 겹으로 덧댄 사냥꾼용 조끼.', look: { body: ['9a6a3a', '5a3a1e'] } },
   ironSword: { name: '철검', slot: 'weapon', rarity: 'uncommon', atk: 2, desc: '드워프 대장간에서 막 벼린 철검. 목검보다 무겁고 정직하다.', look: { blade: 'a8b0bc' } },
   dwarfBlade: { name: '드워프 장검', slot: 'weapon', rarity: 'rare', atk: 5, desc: '브로크가 산의 불로 벼린 장검. 날에 룬이 희미하게 새겨져 있다.', look: { blade: 'e8c870' } },
-  frostCloak: { name: '서리 망토', slot: 'armor', rarity: 'rare', def: 0.09, desc: '받는 피해 -9%. 서리 마을 사람들이 겨울을 나는 털 망토.', look: { body: ['e8eef4', '7a8aa0'] } },
+  frostCloak: { name: '서리 망토', slot: 'cape', rarity: 'rare', def: 0.09, desc: '받는 피해 -9%. 서리 마을 사람들이 겨울을 나는 털 망토.', look: { cape: ['e8eef4', '8a9ab0'] } },
+  travelCape: { name: '여행자 망토', slot: 'cape', rarity: 'uncommon', def: 0.03, desc: '받는 피해 -3%. 로웬 상인 조합이 길 떠나는 사람에게 파는 갈색 모직 망토. 비를 막는다.', look: { cape: ['a0784a', '5e4228'] } },
+  redCape:    { name: '토르크의 붉은 망토', slot: 'cape', rarity: 'rare', atk: 2, def: 0.04, desc: '받는 피해 -4%. 토르크가 두르던 붉은 망토. 거칠게 짠 오크 털실이라 무겁고 따뜻하다.', look: { cape: ['c84a3a', '7a2420'] } },
   crystalCharm: { name: '수정 부적', slot: 'accessory', rarity: 'rare', def: 0.04, desc: '받는 피해 -4%. 아스테라의 마력 수정 조각. 쥐면 손이 서늘하다.' },
   orcGloves:   { name: '오크 가죽 장갑', slot: 'gloves', rarity: 'uncommon', atk: 2, desc: '거칠게 무두질한 가죽 장갑. 손에 힘이 잘 실린다.' },
   emberCharm:  { name: '불씨 부적', slot: 'accessory', rarity: 'uncommon', mods: [{ skill: 'atk', status: { id: 'burn', chance: 0.2 } }], desc: '기본 공격이 20% 확률로 화상을 입힌다.' },
@@ -86,12 +88,12 @@ export const SETS = {
   },
 };
 // 장비 칸: 장비 종류 → 들어갈 수 있는 칸
-export const EQUIP_SLOTS = ['head', 'armor', 'boots', 'gloves', 'acc1', 'acc2', 'necklace', 'backpack', 'offhand', 'weapon', 'weapon2'];
+export const EQUIP_SLOTS = ['head', 'armor', 'cape', 'boots', 'gloves', 'acc1', 'acc2', 'necklace', 'backpack', 'offhand', 'weapon', 'weapon2'];
 export const SLOT_FITS = {
-  head: ['head'], armor: ['armor'], boots: ['boots'], gloves: ['gloves'], accessory: ['acc1', 'acc2'],
+  head: ['head'], armor: ['armor'], cape: ['cape'], boots: ['boots'], gloves: ['gloves'], accessory: ['acc1', 'acc2'],
   necklace: ['necklace'], backpack: ['backpack'], offhand: ['offhand'], weapon: ['weapon', 'weapon2'],
 };
 export const ACTIVE_SLOTS = EQUIP_SLOTS.filter((k) => k !== 'weapon2'); // 무기 2는 예비: 바꿔 들기 전엔 효과가 없다
-export const EQUIP_DEFAULT = { weapon: 'woodSword', weapon2: null, armor: null, head: null, boots: null, gloves: null, acc1: null, acc2: null, necklace: null, backpack: null, offhand: null };
+export const EQUIP_DEFAULT = { weapon: 'woodSword', weapon2: null, armor: null, cape: null, head: null, boots: null, gloves: null, acc1: null, acc2: null, necklace: null, backpack: null, offhand: null };
 
 export const ARENA = { w: 384, h: 240 };

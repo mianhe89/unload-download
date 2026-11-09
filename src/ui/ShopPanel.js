@@ -294,4 +294,4 @@ export class ShopPanel {
   }
 }
 
-const KIND_SLOT_NAME = { head: '투구', armor: '갑옷', boots: '신발', gloves: '장갑', accessory: '악세사리', necklace: '목걸이', backpack: '배낭', offhand: '보조장비', weapon: '무기' };
+const KIND_SLOT_NAME = { head: '투구', armor: '갑옷', cape: '망토', boots: '신발', gloves: '장갑', accessory: '악세사리', necklace: '목걸이', backpack: '배낭', offhand: '보조장비', weapon: '무기' };
