@@ -58,6 +58,12 @@ export function recolorPixels(data, w, body, head, frame = CHAR.frame, rows = HE
   const src = Uint8ClampedArray.from(data);
   const at = (x, y) => { const i = (y * w + x) * 4; return src[i + 3] ? (src[i] << 16) | (src[i + 1] << 8) | src[i + 2] : -1; };
   const h = data.length / 4 / w;
+  // 눈 흰자는 밝은 셔츠와 같은 색이라, 옷 색을 바꾸면 눈까지 물든다. 상하좌우에 같은 옷 색이 없는 외딴 칸은 눈으로 보고 남긴다
+  const shirt = new Set(SHIRT.map(num));
+  const isEye = (x, y, c) => shirt.has(c) && ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+    const nx = x + dx, ny = y + dy;
+    return nx >= 0 && nx < w && ny >= 0 && ny < h && shirt.has(at(nx, ny));
+  });
   for (let i = 0; i < data.length; i += 4) {
     const x = (i / 4) % w, y = Math.floor(i / 4 / w);
     const c = px(i);
@@ -69,7 +75,7 @@ export function recolorPixels(data, w, body, head, frame = CHAR.frame, rows = HE
     }
     let to;
     if (inHead && H[c] !== undefined) to = (rim && y + 1 < h && (y + 1) % frame < rows && at(x, y + 1) === num(SKIN)) ? num(rim) : H[c];
-    else to = B?.[c];
+    else if (B?.[c] !== undefined && !isEye(x, y, c)) to = B[c];
     if (to !== undefined) set(i, to);
   }
   return data;

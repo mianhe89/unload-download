@@ -199,6 +199,17 @@ describe('의장: 성능과 따로 겉모습만', async () => {
     expect([...data.slice(0, 3)]).toEqual([255, 255, 255]);
     expect([...data.slice(HEAD_ROWS * 4, HEAD_ROWS * 4 + 3)]).toEqual(hex(HAIR[0]));
   });
+  it('갑옷 색은 셔츠만 — 같은 색인 눈 흰자(외딴 한 칸)는 물들지 않는다', async () => {
+    const { recolorPixels, SHIRT } = await import('../../src/art/equipLook.js');
+    const hex = (h) => [0, 2, 4].map((k) => Number.parseInt(h.slice(k, k + 2), 16));
+    // 가로 3, 세로 3: 윗줄 가운데 한 칸만 셔츠색(눈) / 아랫줄 셋은 이어진 셔츠
+    const data = new Uint8ClampedArray(9 * 4);
+    data.set([...hex(SHIRT[0]), 255], 1 * 4);
+    for (const i of [6, 7, 8]) data.set([...hex(SHIRT[0]), 255], i * 4);
+    recolorPixels(data, 3, { [SHIRT[0]]: '000000' }, null, 16);
+    expect([...data.slice(4, 7)]).toEqual(hex(SHIRT[0]));
+    expect([...data.slice(28, 31)]).toEqual([0, 0, 0]);
+  });
 });
 
 describe('가방의 장비 수치', async () => {

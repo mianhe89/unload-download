@@ -34,7 +34,9 @@ export class Quests {
 
   // 말 걸었을 때: 진행 중 단계가 그 사람과의 대화면 그걸, 아니면 그 사람이 주는 퀘스트를 제안. 처리했으면 true
   onTalk(npcId) {
-    if (this.check({ talk: npcId })) return true;
+    // 말을 건 것으로 넘어간 단계(done.talk)가 있을 때만 이 말 걸기를 쓴다. 마침 다른 단계가 같이 넘어갔다고 대화를 삼키지 않는다
+    this.check({ talk: npcId });
+    if (this.talked) return true;
     const offer = Object.values(QUESTS).find((d) => d.giver === npcId && this.available(d.id));
     if (!offer) return false;
     this.field.sayOnce(npcId, offer.offer ?? `${offer.title}… 부탁 좀 해도 될까?`).then(() => this.start(offer.id));
@@ -52,6 +54,7 @@ export class Quests {
   // 단계가 넘어갔으면 true. 한 번에 여러 단계가 맞으면(이어하기로 들어와 이미 지나온 단계) 연달아 넘긴다
   check(event) {
     let moved = false;
+    this.talked = false;
     for (const [id, def] of Object.entries(QUESTS)) {
       for (let guard = 0; guard < def.steps.length; guard += 1) {
         const q = WorldMemory.quest(id);
@@ -60,7 +63,7 @@ export class Quests {
         if (!step || !this.met(step.done, event)) break;
         this.advance(id);
         moved = true;
-        if (step.done.talk) break; // 대화 한 번은 한 단계만
+        if (step.done.talk) { this.talked = true; break; } // 대화 한 번은 한 단계만
       }
     }
     if (moved) this.field.refreshObjective?.();

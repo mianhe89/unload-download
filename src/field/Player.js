@@ -16,6 +16,14 @@ export class Player extends Actor {
     this.idleTime = 0;
     this.frozen = false;
     this.running = false;
+    // 짧게 톡 친 키: Phaser는 키를 떼는 순간 JustDown을 지워서, 한 프레임 안에 눌렀다 뗀 키(느린 기기·빠른 손)를 놓친다.
+    // 누른 것을 따로 적어 두고 그 프레임 안에 한 번 쓴다(멈춰 있는 동안 누른 것은 버린다)
+    this.taps = {};
+    for (const [name, list] of Object.entries(this.keys)) for (const key of list) key.on('down', () => { this.taps[name] = true; });
+    // 한 프레임이 끝나면 비운다: 그 프레임에 읽지 않은 누름(대사 넘기기 등)이 쌓였다가 뒤늦게 말을 걸지 않게
+    const clear = () => { this.taps = {}; };
+    scene.events.on('postupdate', clear);
+    scene.events.once('shutdown', () => scene.events.off('postupdate', clear));
     const lastTap = {};
     for (const dir of ['up', 'down', 'left', 'right']) {
       for (const key of this.keys[dir]) {
@@ -30,12 +38,17 @@ export class Player extends Actor {
 
   // 키보드와 터치(가상 조이스틱·E 버튼)를 함께 본다
   pressed(name) { return this.keys[name].some((k) => k.isDown) || Touch.pressed(name); }
-  justPressed(name) { return this.keys[name].some((k) => Phaser.Input.Keyboard.JustDown(k)) || (name === 'act' && Touch.takeAct()); }
+  justPressed(name) {
+    const tapped = Boolean(this.taps[name]);
+    delete this.taps[name];
+    const down = this.keys[name].map((k) => Phaser.Input.Keyboard.JustDown(k)).some(Boolean); // 둘 다 읽어 비운다
+    return tapped || down || (name === 'act' && Touch.takeAct());
+  }
 
   // 8방향 자유 이동. 누르는 대로 바로 꺾이되, 출발·멈춤은 아주 짧게 가속·감속해 미끄러지듯 자연스럽다.
   // 게임패드가 있으면 왼쪽 스틱으로 아날로그 이동(기울인 만큼 빠르게)
   update(dt, blocked) {
-    if (this.frozen) { this.running = false; this.vel = { x: 0, y: 0 }; this.move(0, 0, blocked); return; }
+    if (this.frozen) { this.taps = {}; this.running = false; this.vel = { x: 0, y: 0 }; this.move(0, 0, blocked); return; }
     let ix = 0, iy = 0;
     if (this.pressed('left')) ix -= 1;
     if (this.pressed('right')) ix += 1;

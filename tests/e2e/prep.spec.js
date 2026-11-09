@@ -11,7 +11,9 @@ test('에다를 먼저 거쳐야 하고, 그 뒤 E로 호르트를 도우면 목
   expect(await page.evaluate(() => window.__game.scene.getScene('UI').hud.objective.text)).toContain('에다');
   await page.evaluate(() => { window.__ud.setFlag('eda.asked'); window.__ud.setFlag('got.burnt'); window.__ud.setFlag('ev.prep.eda'); });
   // 이벤트 반경 밖(4칸)에서 다가가지 않고, 말 거는 거리까지만 붙여 세운 뒤 E
-  await page.evaluate(() => { const f = window.__game.scene.getScene('Field'); f.director.events.filter((e) => e.trigger.near === 'hort').forEach((e) => { e.trigger = { ...e.trigger, r: 0.5 }; }); const n = f.npcs.hort; f.player.sprite.x = n.x; f.player.sprite.y = n.y + 15; });
+  await page.evaluate(() => { const f = window.__game.scene.getScene('Field'); f.director.events.filter((e) => e.trigger.near === 'hort').forEach((e) => { e.trigger = { ...e.trigger, r: 0.5 }; }); const n = f.npcs.hort; f.player.sprite.x = n.x; f.player.sprite.y = n.y + 15; for (const o of Object.values(f.npcs)) if (o !== n && Math.hypot(o.x - n.x, o.y - n.y) < 64) { o.sprite.x += 160; } });
+  // 지나가던 마을 사람(일과)이 곁에 서면 E가 그 사람에게 간다 — 호르트가 가장 가까운지 확인하고 누른다
+  await page.waitForFunction(() => window.__game.scene.getScene('Field').nearestInteractable()?.npc?.id === 'hort');
   await page.waitForTimeout(200);
   await page.keyboard.press('e');
   await page.waitForFunction(() => window.__ud.run.flags['ev.prep.hort'], null, { timeout: 30_000 });

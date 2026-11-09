@@ -266,9 +266,11 @@ export default class FieldScene extends Phaser.Scene {
     if (this.player.frozen) { this.ui.hud.showPrompt(null); return; }
     const target = this.nearestInteractable();
     this.ui.hud.showPrompt(target ? this.worldToScreen(target.x, target.y - 20) : null);
+    // E는 매 프레임 읽어 비운다: 쿨다운 중에 누른 E가 쌓였다가 뒤늦게 말을 걸지 않게(대화를 닫은 E가 다시 말을 거는 것 포함)
+    const act = this.player.justPressed('act');
     // 습격 중이면 E는 먼저 곁의 몬스터에 맞서는 데 쓴다
-    if (this.raids.active && this.cooldown <= 0 && this.player.justPressed('act')) { if (this.raids.onAct()) { this.cooldown = 0.25; return; } }
-    if (!target || this.cooldown > 0 || !this.player.justPressed('act')) return;
+    if (this.raids.active && this.cooldown <= 0 && act) { if (this.raids.onAct()) { this.cooldown = 0.25; return; } }
+    if (!target || this.cooldown > 0 || !act) return;
     this.player.idleTime = 0;
     if (target.npc) this.talkTo(target.npc);
     else if (target.animal) { this.animals.poke(target.animal); this.cooldown = 0.3; }
@@ -460,6 +462,7 @@ export default class FieldScene extends Phaser.Scene {
   // ── 컷신이 부르는 것들 ─────────────────────────
   setFrozen(v) {
     this.player.frozen = v;
+    this.player.taps = {};
     if (!v) this.cooldown = 0.25;
   }
 
