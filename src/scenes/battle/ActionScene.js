@@ -25,6 +25,7 @@ import { worldDate, worldNow } from '../../core/util/worldTime.js';
 import { BattleArena } from './BattleArena.js';
 import { BattleHud } from './BattleHud.js';
 import { BattleFx } from './BattleFx.js';
+import { BattleAnim } from './BattleAnim.js';
 import { PlayLog } from '../../core/playtest/PlayLog.js';
 
 export default class ActionScene extends Phaser.Scene {
@@ -78,6 +79,7 @@ export default class ActionScene extends Phaser.Scene {
     this.player = this.add.sprite(st.p.x, st.p.y, this.textures.exists(ck) ? ck : '__DEFAULT').setOrigin(0.5, 0.75);
     this.guardG = this.add.graphics();
     this.world.add([this.pShadow, this.player, this.guardG, this.shotG, this.barG]);
+    this.anim = new BattleAnim(this, { player: this.player, blade: this.blade, bladeG: this.guardG, fx: this.fx });
     for (const f of st.foes) this.addFoe(f);
     this.arena.raise();
     this.dir = 'down';
@@ -109,7 +111,7 @@ export default class ActionScene extends Phaser.Scene {
     this.world.add([shadow, spr]);
     this.world.bringToTop(this.shotG); this.world.bringToTop(this.barG);
     this.arena?.raise();
-    this.sprites[f.uid] = { spr, shadow, lx: f.x, ly: f.y, face: 'down', base: spr.scaleX };
+    this.sprites[f.uid] = { spr, shadow, lx: f.x, ly: f.y, face: 'down', base: spr.scaleX, phase: (Object.keys(this.sprites).length * 1.7) % 6.28 };
   }
 
   bindInput() {
@@ -205,9 +207,10 @@ export default class ActionScene extends Phaser.Scene {
     for (const e of events) {
       if (e.type === 'skill') {
         fx.slash(e, { blade: this.blade, player: this.player });
+        this.anim.onSkill(e);
         Sound.sfx(this, e.key === 'r' ? 'step' : e.key === 'e' ? 'cancel' : 'skill', { volume: 0.3, rate: e.key === 'atk' ? [1, 1.08, 0.85][e.combo] : 1 });
       }
-      else if (e.type === 'dodge') { fx.dodge(e, this.player); Sound.sfx(this, 'step', { volume: 0.35, rate: 1.3 }); }
+      else if (e.type === 'dodge') { this.anim.onDodge(e); fx.dodge(e, this.player); Sound.sfx(this, 'step', { volume: 0.35, rate: 1.3 }); }
       else if (e.type === 'hurt' && e.to !== 'p') {
         const big = !e.dot && e.dmg >= 20;
         fx.num(e.x, e.y - 14, e.dmg, { color: e.dot ? '#ffb070' : big ? '#ffd75e' : '#ffffff', big });
@@ -217,18 +220,19 @@ export default class ActionScene extends Phaser.Scene {
           this.hitStop = big || third ? 0.07 : 0.04;
           if (third) this.cameras.main.shake(90, 0.004);
           fx.flash(v?.spr, this.foeOf(e.to)?.def.tint);
-          fx.squash(v?.spr);
+          this.anim.onFoeHurt(v);
+          this.bossHit(v, this.foeOf(e.to));
           fx.spark(e.x, e.y - 6, Math.atan2(st.p.y - e.y, st.p.x - e.x), big);
           if (big) this.cameras.main.shake(70, 0.003);
           this.hud.hit();
           Sound.sfx(this, 'hit', { volume: 0.4, rate: 0.9 + Math.random() * 0.2 });
         }
       }
-      else if (e.type === 'hurt' && e.to === 'p') { fx.num(e.x, e.y - 12, e.dmg, { color: '#ff6a6a', mine: true }); if (!e.dot) { this.cameras.main.shake(120, 0.005); fx.flash(this.player); Sound.sfx(this, 'heavy', { volume: 0.45 }); } }
+      else if (e.type === 'hurt' && e.to === 'p') { fx.num(e.x, e.y - 12, e.dmg, { color: '#ff6a6a', mine: true }); if (!e.dot) { this.cameras.main.shake(120, 0.005); fx.flash(this.player); this.anim.onHurt(e.dir !== undefined ? e.dir + Math.PI : Math.PI / 2); this.hitStop = Math.max(this.hitStop, 0.05); Sound.sfx(this, 'heavy', { volume: 0.45 }); } }
       else if (e.type === 'kill') this.killFx(e);
-      else if (e.type === 'spawn') { this.addFoe(this.foeOf(e.uid)); const v = this.sprites[e.uid]; fx.appear(v.spr, e.x, e.y); }
+      else if (e.type === 'spawn') { this.addFoe(this.foeOf(e.uid)); const v = this.sprites[e.uid]; v.born = this.time.now; fx.appear(v.spr, e.x, e.y); }
       else if (e.type === 'tell' && e.boss) { Sound.sfx(this, 'tell', { volume: 0.3 }); this.hud.message(e.name, '#ff9a9a'); }
-      else if (e.type === 'foeAttack' && e.boss && e.kind === 'sweep') this.cameras.main.shake(110, 0.004);
+      else if (e.type === 'foeAttack') { this.anim.onFoeAttack(this.sprites[e.uid], e); if (e.boss && e.kind === 'sweep') this.cameras.main.shake(110, 0.004); }
       else if (e.type === 'block' || e.type === 'parry') { fx.text(e.x, e.y - 16, e.type === 'parry' ? '완벽한 막기!' : '막았다', '#9ad0ff', e.type === 'parry' ? 1.3 : 1); fx.spark(e.x, e.y - 4, st.p.face + Math.PI, e.type === 'parry'); Sound.sfx(this, 'cancel', { volume: 0.5 }); if (e.type === 'parry') { this.cameras.main.flash(80, 160, 200, 255); this.hitStop = 0.08; } }
       else if (e.type === 'reflect') fx.text(e.x, e.y, '반사', '#ffe066');
       else if (e.type === 'resist') fx.text(e.x, e.y - 20, '버텼다', '#9ad0ff');
@@ -237,8 +241,16 @@ export default class ActionScene extends Phaser.Scene {
       else if (e.type === 'quick') this.hud.message(`${CONSUMABLES[e.id].name} (남은 ${e.left})`, RARITY[CONSUMABLES[e.id].rarity].glow);
       else if (e.type === 'quickFail') this.hud.message(e.why, '#ff9a9a');
       else if (e.type === 'regenCut') this.hud.message('맞아서 회복이 끊겼다', '#ffb0b0');
-      else if (e.type === 'win' || e.type === 'lose') this.time.delayedCall(500, () => this.finish(e.type));
+      else if (e.type === 'win' || e.type === 'lose') { if (e.type === 'lose') this.anim.onLose(); this.time.delayedCall(e.type === 'lose' ? 700 : 500, () => this.finish(e.type)); }
     }
+  }
+
+  // 큰 그림자(보스)는 맞으면 '맞음' 그림을 한 번 돌리고 다시 서 있는 그림으로
+  bossHit(v, f) {
+    if (!v || f?.def.art.mon !== 'GiantSpirit' || !this.anims.exists('mon.GiantSpiritHit')) return;
+    if (v.spr.anims.currentAnim?.key === 'mon.GiantSpiritHit' && v.spr.anims.isPlaying) return;
+    v.spr.play('mon.GiantSpiritHit');
+    v.spr.once('animationcomplete', () => { if (v.spr.active) v.spr.play('mon.GiantSpirit'); });
   }
 
   // 쓰러짐: 하얗게 번쩍이며 납작해지고, 그 색의 조각이 튄다. 보스는 크게, 느리게
@@ -260,18 +272,18 @@ export default class ActionScene extends Phaser.Scene {
 
   draw(dt = 0) {
     const st = this.engine.state, p = st.p;
-    // 주인공: 이동하면 걷기, 조준 쪽을 본다
+    // 주인공: 이동하면 걷기, 조준 쪽을 본다. 몸짓(베기·찌르기·구르기…)은 BattleAnim이 자세 그림과 칼을 그린다
     const a = p.face;
+    const pp = this.at(p);
+    const walkOk = this.anim.drawPlayer(p, pp, this.paused ? 0 : dt, this.time.now);
     const key = `char.${this.skin}.${this.dirOf(a)}`;
-    if (this.anims.exists(key)) {
+    if (walkOk && this.anims.exists(key)) {
       if (p.moving) { if (this.player.anims.currentAnim?.key !== key || !this.player.anims.isPlaying) this.player.play(key); } else { this.player.anims.stop(); this.player.setFrame(this.anims.get(key).frames[0].frame.name); }
     }
-    const pp = this.at(p);
-    // 맞은 직후엔 깜빡이고, 구르는 중엔 옅게 납작하다
+    // 맞은 직후엔 깜빡인다
     const blink = p.hurtT > 0 && Math.floor(this.time.now / 50) % 2 === 0;
-    const rolling = p.dash?.dodge;
-    this.player.setPosition(pp.x, pp.y).setAlpha(blink ? 0.25 : rolling ? 0.7 : 1).setScale(rolling ? 1.1 : 1, rolling ? 0.85 : 1);
-    this.pShadow.setPosition(pp.x, pp.y + 4);
+    this.player.setAlpha(blink ? 0.25 : p.dash?.dodge ? 0.8 : 1);
+    this.pShadow.setPosition(pp.x, pp.y + 4).setScale(p.dash?.dodge ? 0.8 : 1, 1);
     if (p.moving && !this.paused) this.fx.step(pp.x, pp.y, dt); // 발밑 먼지
     // 적: 위치, 인물 도트는 움직이는 쪽을 본다, 작은 체력 막대
     const bg = this.barG.clear();
@@ -279,23 +291,19 @@ export default class ActionScene extends Phaser.Scene {
       const v = this.sprites[f.uid];
       if (!v || f.hp <= 0) continue;
       const fp = this.at(f);
-      // 예고 중엔 힘을 모으듯 떨리고, 터지기 직전엔 붉게 번쩍인다(무엇이 칠지 몸으로도 보인다)
-      let jx = 0;
+      // 예고 중: 터지기 직전엔 붉게 번쩍인다(무엇이 칠지 몸으로도 보인다). 몸짓은 BattleAnim
       const tell = f.state === 'tell' && !f.charge ? st.tells.find((t) => t.uid === f.uid) : null;
       if (tell) {
         const k = 1 - tell.left / tell.total;
-        jx = Math.sin(this.time.now / 22) * (0.3 + k * 0.9);
         if (k > 0.75 && Math.floor(this.time.now / 45) % 2 === 0) v.spr.setTint(0xff5060).setTintMode(Phaser.TintModes.FILL); else this.baseTint(v.spr, f);
       } else if (v.tinted) this.baseTint(v.spr, f);
       v.tinted = Boolean(tell);
-      v.spr.setPosition(fp.x + jx, fp.y).setAlpha(f.status.stun ? 0.7 : 1);
-      v.shadow.setPosition(fp.x, fp.y + f.def.radius * 0.7);
-      if (f.def.art.char) {
-        const mv = Math.hypot(f.x - v.lx, f.y - v.ly) > 0.05;
-        const dir = this.dirOf(mv ? Math.atan2(f.y - v.ly, f.x - v.lx) : Math.atan2(p.y - f.y, p.x - f.x));
-        const k = `char.${f.def.art.char}.${dir}`;
-        if (this.anims.exists(k)) { if (mv) { if (v.spr.anims.currentAnim?.key !== k || !v.spr.anims.isPlaying) v.spr.play(k); } else { v.spr.anims.stop(); v.spr.setFrame(this.anims.get(k).frames[0].frame.name); } }
-      }
+      // 움직였나: 마지막 엔진 걸음의 변화로 본다(화면이 엔진보다 빨라도 걷기/서기가 깜빡이지 않게)
+      const bx = f.px ?? v.lx, by = f.py ?? v.ly;
+      const mv = Math.hypot(f.x - bx, f.y - by) > 0.02;
+      this.anim.drawFoe(v, f, fp, tell, Math.atan2(p.y - f.y, p.x - f.x), mv ? Math.atan2(f.y - by, f.x - bx) : null, this.paused ? 0 : dt, this.time.now);
+      const born = Math.min(1, (this.time.now - (v.born ?? -1e9)) / 300); // 막 나타난 적은 서서히
+      v.spr.setAlpha(born * (f.status.stun ? 0.75 : 1));
       v.lx = f.x; v.ly = f.y;
       if (!f.def.boss && f.hp < f.maxHp) {
         const w = 14, y = fp.y - f.def.radius - 10;
@@ -303,11 +311,6 @@ export default class ActionScene extends Phaser.Scene {
         bg.fillStyle(0xe05a4a, 1).fillRect(fp.x - w / 2, y, w * (f.hp / f.maxHp), 2);
       }
     }
-    // 칼: 조준 방향으로 든다 (장비 색)
-    this.guardG.clear();
-    const hx = pp.x + Math.cos(a) * 4, hy = pp.y - 3 + Math.sin(a) * 4;
-    this.guardG.lineStyle(2, 0x2a2533, 1).lineBetween(hx, hy, hx + Math.cos(a) * 10, hy + Math.sin(a) * 10);
-    this.guardG.lineStyle(1, this.blade, 1).lineBetween(hx, hy, hx + Math.cos(a) * 10, hy + Math.sin(a) * 10);
     if (p.guard > 0) {
       const half = (st.skills.e.arc * Math.PI) / 360;
       this.guardG.lineStyle(2, st.skills.e.blocksShots ? 0xffe066 : 0x9ad0ff, 0.9).beginPath().arc(pp.x, pp.y, 11, p.face - half, p.face + half).strokePath();

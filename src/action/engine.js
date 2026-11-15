@@ -128,7 +128,7 @@ function hurtPlayer(s, dmg, ev, opts = {}) {
   p.lastHit = s.t;
   if (!opts.dot) { p.invuln = Math.max(p.invuln, FEEL.hurtInvuln); p.hurtT = FEEL.hurtInvuln; }
   if (p.regen && !opts.dot) { p.regen = null; ev.push({ type: 'regenCut' }); }
-  ev.push({ type: 'hurt', to: 'p', dmg: d, x: p.x, y: p.y, dot: Boolean(opts.dot) });
+  ev.push({ type: 'hurt', to: 'p', dmg: d, x: p.x, y: p.y, dot: Boolean(opts.dot), dir: opts.dir });
   if (opts.status && !opts.dot) addStatus(s, p, opts.status, ev, true);
   if (p.hp <= 0) { s.over = 'lose'; ev.push({ type: 'lose' }); }
   return true;
@@ -325,7 +325,7 @@ function foeThink(s, f, dt, ev) {
     if (f.timer > 0) return;
     const a = f.cur;
     s.tells = s.tells.filter((x) => x.uid !== f.uid);
-    ev.push({ type: 'foeAttack', uid: f.uid, id: a.id, kind: a.kind, name: a.name, x: f.x, y: f.y, dir: f.aim, boss: Boolean(D.boss) });
+    ev.push({ type: 'foeAttack', uid: f.uid, id: a.id, kind: a.kind, name: a.name, x: f.x, y: f.y, dir: f.aim, boss: Boolean(D.boss), range: a.range, arc: a.arc });
     const dmg = Math.round(a.dmg * DIFFICULTY.dmg);
     if (a.kind === 'sweep') {
       if (inShape({ shape: 'arc', range: a.range, arc: a.arc }, f.x, f.y, f.aim, p.x, p.y, PLAYER.radius)) hurtPlayer(s, dmg, ev, { dir: f.aim + Math.PI, status: a.status, src: f.uid });

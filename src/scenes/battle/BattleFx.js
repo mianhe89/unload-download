@@ -58,6 +58,18 @@ export class BattleFx {
     } else g.destroy();
   }
 
+  // 적이 휘두른 자국: 붉은 면이 번쩍이고 끝선이 하얗게 — 예고가 '터진' 순간이 보이게
+  foeSwipe(e) {
+    if (!e.range || !e.arc) return;
+    const g = this.add(this.scene.add.graphics());
+    if (!g) return;
+    const half = (e.arc * Math.PI) / 360, a0 = e.dir - half, a1 = e.dir + half;
+    g.fillStyle(0xff4050, 0.32).slice(e.x, e.y, e.range, a0, a1).fillPath();
+    g.lineStyle(3, 0xffffff, 0.9).beginPath().arc(e.x, e.y, e.range, a0, a1).strokePath();
+    g.lineStyle(1, 0xffb0b0, 0.7).beginPath().arc(e.x, e.y, e.range * 0.7, a0 + 0.1, a1 - 0.1).strokePath();
+    this.fade(g, 200);
+  }
+
   // 구르기: 파르스름한 잔상이 남고 발밑에 먼지
   dodge(e, player) {
     const sc = this.scene;

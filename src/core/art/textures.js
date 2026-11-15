@@ -92,7 +92,11 @@ export function buildAnimations(scene) {
   for (const [key, m] of Object.entries(MONSTER_ART)) {
     if (!scene.textures.exists(`mon.${key}`) || A.exists(`mon.${key}`)) continue;
     const frames = m.kind === 'walker' ? [0, 1, 2, 3].map((r) => ({ key: `mon.${key}`, frame: r * 4 + 2 })) : A.generateFrameNumbers(`mon.${key}`, { start: 0, end: m.frames - 1 });
-    A.create({ key: `mon.${key}`, frames, frameRate: m.kind === 'walker' ? 6 : 8, repeat: -1 });
+    A.create({ key: `mon.${key}`, frames, frameRate: m.kind === 'walker' ? 6 : m.kind === 'once' ? 14 : 8, repeat: m.kind === 'once' ? 0 : -1 });
+    // 걷는 몬스터는 방향마다(열 = 아래·위·왼·오) — 싸움에서 움직이는 쪽·노리는 쪽을 본다
+    if (m.kind === 'walker') for (const [dir, col] of Object.entries(CHAR.dirs)) {
+      A.create({ key: `mon.${key}.${dir}`, frames: [0, 1, 2, 3].map((r) => ({ key: `mon.${key}`, frame: r * 4 + col })), frameRate: 7, repeat: -1 });
+    }
   }
   for (const [key, a] of Object.entries(ANIMATED)) {
     if (A.exists(`anim.${key}`)) continue;
