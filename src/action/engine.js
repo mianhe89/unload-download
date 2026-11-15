@@ -1,9 +1,11 @@
 // 탑뷰 액션 전투 엔진 (순수 — 화면 없이 돌고, 같은 씨앗이면 같은 결과).
 // 모든 전투가 이 엔진이다: 길 위의 무리, 마을 습격, 시험·결투, 보스. 동료는 없다 — 주인공 혼자 싸운다.
 // 장면(ActionScene)은 매 프레임 입력을 넣고 step()이 돌려준 사건을 그린다.
-//   input: { move:{x,y}(-1~1), aim:{x,y}(월드 좌표), atk, q, w, e, r (이번 프레임에 눌림), quick: 0~7 | null }
+//   input: { move:{x,y}(-1~1), aim:{x,y}(월드 좌표), atk, q, w, e, r, dodge (이번 프레임에 눌림), quick: 0~7 | null }
+//   손맛(content/action/action.js의 FEEL·DODGE·COMBO·KNOCK): 붙고 멎는 이동, 구르기(무적), 입력 버퍼, 3연타, 넉백, 맞은 뒤 무적.
+//   난이도(DIFFICULTY): 적의 체력·피해·빠르기·쉬는 틈·예고, 예고 앞쪽 동안 주인공을 따라 겨눈다
 //   적은 content/action/foes.js. 한 번에 maxAlive마리까지 나오고, 쓰러지면 남은 무리가 가장자리에서 들어온다.
-import { BASE_SKILLS, STATUS, CONSUMABLES, QUICK_CD, EQUIPMENT, SETS, ARENA } from '../../content/action/action.js';
+import { BASE_SKILLS, STATUS, CONSUMABLES, QUICK_CD, EQUIPMENT, SETS, ARENA, FEEL, DODGE, COMBO, KNOCK, DIFFICULTY } from '../../content/action/action.js';
 import { FOES } from '../../content/action/foes.js';
 
 export const PLAYER = { radius: 6, speed: 78, maxHp: 120 };
@@ -54,7 +56,8 @@ function makeFoe(s, id, x, y) {
   const d = FOES[id];
   if (!d) throw new Error(`없는 적: ${id}`);
   const n = (s.seq += 1);
-  return { uid: `${id}#${n}`, id, def: d, x, y, hp: d.hp, maxHp: d.hp, status: {}, i: 0, state: 'rest', timer: 0.8 + (n % 5) * 0.25, cur: null, aim: 0, charge: null, bump: -9, strafe: n % 2 ? 1 : -1 };
+  const hp = Math.round(d.hp * DIFFICULTY.hp);
+  return { uid: `${id}#${n}`, id, def: d, x, y, hp, maxHp: hp, status: {}, i: 0, state: 'rest', timer: 0.8 + (n % 5) * 0.25, cur: null, aim: 0, charge: null, bump: -9, strafe: n % 2 ? 1 : -1, kx: 0, ky: 0, flinch: 0 };
 }
 
 // enemies: 적 id 목록(순서대로 나온다). hp/maxHp: 주인공 체력. mods: bodyMods(...)
@@ -67,7 +70,8 @@ export function createAction({ enemies = ['sweeper'], hp, maxHp, equip, bag = {}
   const top = Math.round(PLAYER.maxHp * m.hpMul);
   const s = {
     t: 0, over: null, rng, def, skills, mods: m, maxAlive,
-    p: { x: ARENA.w / 2, y: ARENA.h - 40, hp: Math.min(hp ?? top, maxHp ?? top), maxHp: maxHp ?? top, face: -Math.PI / 2, cd: {}, status: {}, guard: 0, guardT: 0, dash: null, invuln: 0, regen: null, quickCd: 0, lastHit: -9, moving: false },
+    p: { x: ARENA.w / 2, y: ARENA.h - 40, vx: 0, vy: 0, hp: Math.min(hp ?? top, maxHp ?? top), maxHp: maxHp ?? top, face: -Math.PI / 2, cd: {}, status: {}, guard: 0, guardT: 0, dash: null, invuln: 0, hurtT: 0, regen: null, quickCd: 0, lastHit: -9, moving: false, buf: {}, recover: 0, combo: 0, lastAtk: -9, dodgeCd: 0 },
+    dodgeCd: +(DODGE.cd * m.dashMul).toFixed(2),
     foes: [], queue: [...enemies], total: enemies.length, killed: 0, spawnT: 0, seq: 0,
     shots: [],      // { x, y, vx, vy, r, dmg, from: foe uid | 'player', life, status }
     tells: [],      // 화면에 그릴 예고
@@ -104,7 +108,7 @@ function addStatus(s, who, st, ev, isP) {
 
 function hurtPlayer(s, dmg, ev, opts = {}) {
   const p = s.p;
-  if (p.invuln > 0 || s.over) return false;
+  if ((p.invuln > 0 && !opts.dot) || s.over) return false;
   // 막기: 앞쪽에서 온 공격만. 막 시작했을 때(완벽한 막기)는 완전히 막고 상대를 기절시킨다
   if (p.guard > 0 && opts.dir !== undefined && angDiff(opts.dir, p.face) < (s.skills.e.arc * Math.PI / 360)) {
     if (opts.shot && !s.skills.e.blocksShots) { /* 탄환은 못 막는다 */ } else {
@@ -122,6 +126,7 @@ function hurtPlayer(s, dmg, ev, opts = {}) {
   const d = Math.max(1, Math.round(dmg * m));
   p.hp = Math.max(0, p.hp - d);
   p.lastHit = s.t;
+  if (!opts.dot) { p.invuln = Math.max(p.invuln, FEEL.hurtInvuln); p.hurtT = FEEL.hurtInvuln; }
   if (p.regen && !opts.dot) { p.regen = null; ev.push({ type: 'regenCut' }); }
   ev.push({ type: 'hurt', to: 'p', dmg: d, x: p.x, y: p.y, dot: Boolean(opts.dot) });
   if (opts.status && !opts.dot) addStatus(s, p, opts.status, ev, true);
@@ -139,11 +144,12 @@ function hurtFoe(s, f, dmg, ev, opts = {}) {
   f.hp = Math.max(0, f.hp - d);
   ev.push({ type: 'hurt', to: f.uid, dmg: d, x: f.x, y: f.y, dot: Boolean(opts.dot), skill: opts.skill });
   if (opts.status) addStatus(s, f, opts.status, ev, false);
-  // 맞으면 살짝 밀려난다 (보스는 버틴다)
+  // 맞으면 밀려나고(덩치가 클수록 덜), 작은 적은 잠깐 멈칫한다. 보스와 돌진 중인 적은 버틴다
   if (!opts.dot && !f.def.boss && !f.charge) {
     const a = Math.atan2(f.y - s.p.y, f.x - s.p.x);
-    f.x = clamp(f.x + Math.cos(a) * 4, f.def.radius, ARENA.w - f.def.radius);
-    f.y = clamp(f.y + Math.sin(a) * 4, f.def.radius, ARENA.h - f.def.radius);
+    const k = (opts.knock ?? 60) * Math.min(1, 7 / f.def.radius);
+    f.kx += Math.cos(a) * k; f.ky += Math.sin(a) * k;
+    if (f.def.radius < 9) f.flinch = Math.max(f.flinch, KNOCK.flinch);
   }
   if (f.hp <= 0) {
     s.killed += 1;
@@ -192,18 +198,48 @@ function inShape(sk, ox, oy, face, tx, ty, tr) {
 
 // ── 주인공 ───────────────────────────────────────────────
 function useSkill(s, key, ev) {
-  const p = s.p, sk = s.skills[key];
-  if ((p.cd[key] ?? 0) > 0 || !canAct(p) || p.dash) return;
+  const p = s.p;
+  let sk = s.skills[key];
+  if ((p.cd[key] ?? 0) > 0 || !canAct(p) || p.dash) return false;
+  if (p.recover > 0 && key !== 'e' && key !== 'r') return false; // 앞 동작이 끝나야 다음 (막기·돌진은 끊고 들어간다)
   p.cd[key] = sk.cd;
-  ev.push({ type: 'skill', key, name: sk.name, shape: sk.shape, x: p.x, y: p.y, face: p.face, range: sk.range, arc: sk.arc, width: sk.width });
-  if (sk.shape === 'guard') { p.guard = sk.dur; return; }
+  // 기본 공격 3연타: 이어서 베면 셋째가 넓고 세다
+  let hit = { knock: key === 'q' ? 110 : 70, mul: 1 }, combo = 0;
+  if (key === 'atk') {
+    combo = s.t - p.lastAtk <= COMBO.window + sk.cd ? (p.combo + 1) % COMBO.hits.length : 0;
+    p.combo = combo; p.lastAtk = s.t;
+    const c = COMBO.hits[combo];
+    sk = { ...sk, arc: c.arc ?? sk.arc, range: c.range ?? sk.range };
+    hit = { knock: c.knock, mul: c.dmgMul };
+  }
+  p.recover = FEEL.recover[key] ?? 0;
+  ev.push({ type: 'skill', key, name: sk.name, shape: sk.shape, x: p.x, y: p.y, face: p.face, range: sk.range, arc: sk.arc, width: sk.width, combo });
+  if (sk.shape === 'guard') { p.guard = sk.dur; return true; }
   if (sk.shape === 'dash') {
     p.dash = { left: sk.dur, vx: Math.cos(p.face) * sk.dist / sk.dur, vy: Math.sin(p.face) * sk.dist / sk.dur, hit: new Set() };
-    if (sk.invuln) p.invuln = sk.dur + 0.05;
-    return;
+    if (sk.invuln) p.invuln = Math.max(p.invuln, sk.dur + 0.05);
+    p.recover = 0;
+    return true;
   }
+  // 베는 쪽으로 반걸음 (무게)
+  p.vx += Math.cos(p.face) * 40; p.vy += Math.sin(p.face) * 40;
   // 범위 안의 적은 모두 맞는다
-  for (const f of alive(s)) if (inShape(sk, p.x, p.y, p.face, f.x, f.y, f.def.radius)) hurtFoe(s, f, sk.dmg, ev, { status: sk.status, skill: key });
+  for (const f of alive(s)) if (inShape(sk, p.x, p.y, p.face, f.x, f.y, f.def.radius)) hurtFoe(s, f, Math.round(sk.dmg * hit.mul), ev, { status: sk.status, skill: key, knock: hit.knock, combo });
+  return true;
+}
+
+// 구르기: 이동 방향(없으면 보는 쪽)으로 무적인 채 굴러 빠진다. 공격은 못 하고, 끝나면 앞 동작의 무게도 풀린다
+function useDodge(s, input, ev) {
+  const p = s.p;
+  if (p.dodgeCd > 0 || p.dash || p.status.stun || p.status.freeze) return false;
+  const mx = input.move?.x ?? 0, my = input.move?.y ?? 0;
+  const a = Math.hypot(mx, my) > 0.1 ? Math.atan2(my, mx) : p.face;
+  p.dash = { left: DODGE.dur, vx: Math.cos(a) * DODGE.dist / DODGE.dur, vy: Math.sin(a) * DODGE.dist / DODGE.dur, hit: new Set(), dodge: true };
+  p.invuln = Math.max(p.invuln, DODGE.invuln);
+  p.dodgeCd = s.dodgeCd;
+  p.recover = 0; p.guard = 0;
+  ev.push({ type: 'dodge', x: p.x, y: p.y, dir: a });
+  return true;
 }
 
 function useQuick(s, slot, ev) {
@@ -257,19 +293,21 @@ function foeThink(s, f, dt, ev) {
     return;
   }
   f.timer -= dt;
+  if (f.state === 'rest' && f.flinch > 0) return; // 맞고 멈칫 (예고는 끊지 않는다)
   if (f.state === 'rest') {
     const slow = f.status.slow ? STATUS.slow.slow : 1;
     // 원거리는 거리를 지키며 옆으로 돈다, 근거리는 다가온다
     if (D.keep) {
-      if (d > D.keep + 12) moveFoe(f, toP, D.speed * slow, dt);
-      else if (d < D.keep - 12) moveFoe(f, toP + Math.PI, D.speed * slow, dt);
-      else moveFoe(f, toP + (Math.PI / 2) * f.strafe, D.speed * 0.6 * slow, dt);
-    } else if (d > (D.boss ? 40 : D.radius + PLAYER.radius + 6)) moveFoe(f, toP, D.speed * slow, dt);
+      const sp = D.speed * DIFFICULTY.speed * slow;
+      if (d > D.keep + 12) moveFoe(f, toP, sp, dt);
+      else if (d < D.keep - 12) moveFoe(f, toP + Math.PI, sp, dt);
+      else moveFoe(f, toP + (Math.PI / 2) * f.strafe, sp * 0.6, dt);
+    } else if (d > (D.boss ? 40 : D.radius + PLAYER.radius + 6)) moveFoe(f, toP, D.speed * DIFFICULTY.speed * slow, dt);
     if (f.timer <= 0) {
       const a = nextAttack(f, d);
       if (!a) { f.timer = 0.2; return; }
       f.i += 1;
-      f.cur = a; f.state = 'tell'; f.timer = a.tell * (enraged ? 0.7 : 1); f.aim = toP;
+      f.cur = a; f.state = 'tell'; f.timer = a.tell * DIFFICULTY.tell * (enraged ? 0.7 : 1); f.aim = toP;
       const tell = { uid: f.uid, id: a.id, kind: a.kind, name: a.name, x: f.x, y: f.y, dir: toP, range: a.range ?? a.dist, arc: a.arc, width: a.width, total: f.timer, left: f.timer };
       s.tells = s.tells.filter((t) => t.uid !== f.uid).concat(tell);
       ev.push({ type: 'tell', boss: Boolean(D.boss), ...tell });
@@ -278,33 +316,39 @@ function foeThink(s, f, dt, ev) {
   }
   if (f.state === 'tell') {
     const t = s.tells.find((x) => x.uid === f.uid);
-    if (t) { t.left = f.timer; t.x = f.x; t.y = f.y; }
+    // 예고 앞쪽 동안은 주인공을 따라 겨눈다(돌 수 있는 빠르기에 한계). 둥근 탄은 방향이 없다
+    if (t && f.cur.kind !== 'ring' && f.timer > t.total * (1 - DIFFICULTY.track)) {
+      let dd = toP - f.aim; while (dd > Math.PI) dd -= 2 * Math.PI; while (dd < -Math.PI) dd += 2 * Math.PI;
+      f.aim += clamp(dd, -DIFFICULTY.turn * dt, DIFFICULTY.turn * dt);
+    }
+    if (t) { t.left = f.timer; t.x = f.x; t.y = f.y; t.dir = f.aim; }
     if (f.timer > 0) return;
     const a = f.cur;
     s.tells = s.tells.filter((x) => x.uid !== f.uid);
     ev.push({ type: 'foeAttack', uid: f.uid, id: a.id, kind: a.kind, name: a.name, x: f.x, y: f.y, dir: f.aim, boss: Boolean(D.boss) });
+    const dmg = Math.round(a.dmg * DIFFICULTY.dmg);
     if (a.kind === 'sweep') {
-      if (inShape({ shape: 'arc', range: a.range, arc: a.arc }, f.x, f.y, f.aim, p.x, p.y, PLAYER.radius)) hurtPlayer(s, a.dmg, ev, { dir: f.aim + Math.PI, status: a.status, src: f.uid });
+      if (inShape({ shape: 'arc', range: a.range, arc: a.arc }, f.x, f.y, f.aim, p.x, p.y, PLAYER.radius)) hurtPlayer(s, dmg, ev, { dir: f.aim + Math.PI, status: a.status, src: f.uid });
     } else if (a.kind === 'lunge') {
-      f.charge = { dir: f.aim, left: a.dist, speed: a.dist / 0.3, width: a.width, dmg: a.dmg, status: a.status, hit: false };
+      f.charge = { dir: f.aim, left: a.dist, speed: a.dist / 0.3, width: a.width, dmg, status: a.status, hit: false };
     } else if (a.kind === 'shot') {
       for (let k = 0; k < a.count; k += 1) {
         const ang = f.aim + (k - (a.count - 1) / 2) * (a.spread ?? 0);
-        s.shots.push({ x: f.x, y: f.y, vx: Math.cos(ang) * a.speed, vy: Math.sin(ang) * a.speed, r: 3, dmg: a.dmg, from: f.uid, life: 3, status: a.status });
+        s.shots.push({ x: f.x, y: f.y, vx: Math.cos(ang) * a.speed, vy: Math.sin(ang) * a.speed, r: 3, dmg, from: f.uid, life: 3, status: a.status });
       }
     } else if (a.kind === 'ring') {
       for (let k = 0; k < a.count; k += 1) {
         const ang = (k / a.count) * Math.PI * 2 + f.aim;
-        s.shots.push({ x: f.x, y: f.y, vx: Math.cos(ang) * a.speed, vy: Math.sin(ang) * a.speed, r: 4, dmg: a.dmg, from: f.uid, life: 5, status: a.status });
+        s.shots.push({ x: f.x, y: f.y, vx: Math.cos(ang) * a.speed, vy: Math.sin(ang) * a.speed, r: 4, dmg, from: f.uid, life: 5, status: a.status });
       }
     } else if (a.kind === 'motes') {
       for (let k = 0; k < a.count; k += 1) {
         const ang = f.aim + (k - (a.count - 1) / 2) * 0.6;
-        s.shots.push({ x: f.x, y: f.y, vx: Math.cos(ang) * a.speed, vy: Math.sin(ang) * a.speed, r: 5, dmg: a.dmg, from: f.uid, life: a.life, home: 1.6, speed: a.speed, status: a.status });
+        s.shots.push({ x: f.x, y: f.y, vx: Math.cos(ang) * a.speed, vy: Math.sin(ang) * a.speed, r: 5, dmg, from: f.uid, life: a.life, home: 1.6, speed: a.speed, status: a.status });
       }
     }
     f.state = 'rest';
-    f.timer = D.rest * (enraged ? 0.7 : 1) * (0.85 + s.rng() * 0.3);
+    f.timer = D.rest * DIFFICULTY.rest * (enraged ? 0.7 : 1) * (0.85 + s.rng() * 0.3);
   }
 }
 
@@ -332,30 +376,44 @@ export function step(s, dt, input) {
   for (const k of SKILL_KEYS) if (p.cd[k] > 0) p.cd[k] = Math.max(0, p.cd[k] - dt);
   p.quickCd = Math.max(0, p.quickCd - dt);
   p.invuln = Math.max(0, p.invuln - dt);
+  p.hurtT = Math.max(0, p.hurtT - dt);
+  p.recover = Math.max(0, p.recover - dt);
+  p.dodgeCd = Math.max(0, p.dodgeCd - dt);
   if (p.guard > 0) p.guard = Math.max(0, p.guard - dt);
 
   // 조준: 마우스 쪽을 본다
   if (input.aim && !p.dash) p.face = Math.atan2(input.aim.y - p.y, input.aim.x - p.x);
 
-  // 이동 / 돌진
+  // 이동 / 돌진·구르기
+  if (input.dodge) p.buf.dodge = s.t + FEEL.buffer;
+  if (p.buf.dodge >= s.t && useDodge(s, input, ev)) delete p.buf.dodge;
   if (p.dash) {
     const d = p.dash;
     p.x = clamp(p.x + d.vx * dt, PLAYER.radius, ARENA.w - PLAYER.radius);
     p.y = clamp(p.y + d.vy * dt, PLAYER.radius, ARENA.h - PLAYER.radius);
-    for (const f of alive(s)) if (!d.hit.has(f.uid) && Math.hypot(p.x - f.x, p.y - f.y) < f.def.radius + PLAYER.radius + 4) { d.hit.add(f.uid); hurtFoe(s, f, s.skills.r.dmg, ev, { skill: 'r' }); }
+    if (!d.dodge) for (const f of alive(s)) if (!d.hit.has(f.uid) && Math.hypot(p.x - f.x, p.y - f.y) < f.def.radius + PLAYER.radius + 4) { d.hit.add(f.uid); hurtFoe(s, f, s.skills.r.dmg, ev, { skill: 'r', knock: 120 }); }
     d.left -= dt;
-    if (d.left <= 0) p.dash = null;
+    // 구르기·돌진이 끝나면 그 빠르기의 일부를 남겨 미끄러지듯 선다
+    if (d.left <= 0) { p.dash = null; p.vx = d.vx * 0.25; p.vy = d.vy * 0.25; }
     p.moving = true;
-  } else if (canAct(p) || p.status.stun) {
-    const mx = input.move?.x ?? 0, my = input.move?.y ?? 0;
+  } else {
+    const can = canAct(p);
+    const mx = can ? input.move?.x ?? 0 : 0, my = can ? input.move?.y ?? 0 : 0;
     const m = Math.min(1, Math.hypot(mx, my));
-    p.moving = m > 0.05 && !p.status.stun && !p.status.freeze;
-    if (p.moving) {
-      const sp = PLAYER.speed * s.mods.speedMul * (p.status.slow ? STATUS.slow.slow : 1) * (p.guard > 0 ? 0.45 : 1);
+    let tx = 0, ty = 0;
+    if (m > 0.05) {
+      const sp = PLAYER.speed * s.mods.speedMul * (p.status.slow ? STATUS.slow.slow : 1) * (p.guard > 0 ? 0.45 : 1) * (p.recover > 0 ? FEEL.recoverMul : 1);
       const l = len(mx, my);
-      p.x = clamp(p.x + (mx / l) * m * sp * dt, PLAYER.radius, ARENA.w - PLAYER.radius);
-      p.y = clamp(p.y + (my / l) * m * sp * dt, PLAYER.radius, ARENA.h - PLAYER.radius);
+      tx = (mx / l) * m * sp; ty = (my / l) * m * sp;
     }
+    // 붙고 멎는 이동: 바라는 빠르기로 빠르게 다가간다(지수 감쇠 — 프레임 빠르기와 무관)
+    const rate = m > 0.05 ? FEEL.accel : FEEL.decel;
+    const kk = 1 - Math.exp(-rate * dt);
+    p.vx += (tx - p.vx) * kk; p.vy += (ty - p.vy) * kk;
+    if (Math.hypot(p.vx, p.vy) < 1) { p.vx = 0; p.vy = 0; }
+    p.x = clamp(p.x + p.vx * dt, PLAYER.radius, ARENA.w - PLAYER.radius);
+    p.y = clamp(p.y + p.vy * dt, PLAYER.radius, ARENA.h - PLAYER.radius);
+    p.moving = Math.hypot(p.vx, p.vy) > 12;
   }
   // 적의 몸에 부딪히면 밀려난다 (+ 약한 피해). 적끼리도 겹치지 않게 민다
   const live = alive(s);
@@ -365,7 +423,7 @@ export function step(s, dt, input) {
       const nx = (p.x - f.x) / (fd || 1), ny = (p.y - f.y) / (fd || 1);
       p.x = clamp(f.x + nx * minD, PLAYER.radius, ARENA.w - PLAYER.radius);
       p.y = clamp(f.y + ny * minD, PLAYER.radius, ARENA.h - PLAYER.radius);
-      if (!p.dash && s.t - f.bump > 0.8) { f.bump = s.t; hurtPlayer(s, f.def.contact, ev, { dir: Math.atan2(-ny, -nx), src: f.uid }); }
+      if (!p.dash && s.t - f.bump > 0.8) { f.bump = s.t; hurtPlayer(s, Math.round(f.def.contact * DIFFICULTY.contact), ev, { dir: Math.atan2(-ny, -nx), src: f.uid }); }
     }
   }
   for (let i = 0; i < live.length; i += 1) for (let j = i + 1; j < live.length; j += 1) {
@@ -379,8 +437,10 @@ export function step(s, dt, input) {
   }
 
   // 행동
+  // 누른 공격·스킬은 잠깐 기억했다가(입력 버퍼) 되는 순간 쓴다 — 구르기 끝·쿨다운 끝에 맞춰 누르지 않아도 된다
+  for (const k of SKILL_KEYS) if (input[k]) p.buf[k] = s.t + FEEL.buffer;
   if (canAct(p)) {
-    for (const k of SKILL_KEYS) if (input[k]) useSkill(s, k, ev);
+    for (const k of SKILL_KEYS) if (p.buf[k] >= s.t && useSkill(s, k, ev)) delete p.buf[k];
     if (input.quick !== undefined && input.quick !== null) useQuick(s, input.quick, ev);
   }
 
@@ -395,6 +455,17 @@ export function step(s, dt, input) {
     }
   }
 
+  // 넉백: 밀려나는 빠르기가 줄어들며 미끄러진다. 멈칫이 풀린다
+  const kd = Math.exp(-KNOCK.decay * dt);
+  for (const f of alive(s)) {
+    if (f.kx || f.ky) {
+      f.x = clamp(f.x + f.kx * dt, f.def.radius, ARENA.w - f.def.radius);
+      f.y = clamp(f.y + f.ky * dt, f.def.radius, ARENA.h - f.def.radius);
+      f.kx *= kd; f.ky *= kd;
+      if (Math.hypot(f.kx, f.ky) < 2) { f.kx = 0; f.ky = 0; }
+    }
+    f.flinch = Math.max(0, f.flinch - dt);
+  }
   for (const f of alive(s)) foeThink(s, f, dt, ev);
   reinforce(s, dt, ev);
 

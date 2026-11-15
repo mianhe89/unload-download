@@ -13,17 +13,110 @@ const wins = (enemies, bot, n) => { let w = 0; for (let seed = 1; seed <= n; see
 // 보스를 가만히 세워 두고 시험할 때
 const calm = (a) => { for (const f of a.state.foes) { f.timer = 999; f.x = 20; f.y = 20; } return a; };
 
+describe('손맛: 이동·구르기·입력 버퍼·3연타·넉백', () => {
+  const quiet = () => calm(createAction({ enemies: ['sweeper'], seed: 1, ...kit() }));
+  it('이동은 붙고 멎는다: 첫 프레임은 최고 빠르기가 아니고, 손을 떼도 한 프레임에 서지 않는다', () => {
+    const a = quiet(), p = a.state.p;
+    a.step(DT, { move: { x: 1, y: 0 } });
+    expect(p.vx).toBeGreaterThan(0);
+    expect(p.vx).toBeLessThan(PLAYER.speed * 0.5);
+    for (let i = 0; i < 30; i += 1) a.step(DT, { move: { x: 1, y: 0 } });
+    expect(p.vx).toBeGreaterThan(PLAYER.speed * 0.9);
+    a.step(DT, {});
+    expect(p.vx).toBeGreaterThan(0);
+    for (let i = 0; i < 30; i += 1) a.step(DT, {});
+    expect(p.vx).toBe(0);
+  });
+  it('구르기: 무적인 채 이동 방향으로 빠지고, 재사용 대기가 있다', () => {
+    const a = quiet(), p = a.state.p, x0 = p.x;
+    const ev = a.step(DT, { move: { x: 1, y: 0 }, dodge: true });
+    expect(ev.some((e) => e.type === 'dodge')).toBe(true);
+    expect(p.invuln).toBeGreaterThan(0);
+    for (let i = 0; i < 15; i += 1) a.step(DT, {});
+    expect(p.x - x0).toBeGreaterThan(30);
+    expect(a.step(DT, { dodge: true }).some((e) => e.type === 'dodge')).toBe(false); // 아직 대기 중
+  });
+  it('구르기로 예고를 뚫으면 맞지 않는다 (가만히 있으면 맞는다)', () => {
+    const hits = (dodge) => {
+      const a = createAction({ enemies: ['wolf'], seed: 4, ...kit() });
+      const f = a.state.foes[0], p = a.state.p;
+      f.x = p.x; f.y = p.y - 16; f.timer = 0;
+      let hurt = 0;
+      for (let i = 0; i < 40; i += 1) {
+        const t = a.state.tells[0];
+        hurt += a.step(DT, dodge && t && t.left < 0.1 ? { move: { x: 1, y: 0 }, dodge: true } : {}).filter((e) => e.type === 'hurt' && e.to === 'p' && !e.dot).length;
+        f.x = Math.min(f.x, p.x + 2); // 몸으로 부딪혀 맞는 건 빼고 예고만 본다
+      }
+      return hurt;
+    };
+    expect(hits(false)).toBeGreaterThan(0);
+    expect(hits(true)).toBe(0);
+  });
+  it('입력 버퍼: 쿨다운 끝나기 직전에 누른 공격이 되는 순간 나간다', () => {
+    const a = quiet();
+    a.step(DT, { atk: true });
+    const cd = a.state.p.cd.atk;
+    let fired = false;
+    for (let t = DT; t < cd + 0.1; t += DT) {
+      const press = Math.abs(cd - t - 0.08) < DT / 2; // 끝나기 0.08초 전에 한 번만 누른다
+      if (a.step(DT, press ? { atk: true } : {}).some((e) => e.type === 'skill' && e.key === 'atk')) fired = true;
+    }
+    expect(fired).toBe(true);
+  });
+  it('기본 공격 3연타: 셋째가 가장 세고 멀리 민다', () => {
+    const a = createAction({ enemies: ['slime_big'], seed: 1, ...kit() });
+    const f = a.state.foes[0], p = a.state.p;
+    f.timer = 999;
+    const dmg = [];
+    for (let k = 0; k < 3; k += 1) {
+      f.x = p.x; f.y = p.y - 14; f.kx = 0; f.ky = 0;
+      const ev = a.step(DT, { atk: true, aim: { x: f.x, y: f.y } });
+      dmg.push(ev.find((e) => e.type === 'hurt' && e.to === f.uid)?.dmg ?? 0);
+      for (let i = 0; i < 26; i += 1) a.step(DT, { aim: { x: f.x, y: f.y } });
+    }
+    expect(dmg[2]).toBeGreaterThan(dmg[0]);
+    expect(a.state.p.combo).toBe(2);
+  });
+  it('맞으면 밀려나 미끄러진다(순간이동이 아니다)', () => {
+    const a = createAction({ enemies: ['slime'], seed: 1, ...kit() });
+    const f = a.state.foes[0], p = a.state.p;
+    f.timer = 999; f.x = p.x; f.y = p.y - 12;
+    a.step(DT, { atk: true, aim: { x: f.x, y: f.y } });
+    const y1 = f.y;
+    expect(f.ky).toBeLessThan(0);
+    a.step(DT, {});
+    expect(f.y).toBeLessThan(y1);
+    expect(y1 - f.y).toBeLessThan(5);
+  });
+  it('맞은 직후 잠깐 무적이라 한 프레임에 두 대가 겹치지 않는다', () => {
+    const a = quiet(), p = a.state.p;
+    a.state.shots.push({ x: p.x, y: p.y, vx: 0, vy: 0, r: 4, dmg: 10, from: 'x', life: 1 }, { x: p.x, y: p.y, vx: 0, vy: 0, r: 4, dmg: 10, from: 'x', life: 1 });
+    const ev = a.step(DT, {});
+    expect(ev.filter((e) => e.type === 'hurt' && e.to === 'p').length).toBe(1);
+  });
+});
+
 describe('액션 전투: 조작에 기대는 싸움', () => {
   it('가만히 있으면 진다', () => {
     expect(runBot(createAction({ enemies: ['sweeper'], seed: 3, ...kit() }), idle)).toBe('lose');
     expect(runBot(createAction({ enemies: POOLS.temperate[0], seed: 3, ...kit() }), idle)).toBe('lose');
   });
-  it('보스(정리자의 그림자): 피하며 싸우면 대체로 이기고(50% 이상), 때리기만 하면 진다(20% 이하)', () => {
-    expect(wins(['sweeper'], smart, 12)).toBeGreaterThanOrEqual(6);
-    expect(wins(['sweeper'], brute, 12)).toBeLessThanOrEqual(2);
+  it('보스는 어렵다: 예고를 읽고 구르는 봇은 대체로 이기고, 때리기만 하면 거의 못 이긴다', () => {
+    for (const b of ['sweeper', 'lostknight', 'tork']) {
+      expect(wins([b], smart, 12), b).toBeGreaterThanOrEqual(b === 'sweeper' ? 4 : 8); // 정리자의 그림자가 가장 어렵다
+      expect(wins([b], brute, 12), b).toBeLessThanOrEqual(1);
+    }
+  });
+  it('어렵지만 못 깨는 무리는 없다: 어느 땅이든 예고를 읽으면 이길 수 있다', () => {
+    for (const [k, gs] of Object.entries(POOLS)) for (const g of gs) expect(wins(g, smart, 6), k).toBeGreaterThanOrEqual(2);
+  });
+  it('뒤로 갈수록 어렵다: 굴의 무리는 때리기만 하면 대부분 진다', () => {
+    let w = 0, n = 0;
+    for (const k of ['cave', 'deepCave', 'lava', 'snow']) for (const g of POOLS[k]) { w += wins(g, brute, 4); n += 4; }
+    expect(w / n).toBeLessThanOrEqual(0.35);
   });
   it('레온과의 결투: 때리기만 하면 진다', () => {
-    expect(wins(['leon_duel'], brute, 8)).toBeLessThanOrEqual(2);
+    expect(wins(['leon_duel'], brute, 8)).toBeLessThanOrEqual(1);
     expect(wins(['leon_duel'], smart, 8)).toBeGreaterThanOrEqual(5);
   });
   it('들판의 무리는 피하며 싸우면 거의 이긴다', () => {

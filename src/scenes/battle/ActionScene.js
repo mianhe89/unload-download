@@ -1,6 +1,7 @@
 // 전투 장면: 탑뷰 액션. 이 게임의 모든 전투가 여기서 열린다(길 위의 무리, 마을 습격, 시험·결투, 보스).
 // 규칙은 src/action/engine.js(순수), 여기선 그리고 입력만 받는다. 동료는 없다 — 주인공 혼자 싸운다.
-//   방향키 이동 · 마우스 조준 + 클릭 기본 공격 · Q W E R 스킬 · 1~8 퀵슬롯
+//   방향키 이동 · 마우스 조준 + 클릭 기본 공격(3연타) · Q W E R 스킬 · Space 구르기 · 1~8 퀵슬롯
+//   엔진은 1/60초 고정 걸음으로 돌리고, 그림은 두 걸음 사이를 이어 그린다(보간) — 화면 빠르기와 무관하게 부드럽고 같은 손맛
 //   data: { enemies, seed, boss?, note?, winLine?, winFlag?, victim?, from: { layer, at, key, back, biome } | { field: true, biome } }
 //   길 맵에서 열리면 끝나고 그 칸으로, 마을(이야기 필드)에서 열리면(FieldBattle) 잠재운 필드를 깨워 결과를 넘긴다.
 // 지면: 되돌리기(로드 — 네다섯 번에 한 번 누군가 지워진다) 또는 물러나기.
@@ -29,7 +30,7 @@ import { PlayLog } from '../../core/playtest/PlayLog.js';
 export default class ActionScene extends Phaser.Scene {
   constructor() { super('Action'); }
 
-  init(data) { this.data0 = data; this.leaving = false; this.pressed = {}; this.quickPressed = null; this.hitStop = 0; this.sprites = {}; }
+  init(data) { this.data0 = data; this.leaving = false; this.pressed = {}; this.quickPressed = null; this.hitStop = 0; this.sprites = {}; this.acc = 0; }
 
   create() {
     const { width: W, height: H } = this.scale;
@@ -114,6 +115,8 @@ export default class ActionScene extends Phaser.Scene {
   bindInput() {
     const kb = this.input.keyboard;
     this.keys = kb.addKeys('UP,DOWN,LEFT,RIGHT'); // 이동은 방향키 (Q W E R은 스킬)
+    kb.on('keydown-SPACE', (e) => { if (!e.repeat) this.pressed.dodge = true; }); // 구르기
+    this.input.on('pointerdown', (p) => { if (p.rightButtonDown()) this.pressed.dodge = true; }); // 오른쪽 클릭도 구르기
     for (const [slot, key] of Object.entries(CONTROLS.skills)) kb.on(`keydown-${key}`, (e) => { if (!e.repeat) this.pressed[slot] = true; });
     ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT'].forEach((name, i) => kb.on(`keydown-${name}`, () => { this.quickPressed = i; }));
     this.input.on('pointerdown', (p) => { if (p.leftButtonDown() || p.wasTouch) this.pressed.atk = true; });
@@ -130,7 +133,7 @@ export default class ActionScene extends Phaser.Scene {
     band.fillStyle(0x0b0810, 0.78).fillRect(0, H / 2 - 45 * s, W, 90 * s);
     band.fillStyle(victim ? 0xff7a6a : 0xe8b860, 0.9).fillRect(0, H / 2 - 45 * s, W, 2 * s).fillRect(0, H / 2 + 43 * s, W, 2 * s);
     const t1 = this.add.text(W / 2, H / 2 - 14 * s, head, { fontFamily: FONT_TALK, fontSize: `${(head.length > 24 ? 16 : 24) * s}px`, color: victim ? '#ff9a8a' : '#f4f0e8', align: 'center', wordWrap: { width: W * 0.8 } }).setOrigin(0.5).setDepth(51);
-    const t2 = this.add.text(W / 2, H / 2 + 22 * s, `방향키 이동 · 클릭 공격 · ${Object.values(CONTROLS.skills).join(' ')} 스킬 · 1~8 퀵슬롯`, { fontFamily: FONT, fontSize: `${11 * s}px`, color: '#d8d0c0' }).setOrigin(0.5).setDepth(51);
+    const t2 = this.add.text(W / 2, H / 2 + 22 * s, `방향키 이동 · 클릭 공격 · Space 구르기 · ${Object.values(CONTROLS.skills).join(' ')} 스킬 · 1~8 퀵슬롯`, { fontFamily: FONT, fontSize: `${11 * s}px`, color: '#d8d0c0' }).setOrigin(0.5).setDepth(51);
     Sound.sfx(this, 'tell', { volume: 0.4 });
     this.time.delayedCall(victim || this.data0.note ? 1900 : 1100, () => {
       this.tweens.add({ targets: [band, t1, t2], alpha: 0, duration: 300, onComplete: () => [band, t1, t2].forEach((o) => o.destroy()) });
@@ -147,21 +150,52 @@ export default class ActionScene extends Phaser.Scene {
     const ptr = this.input.activePointer;
     const aim = this.toWorld(ptr.x, ptr.y);
     const input = { move: { x, y }, aim, ...this.pressed, quick: this.quickPressed };
-    if (ptr.isDown && ptr.leftButtonDown?.()) input.atk = true; // 누르고 있으면 계속 벤다
+    if (ptr.isDown && ptr.leftButtonDown?.()) { input.atk = true; input.held = true; } // 누르고 있으면 계속 벤다
     this.pressed = {};
     this.quickPressed = null;
     return input;
   }
 
+  // 고정 걸음: 엔진은 늘 1/60초씩. 남은 시간(acc)으로 두 걸음 사이를 이어 그린다
   update(_, dms) {
     if (this.leaving || !this.engine) return;
-    const dt = Math.min(dms / 1000, 0.05);
+    const dt = Math.min(dms / 1000, 0.1);
+    const STEP = 1 / 60;
     if (!this.paused && !this.engine.over) {
-      if (this.hitStop > 0) this.hitStop -= dt;
-      else this.handle(this.engine.step(dt, this.readInput()));
+      if (this.hitStop > 0) this.hitStop -= dt; // 타격 멈춤: 시간이 잠깐 선다
+      else {
+        this.acc += dt;
+        let input = this.readInput();
+        let n = 0;
+        while (this.acc >= STEP && n < 6 && !this.engine.over) {
+          this.snap();
+          this.handle(this.engine.step(STEP, input));
+          // 이번 프레임에 '누른' 것은 첫 걸음에만 (누르고 있는 이동·공격은 계속)
+          input = { move: input.move, aim: input.aim, atk: input.held };
+          this.acc -= STEP; n += 1;
+          if (this.hitStop > 0) { this.acc = 0; break; }
+        }
+        if (n >= 6) this.acc = 0;
+      }
     }
+    this.alpha = this.paused || this.engine.over || this.hitStop > 0 ? 1 : Math.min(1, this.acc / STEP);
     this.draw(dt);
     this.hud.refresh(this.engine.state, dt);
+  }
+
+  // 걸음 전 자리를 적어 둔다(보간용)
+  snap() {
+    const st = this.engine.state;
+    st.p.px = st.p.x; st.p.py = st.p.y;
+    for (const f of st.foes) { f.px = f.x; f.py = f.y; }
+    for (const sh of st.shots) { sh.px = sh.x; sh.py = sh.y; }
+  }
+
+  // 그릴 자리: 앞 걸음과 이번 걸음 사이
+  at(o) {
+    const a = this.alpha ?? 1;
+    if (o.px === undefined) return { x: o.x, y: o.y };
+    return { x: o.px + (o.x - o.px) * a, y: o.py + (o.y - o.py) * a };
   }
 
   foeOf(uid) { return this.engine.state.foes.find((f) => f.uid === uid); }
@@ -169,13 +203,19 @@ export default class ActionScene extends Phaser.Scene {
   handle(events) {
     const st = this.engine.state, fx = this.fx;
     for (const e of events) {
-      if (e.type === 'skill') { fx.slash(e, { blade: this.blade, player: this.player }); Sound.sfx(this, e.key === 'r' ? 'step' : e.key === 'e' ? 'cancel' : 'skill', { volume: 0.3 }); }
+      if (e.type === 'skill') {
+        fx.slash(e, { blade: this.blade, player: this.player });
+        Sound.sfx(this, e.key === 'r' ? 'step' : e.key === 'e' ? 'cancel' : 'skill', { volume: 0.3, rate: e.key === 'atk' ? [1, 1.08, 0.85][e.combo] : 1 });
+      }
+      else if (e.type === 'dodge') { fx.dodge(e, this.player); Sound.sfx(this, 'step', { volume: 0.35, rate: 1.3 }); }
       else if (e.type === 'hurt' && e.to !== 'p') {
         const big = !e.dot && e.dmg >= 20;
         fx.num(e.x, e.y - 14, e.dmg, { color: e.dot ? '#ffb070' : big ? '#ffd75e' : '#ffffff', big });
         if (!e.dot) {
           const v = this.sprites[e.to];
-          this.hitStop = big ? 0.06 : 0.035;
+          const third = e.skill === 'atk' && st.p.combo === 2;
+          this.hitStop = big || third ? 0.07 : 0.04;
+          if (third) this.cameras.main.shake(90, 0.004);
           fx.flash(v?.spr, this.foeOf(e.to)?.def.tint);
           fx.squash(v?.spr);
           fx.spark(e.x, e.y - 6, Math.atan2(st.p.y - e.y, st.p.x - e.x), big);
@@ -213,6 +253,9 @@ export default class ActionScene extends Phaser.Scene {
     delete this.sprites[e.uid];
   }
 
+  // 적 그림을 제 색으로 (예고 번쩍임을 걷는다)
+  baseTint(spr, f) { spr.setTintMode(Phaser.TintModes.MULTIPLY); if (f.def.tint) spr.setTint(f.def.tint); else spr.clearTint(); }
+
   dirOf(a) { return Math.abs(Math.cos(a)) > Math.abs(Math.sin(a)) ? (Math.cos(a) > 0 ? 'right' : 'left') : (Math.sin(a) > 0 ? 'down' : 'up'); }
 
   draw(dt = 0) {
@@ -223,16 +266,30 @@ export default class ActionScene extends Phaser.Scene {
     if (this.anims.exists(key)) {
       if (p.moving) { if (this.player.anims.currentAnim?.key !== key || !this.player.anims.isPlaying) this.player.play(key); } else { this.player.anims.stop(); this.player.setFrame(this.anims.get(key).frames[0].frame.name); }
     }
-    this.player.setPosition(p.x, p.y).setAlpha(p.invuln > 0 ? 0.5 : 1);
-    this.pShadow.setPosition(p.x, p.y + 4);
-    if (p.moving && !this.paused) this.fx.step(p.x, p.y, dt); // 발밑 먼지
+    const pp = this.at(p);
+    // 맞은 직후엔 깜빡이고, 구르는 중엔 옅게 납작하다
+    const blink = p.hurtT > 0 && Math.floor(this.time.now / 50) % 2 === 0;
+    const rolling = p.dash?.dodge;
+    this.player.setPosition(pp.x, pp.y).setAlpha(blink ? 0.25 : rolling ? 0.7 : 1).setScale(rolling ? 1.1 : 1, rolling ? 0.85 : 1);
+    this.pShadow.setPosition(pp.x, pp.y + 4);
+    if (p.moving && !this.paused) this.fx.step(pp.x, pp.y, dt); // 발밑 먼지
     // 적: 위치, 인물 도트는 움직이는 쪽을 본다, 작은 체력 막대
     const bg = this.barG.clear();
     for (const f of st.foes) {
       const v = this.sprites[f.uid];
       if (!v || f.hp <= 0) continue;
-      v.spr.setPosition(f.x, f.y).setAlpha(f.status.stun ? 0.7 : 1);
-      v.shadow.setPosition(f.x, f.y + f.def.radius * 0.7);
+      const fp = this.at(f);
+      // 예고 중엔 힘을 모으듯 떨리고, 터지기 직전엔 붉게 번쩍인다(무엇이 칠지 몸으로도 보인다)
+      let jx = 0;
+      const tell = f.state === 'tell' && !f.charge ? st.tells.find((t) => t.uid === f.uid) : null;
+      if (tell) {
+        const k = 1 - tell.left / tell.total;
+        jx = Math.sin(this.time.now / 22) * (0.3 + k * 0.9);
+        if (k > 0.75 && Math.floor(this.time.now / 45) % 2 === 0) v.spr.setTint(0xff5060).setTintMode(Phaser.TintModes.FILL); else this.baseTint(v.spr, f);
+      } else if (v.tinted) this.baseTint(v.spr, f);
+      v.tinted = Boolean(tell);
+      v.spr.setPosition(fp.x + jx, fp.y).setAlpha(f.status.stun ? 0.7 : 1);
+      v.shadow.setPosition(fp.x, fp.y + f.def.radius * 0.7);
       if (f.def.art.char) {
         const mv = Math.hypot(f.x - v.lx, f.y - v.ly) > 0.05;
         const dir = this.dirOf(mv ? Math.atan2(f.y - v.ly, f.x - v.lx) : Math.atan2(p.y - f.y, p.x - f.x));
@@ -241,19 +298,19 @@ export default class ActionScene extends Phaser.Scene {
       }
       v.lx = f.x; v.ly = f.y;
       if (!f.def.boss && f.hp < f.maxHp) {
-        const w = 14, y = f.y - f.def.radius - 10;
-        bg.fillStyle(0x000000, 0.6).fillRect(f.x - w / 2 - 0.5, y - 0.5, w + 1, 3);
-        bg.fillStyle(0xe05a4a, 1).fillRect(f.x - w / 2, y, w * (f.hp / f.maxHp), 2);
+        const w = 14, y = fp.y - f.def.radius - 10;
+        bg.fillStyle(0x000000, 0.6).fillRect(fp.x - w / 2 - 0.5, y - 0.5, w + 1, 3);
+        bg.fillStyle(0xe05a4a, 1).fillRect(fp.x - w / 2, y, w * (f.hp / f.maxHp), 2);
       }
     }
     // 칼: 조준 방향으로 든다 (장비 색)
     this.guardG.clear();
-    const hx = p.x + Math.cos(a) * 4, hy = p.y - 3 + Math.sin(a) * 4;
+    const hx = pp.x + Math.cos(a) * 4, hy = pp.y - 3 + Math.sin(a) * 4;
     this.guardG.lineStyle(2, 0x2a2533, 1).lineBetween(hx, hy, hx + Math.cos(a) * 10, hy + Math.sin(a) * 10);
     this.guardG.lineStyle(1, this.blade, 1).lineBetween(hx, hy, hx + Math.cos(a) * 10, hy + Math.sin(a) * 10);
     if (p.guard > 0) {
       const half = (st.skills.e.arc * Math.PI) / 360;
-      this.guardG.lineStyle(2, st.skills.e.blocksShots ? 0xffe066 : 0x9ad0ff, 0.9).beginPath().arc(p.x, p.y, 11, p.face - half, p.face + half).strokePath();
+      this.guardG.lineStyle(2, st.skills.e.blocksShots ? 0xffe066 : 0x9ad0ff, 0.9).beginPath().arc(pp.x, pp.y, 11, p.face - half, p.face + half).strokePath();
     }
     // 예고: 붉은 바닥, 시간이 갈수록 차오르고 테두리가 빨리 뛴다. 터지기 직전엔 하얗게
     const g = this.tellG; g.clear();
@@ -291,7 +348,8 @@ export default class ActionScene extends Phaser.Scene {
     }
     // 탄: 날아온 쪽으로 꼬리, 빛 테두리
     const sg = this.shotG; sg.clear();
-    for (const sh of st.shots) {
+    for (const sh0 of st.shots) {
+      const sp = this.at(sh0), sh = { ...sh0, x: sp.x, y: sp.y };
       const mine = sh.from === 'player';
       const col = mine ? 0xffe066 : sh.home ? 0x8ad04a : 0xff9a8a;
       const v = Math.hypot(sh.vx, sh.vy) || 1, tx = -sh.vx / v, ty = -sh.vy / v;

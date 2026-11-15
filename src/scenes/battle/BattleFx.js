@@ -17,7 +17,9 @@ export class BattleFx {
     this.stepAt = 0;
   }
 
-  add(o) { this.c.add(o); return o; }
+  // 싸움이 끝나 그릇이 치워진 뒤에 늦게 온 효과(잔상 등)는 그냥 버린다
+  add(o) { if (!o) return null; if (!this.c?.scene) { o.destroy(); return o; } this.c.add(o); return o; }
+  live() { return this.scene.sys.isActive() && this.c?.scene; }
   fade(o, ms, extra = {}) { this.scene.tweens.add({ targets: o, alpha: 0, duration: ms, ...extra, onComplete: () => o.destroy() }); }
 
   // ── 내 공격 ──
@@ -30,10 +32,12 @@ export class BattleFx {
       const accent = e.key === 'w' ? 0xff9a7a : e.key === 'atk' ? 0xffffff : 0xffd75e;
       g.fillStyle(accent, 0.18).slice(e.x, e.y, e.range, a0, a1).fillPath();
       g.fillStyle(accent, 0.22).slice(e.x, e.y, e.range, a0 + (a1 - a0) * 0.35, a1).fillPath();
-      g.lineStyle(3, blade, 0.95).beginPath().arc(e.x, e.y, e.range, a0, a1).strokePath();
+      const third = e.key === 'atk' && e.combo === 2; // 3연타의 셋째: 두껍고 오래 남는다
+      g.lineStyle(third ? 5 : 3, blade, 0.95).beginPath().arc(e.x, e.y, e.range, a0, a1).strokePath();
+      if (third) g.lineStyle(2, 0xffe9a8, 0.9).beginPath().arc(e.x, e.y, e.range + 3, a0 + 0.15, a1 - 0.15).strokePath();
       g.lineStyle(1, 0xffffff, 0.6).beginPath().arc(e.x, e.y, e.range * 0.78, a0 + 0.1, a1 - 0.05).strokePath();
       g.lineStyle(1, 0xffffff, 0.35).beginPath().arc(e.x, e.y, e.range * 0.58, a0 + 0.2, a1 - 0.1).strokePath();
-      this.fade(g, 170, { scaleX: 1.04, scaleY: 1.04 });
+      this.fade(g, third ? 240 : 170);
     } else if (e.shape === 'line') {
       const c = Math.cos(e.face), sn = Math.sin(e.face);
       g.lineStyle(e.width * 0.9, 0xffd75e, 0.25).lineBetween(e.x, e.y, e.x + c * e.range, e.y + sn * e.range);
@@ -45,13 +49,24 @@ export class BattleFx {
       this.fade(g, 240, { scaleX: 1.3, scaleY: 1.3 });
     } else if (e.shape === 'dash' && player) {
       for (let i = 0; i < 5; i += 1) sc.time.delayedCall(i * 35, () => {
-        if (!player.active) return;
+        if (!player.active || !this.live()) return;
         const ghost = this.add(sc.add.sprite(player.x, player.y, player.texture.key, player.frame.name).setOrigin(0.5, 0.75).setAlpha(0.5).setTint(0x9ad0ff));
         this.fade(ghost, 260);
       });
       this.puff(e.x, e.y + 4, 6, 1.4);
       g.destroy();
     } else g.destroy();
+  }
+
+  // 구르기: 파르스름한 잔상이 남고 발밑에 먼지
+  dodge(e, player) {
+    const sc = this.scene;
+    for (let i = 0; i < 4; i += 1) sc.time.delayedCall(i * 40, () => {
+      if (!player?.active || !this.live()) return;
+      const ghost = this.add(sc.add.sprite(player.x, player.y, player.texture.key, player.frame.name).setOrigin(0.5, 0.75).setAlpha(0.45 - i * 0.07).setTint(0xbfe4ff).setTintMode(Phaser.TintModes.FILL));
+      this.fade(ghost, 220);
+    });
+    this.puff(e.x, e.y + 4, 4, 1.1);
   }
 
   // 맞힌 자리의 불꽃: 바깥으로 튀는 짧은 선 몇 개 + 하얀 점

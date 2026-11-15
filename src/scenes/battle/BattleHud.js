@@ -10,8 +10,10 @@ import { FOES } from '../../../content/action/foes.js';
 import { RARITY } from '../../../content/items/items.js';
 import { COLORS } from '../../ui/kit.js';
 
-const KEYS = ['atk', 'q', 'w', 'e', 'r'];
-const KEY_LABEL = { atk: '클릭', ...CONTROLS.skills };
+const KEYS = ['atk', 'q', 'w', 'e', 'r', 'dodge'];
+// 구르기는 스킬이 아니라 몸놀림이라 엔진의 스킬 목록에 없다 — 칸에 보일 모양만 만든다
+const DODGE_SLOT = (st) => ({ shape: 'roll', name: '구르기', cd: st.dodgeCd });
+const KEY_LABEL = { atk: '클릭', ...CONTROLS.skills, dodge: 'Space' };
 const hex = (c) => Number.parseInt(String(c).replace('#', ''), 16);
 const COMBO_GAP = 1.6; // 이 초 안에 다시 맞히면 연타가 이어진다
 
@@ -87,13 +89,13 @@ export class BattleHud {
     // ── 아래 가운데: 스킬 ──
     const SZ = 50 * s;
     this.slots = KEYS.map((k, i) => {
-      const x = 334 * s + i * 60 * s, y = H - 40 * s;
+      const x = 334 * s + i * 53 * s, y = H - 40 * s; // 왼쪽 내 명판(~302)과 오른쪽 퀵슬롯(~629) 사이
       this.plate(this.g, x - SZ / 2, y - SZ / 2, SZ, SZ, 8, 0.95);
       const icon = sc.add.graphics();
       const name = this.T(x, y + SZ / 2 + 1 * s, '', 9, '#fff4e2').setOrigin(0.5, 0);
       // 키캡: 밝은 명패
       const lab = KEY_LABEL[k];
-      const kw = (lab.length > 1 ? 26 : 14) * s;
+      const kw = (lab.length > 2 ? 32 : lab.length > 1 ? 26 : 14) * s;
       this.g.fillStyle(0xf8ecd2, 1).fillRoundedRect(x - SZ / 2 - 3 * s, y - SZ / 2 - 5 * s, kw, 13 * s, 3 * s);
       this.g.fillStyle(0xc8a878, 1).fillRect(x - SZ / 2 - 3 * s, y - SZ / 2 + 6 * s, kw, 2 * s);
       this.T(x - SZ / 2 - 3 * s + kw / 2, y - SZ / 2 + 1.5 * s, lab, 8, COLORS.plateText, { bold: true, stroke: 0 }).setOrigin(0.5);
@@ -155,6 +157,10 @@ export class BattleHud {
     } else if (shape === 'guard') {
       g.beginPath().moveTo(x - 9 * s, y - 9 * s).lineTo(x + 9 * s, y - 9 * s).lineTo(x + 8 * s, y + 2 * s).lineTo(x, y + 11 * s).lineTo(x - 8 * s, y + 2 * s).closePath().strokePath();
       g.lineStyle(1.5 * s, a, 1).lineBetween(x, y - 6 * s, x, y + 6 * s);
+    } else if (shape === 'roll') {
+      g.beginPath().arc(x, y, 9 * s, -2.8, 1.2).strokePath();
+      g.fillStyle(c, 1).fillTriangle(x + 7 * s, y + 9 * s, x + 1 * s, y + 6 * s, x + 6 * s, y + 2 * s);
+      g.fillStyle(a, 1).fillCircle(x - 1 * s, y - 1 * s, 2.5 * s);
     } else if (shape === 'dash') {
       for (const d of [-6, 3]) g.beginPath().moveTo(x + (d - 4) * s, y - 8 * s).lineTo(x + (d + 4) * s, y).lineTo(x + (d - 4) * s, y + 8 * s).strokePath();
     } else g.strokeCircle(x, y, 8 * s);
@@ -264,8 +270,8 @@ export class BattleHud {
     }
     // 스킬: 둥근 재사용 시계, 다 차면 번쩍
     for (const sl of this.slots) {
-      const sk = st.skills[sl.k];
-      const left = p.cd[sl.k] ?? 0;
+      const sk = sl.k === 'dodge' ? DODGE_SLOT(st) : st.skills[sl.k];
+      const left = sl.k === 'dodge' ? p.dodgeCd ?? 0 : p.cd[sl.k] ?? 0;
       const ready = left <= 0;
       if (first || ready !== sl.ready) {
         this.drawIcon(sl.icon, sk.shape, sl.k, sl.x, sl.y - 3 * s, ready);

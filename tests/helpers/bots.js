@@ -1,5 +1,5 @@
 // 액션 전투 봇 (균형 테스트용).
-//   smart: 예고를 보면 그 모양 밖으로 빠지고, 탄을 피하고, 가장 가까운 적에게 붙어 벤다. 다치면 붕대·물약
+//   smart: 예고를 보면 그 모양 밖으로 빠지고, 터지기 직전이면 옆으로 구르고, 탄을 피하고, 가장 가까운 적에게 붙어 벤다. 다치면 붕대·물약
 //   brute: 피하지 않고 가장 가까운 적에게 붙어 때리기만 한다
 //   idle:  가만히 있는다
 const near = (s) => s.foes.filter((f) => f.hp > 0).reduce((a, f) => (!a || Math.hypot(f.x - s.p.x, f.y - s.p.y) < Math.hypot(a.x - s.p.x, a.y - s.p.y) ? f : a), null);
@@ -25,11 +25,11 @@ export function smart(s) {
   if (t) {
     const side = t.dir + Math.PI / 2 * (((p.x - t.x) * -Math.sin(t.dir) + (p.y - t.y) * Math.cos(t.dir)) >= 0 ? 1 : -1);
     input.move = { x: Math.cos(side) - Math.cos(toF) * 0.3, y: Math.sin(side) - Math.sin(toF) * 0.3 };
-    if (t.left !== undefined && t.left < 0.22 && !(p.cd.r > 0)) { input.aim = { x: p.x + Math.cos(side) * 10, y: p.y + Math.sin(side) * 10 }; input.r = true; }
+    if (t.left !== undefined && t.left < 0.2 && !(p.dodgeCd > 0)) input.dodge = true; // 따라 겨누는 예고는 걸어서는 못 빠진다 — 옆으로 구른다
     return input;
   }
   const shot = s.shots.find((sh) => sh.from !== 'player' && Math.hypot(sh.x - p.x, sh.y - p.y) < 30);
-  if (shot) { const away = Math.atan2(shot.vy, shot.vx) + Math.PI / 2; input.move = { x: Math.cos(away), y: Math.sin(away) }; return input; }
+  if (shot) { const away = Math.atan2(shot.vy, shot.vx) + Math.PI / 2; input.move = { x: Math.cos(away), y: Math.sin(away) }; if (Math.hypot(shot.x - p.x, shot.y - p.y) < 14 && !(p.dodgeCd > 0)) input.dodge = true; return input; }
   if (p.hp < p.maxHp * 0.35 && s.bag.potion > 0 && !(p.quickCd > 0)) { input.quick = s.quick.indexOf('potion'); return input; }
   if (p.hp < p.maxHp * 0.5 && !p.regen && s.bag.bandage > 0) { input.quick = s.quick.indexOf('bandage'); input.move = { x: -Math.cos(toF), y: -Math.sin(toF) }; return input; }
   if (d > 22) input.move = { x: Math.cos(toF), y: Math.sin(toF) };

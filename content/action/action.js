@@ -16,6 +16,22 @@ export const BASE_SKILLS = {
   r: { name: '돌진', shape: 'dash', dist: 64, dur: 0.18, cd: 5, dmg: 8, invuln: true },
 };
 
+// ── 손맛 ────────────────────────────────────────────────
+//   accel/decel: 이동이 붙고 멎는 빠르기(초당, 클수록 즉각). 툭 서지 않고 미끄러지지도 않게
+//   buffer: 쿨다운·구르기 중에 누른 공격·스킬을 이만큼(초) 기억했다가 되는 순간 쓴다
+//   hurtInvuln: 맞은 뒤 잠깐 무적(깜빡임) — 한 번에 여러 대가 겹쳐 터지지 않게
+//   recover: 기본 공격·스킬을 쓴 뒤 잠깐 느려지는 시간(무게) / 배수
+export const FEEL = { accel: 16, decel: 20, buffer: 0.16, hurtInvuln: 0.2, recover: { atk: 0.12, q: 0.22, w: 0.22 }, recoverMul: 0.35 };
+// 구르기(Space): 무적으로 예고를 뚫고 지나간다. 이동 방향(없으면 보는 쪽)으로
+export const DODGE = { dist: 44, dur: 0.2, invuln: 0.26, cd: 0.6 };
+// 기본 공격 3연타: 이어서 베면 셋째가 넓고 세게 민다. window 안에 다시 베야 이어진다
+export const COMBO = { window: 0.6, hits: [{ dmgMul: 1, knock: 70 }, { dmgMul: 1.1, knock: 70 }, { dmgMul: 1.8, knock: 170, arc: 160, range: 30 }] };
+// 넉백: 맞은 적이 밀려나는 힘(px/초)이 이만큼 줄어든다(초당 배수) / 작은 적은 잠깐 멈칫한다
+export const KNOCK = { decay: 9, flinch: 0.14 };
+// 난이도: 적 전체에 곱한다. 이 게임은 어렵다 — 예고를 읽고 구르고, 틈에 벤다
+//   track: 예고 시간의 앞쪽 이만큼은 적이 주인공을 따라 겨눈다(그 뒤로 굳는다). 걸어서 비켜서는 늦고, 굴러야 한다
+export const DIFFICULTY = { hp: 1.15, dmg: 1.45, contact: 1.4, speed: 1.12, rest: 0.8, tell: 0.92, track: 0.6, turn: 5 };
+
 // ── 상태이상 ────────────────────────────────────────────────
 //   dps 초당 피해(최대 체력 비율), slow 이동 배수, stun 행동 불가, freeze 이동·행동 불가 + 다음 피해 1.5배로 풀림
 //   weak 주는 피해 배수, vuln 받는 피해 배수, noRegen 회복(붕대·약초) 막음
