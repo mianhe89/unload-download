@@ -7,6 +7,7 @@
 //   적은 content/action/foes.js. 한 번에 maxAlive마리까지 나오고, 쓰러지면 남은 무리가 가장자리에서 들어온다.
 import { BASE_SKILLS, STATUS, CONSUMABLES, QUICK_CD, EQUIPMENT, SETS, ARENA, FEEL, DODGE, COMBO, KNOCK, DIFFICULTY } from '../../content/action/action.js';
 import { FOES } from '../../content/action/foes.js';
+import { RELICS } from '../../content/action/relics.js';
 
 export const PLAYER = { radius: 6, speed: 78, maxHp: 120 };
 const SKILL_KEYS = ['atk', 'q', 'w', 'e', 'r'];
@@ -51,6 +52,18 @@ export function bodyMods(st) {
   };
 }
 
+// 유물 → 합친 효과 (겹치면 더한다). 없으면 모두 0이라 싸움이 그대로다
+export function relicFx(relics = {}) {
+  const R = { dmg: 0, speed: 0, hp: 0, atkCd: 0, dodgeCd: 0, reach: 0, knock: 0, wave: 0, waveCount: 0, waveSeek: 0, wavePierce: 0, waveSize: 0, onHit: [], freeze: 0, leech: 0, chain: 0, killBlast: 0, killHeal: 0, dodgeRing: 0, dodgeCharge: 0, thorns: 0, thirdWave: 0, calm: 0, rage: 0, echo: 0 };
+  for (const [id, n] of Object.entries(relics ?? {})) {
+    const fx = RELICS[id]?.fx;
+    if (!fx || !(n > 0)) continue;
+    for (const [k, v] of Object.entries(fx)) { if (k === 'onHit') for (let i = 0; i < n; i += 1) R.onHit.push(v); else R[k] += v * n; }
+  }
+  R.atkCd = Math.min(R.atkCd, 0.6); R.dodgeCd = Math.min(R.dodgeCd, 0.6); R.chain = Math.min(R.chain, 0.8);
+  return R;
+}
+
 // 적 하나 (번호는 전투마다 1부터: 같은 씨앗이면 같은 전투)
 function makeFoe(s, id, x, y) {
   const d = FOES[id];
@@ -61,17 +74,19 @@ function makeFoe(s, id, x, y) {
 }
 
 // enemies: 적 id 목록(순서대로 나온다). hp/maxHp: 주인공 체력. mods: bodyMods(...)
-export function createAction({ enemies = ['sweeper'], hp, maxHp, equip, bag = {}, quick = [], seed = 1, mods, maxAlive = MAX_ALIVE } = {}) {
+export function createAction({ enemies = ['sweeper'], hp, maxHp, equip, bag = {}, quick = [], seed = 1, mods, maxAlive = MAX_ALIVE, relics = {} } = {}) {
   const rng = rngOf(seed);
   const m = mods ?? bodyMods(null);
   const { skills, def } = skillsFor(equip);
   for (const k of SKILL_KEYS) if (skills[k].dmg) skills[k].dmg = Math.max(1, Math.round(skills[k].dmg * m.atkMul));
   skills.r.cd = Math.max(1, +(skills.r.cd * m.dashMul).toFixed(2));
-  const top = Math.round(PLAYER.maxHp * m.hpMul);
+  const R = relicFx(relics);
+  skills.atk.cd = +(skills.atk.cd * (1 - R.atkCd)).toFixed(3);
+  const top = Math.max(20, Math.round(PLAYER.maxHp * m.hpMul) + R.hp);
   const s = {
-    t: 0, over: null, rng, def, skills, mods: m, maxAlive,
-    p: { x: ARENA.w / 2, y: ARENA.h - 40, vx: 0, vy: 0, hp: Math.min(hp ?? top, maxHp ?? top), maxHp: maxHp ?? top, face: -Math.PI / 2, cd: {}, status: {}, guard: 0, guardT: 0, dash: null, invuln: 0, hurtT: 0, regen: null, quickCd: 0, lastHit: -9, moving: false, buf: {}, recover: 0, combo: 0, lastAtk: -9, dodgeCd: 0 },
-    dodgeCd: +(DODGE.cd * m.dashMul).toFixed(2),
+    t: 0, over: null, rng, def, skills, mods: m, maxAlive, R,
+    p: { x: ARENA.w / 2, y: ARENA.h - 40, vx: 0, vy: 0, hp: Math.min(hp ?? top, maxHp ?? top), maxHp: maxHp ?? top, face: -Math.PI / 2, cd: {}, status: {}, guard: 0, guardT: 0, dash: null, invuln: 0, hurtT: 0, regen: null, quickCd: 0, lastHit: -9, moving: false, buf: {}, recover: 0, combo: 0, lastAtk: -9, dodgeCd: 0, charged: false, calmAt: 0, echo: null, leechCap: 6, leechAcc: 0 },
+    dodgeCd: +(DODGE.cd * m.dashMul * (1 - R.dodgeCd)).toFixed(2),
     foes: [], queue: [...enemies], total: enemies.length, killed: 0, spawnT: 0, seq: 0,
     shots: [],      // { x, y, vx, vy, r, dmg, from: foe uid | 'player', life, status }
     tells: [],      // 화면에 그릴 예고
@@ -131,6 +146,8 @@ function hurtPlayer(s, dmg, ev, opts = {}) {
   ev.push({ type: 'hurt', to: 'p', dmg: d, x: p.x, y: p.y, dot: Boolean(opts.dot), dir: opts.dir });
   if (opts.status && !opts.dot) addStatus(s, p, opts.status, ev, true);
   if (p.hp <= 0) { s.over = 'lose'; ev.push({ type: 'lose' }); }
+  // 가시 껍질: 맞으면 둘레로 가시가 튄다
+  if (!opts.dot && s.R.thorns > 0 && !s.over) spray(s, p.x, p.y, s.R.thorns, Math.round(6 * pMul(s)), { speed: 130, life: 0.6, r: 3, kind: 'thorn', off: s.t });
   return true;
 }
 
@@ -144,6 +161,8 @@ function hurtFoe(s, f, dmg, ev, opts = {}) {
   f.hp = Math.max(0, f.hp - d);
   ev.push({ type: 'hurt', to: f.uid, dmg: d, x: f.x, y: f.y, dot: Boolean(opts.dot), skill: opts.skill });
   if (opts.status) addStatus(s, f, opts.status, ev, false);
+  // 유물: 내가 직접 준 피해(칼·칼바람·번개·터짐·가시)에 붙는 것
+  if (opts.p && !opts.dot) onPlayerHit(s, f, d, ev, opts);
   // 맞으면 밀려나고(덩치가 클수록 덜), 작은 적은 잠깐 멈칫한다. 보스와 돌진 중인 적은 버틴다
   if (!opts.dot && !f.def.boss && !f.charge) {
     const a = Math.atan2(f.y - s.p.y, f.x - s.p.x);
@@ -156,6 +175,7 @@ function hurtFoe(s, f, dmg, ev, opts = {}) {
     f.charge = null;
     s.tells = s.tells.filter((t) => t.uid !== f.uid);
     ev.push({ type: 'kill', uid: f.uid, id: f.id, x: f.x, y: f.y });
+    onKill(s, f, ev, opts);
     // 갈라지는 적: 그 자리에서 작은 것들이 나온다
     for (const [k, id] of (f.def.split ?? []).entries()) {
       const c = makeFoe(s, id, clamp(f.x + (k ? 10 : -10), 8, ARENA.w - 8), f.y);
@@ -196,6 +216,54 @@ function inShape(sk, ox, oy, face, tx, ty, tr) {
   return false;
 }
 
+// ── 유물 ─────────────────────────────────────────────────
+// 내 피해 배수: 숫돌·유리 칼날 등(dmg) + 성난 탈(체력 30% 아래)
+function pMul(s) { const p = s.p; return (1 + s.R.dmg) * (p.hp / p.maxHp < 0.3 ? 1 + s.R.rage : 1); }
+
+// 칼바람·가시: 내 탄. n갈래를 부채꼴(spread) 또는 둥글게(spread 없이 ring)
+function spray(s, x, y, n, dmg, { dir = 0, spread = null, speed = 170, life = 0.9, r = 4, kind = 'wave', off = 0 } = {}) {
+  const R = s.R;
+  for (let k = 0; k < n; k += 1) {
+    const a = spread === null ? (k / n) * Math.PI * 2 + off : dir + (k - (n - 1) / 2) * spread;
+    s.shots.push({ x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: r * (1 + R.waveSize), dmg, from: 'player', life, kind, pierce: R.wavePierce, hits: new Set(), seek: R.waveSeek > 0, speed });
+  }
+}
+
+function onPlayerHit(s, f, d, ev, opts) {
+  const R = s.R, p = s.p;
+  for (const h of R.onHit) addStatus(s, f, { id: h.status, chance: h.chance }, ev, false);
+  if (R.freeze > 0 && f.hp > 0) addStatus(s, f, { id: 'freeze', chance: R.freeze }, ev, false);
+  if (R.leech > 0 && p.leechCap > 0) {
+    const gain = Math.min(d * R.leech, p.leechCap);
+    p.leechCap -= gain; p.leechAcc += gain;
+    if (p.leechAcc >= 1) { const n = Math.floor(p.leechAcc); p.leechAcc -= n; const b = p.hp; p.hp = Math.min(p.maxHp, p.hp + n); if (p.hp > b) ev.push({ type: 'regen', amount: p.hp - b, leech: true }); }
+  }
+  if (R.chain > 0 && !opts.chained && s.rng() < R.chain) {
+    const o = alive(s).filter((x) => x !== f).sort((a, b) => Math.hypot(a.x - f.x, a.y - f.y) - Math.hypot(b.x - f.x, b.y - f.y))[0];
+    if (o && Math.hypot(o.x - f.x, o.y - f.y) < 80) {
+      ev.push({ type: 'chain', x1: f.x, y1: f.y, x2: o.x, y2: o.y });
+      hurtFoe(s, o, Math.max(1, Math.round(d * 0.6)), ev, { p: true, chained: true, skill: 'chain', knock: 30 });
+    }
+  }
+}
+
+function onKill(s, f, ev, opts) {
+  const R = s.R, p = s.p;
+  if (R.killHeal > 0 && !s.over) { const b = p.hp; p.hp = Math.min(p.maxHp, p.hp + R.killHeal); if (p.hp > b) ev.push({ type: 'regen', amount: p.hp - b, soul: true }); }
+  // 터지는 씨앗: 쓰러진 자리가 터진다. 터져서 쓰러진 적도 또 터진다(세 번까지)
+  if (R.killBlast > 0 && (opts.blast ?? 0) < 3) {
+    const r = 34, dmg = Math.max(1, Math.round(f.maxHp * R.killBlast));
+    ev.push({ type: 'blast', x: f.x, y: f.y, r });
+    for (const o of alive(s)) if (o !== f && Math.hypot(o.x - f.x, o.y - f.y) < r + o.def.radius) hurtFoe(s, o, dmg, ev, { p: true, chained: true, blast: (opts.blast ?? 0) + 1, skill: 'blast', knock: 140 });
+  }
+}
+
+// 칼로 치는 판정 (스킬·메아리 공통)
+function strike(s, key, sk, mul, knock, ev, combo = 0) {
+  const p = s.p;
+  for (const f of alive(s)) if (inShape(sk, p.x, p.y, p.face, f.x, f.y, f.def.radius)) hurtFoe(s, f, Math.max(1, Math.round(sk.dmg * mul)), ev, { status: sk.status, skill: key, knock, combo, p: true });
+}
+
 // ── 주인공 ───────────────────────────────────────────────
 function useSkill(s, key, ev) {
   const p = s.p;
@@ -223,8 +291,20 @@ function useSkill(s, key, ev) {
   }
   // 베는 쪽으로 반걸음 (무게)
   p.vx += Math.cos(p.face) * 40; p.vy += Math.sin(p.face) * 40;
+  // 유물: 범위·넉백·피해 배수, 구른 뒤 첫 공격, 고요한 심장
+  const R = s.R;
+  if (R.reach) sk = { ...sk, range: sk.range * (1 + R.reach) };
+  let mul = hit.mul * pMul(s);
+  if (p.charged && R.dodgeCharge) { mul *= 1 + R.dodgeCharge; p.charged = false; ev.push({ type: 'charged' }); }
+  if (R.calm && s.t - Math.max(p.lastHit, p.calmAt) >= 4) { mul *= 1 + R.calm; p.calmAt = s.t; ev.push({ type: 'calm' }); }
+  const knock = hit.knock * (1 + R.knock);
   // 범위 안의 적은 모두 맞는다
-  for (const f of alive(s)) if (inShape(sk, p.x, p.y, p.face, f.x, f.y, f.def.radius)) hurtFoe(s, f, Math.round(sk.dmg * hit.mul), ev, { status: sk.status, skill: key, knock: hit.knock, combo });
+  strike(s, key, sk, mul, knock, ev, combo);
+  // 칼바람: 기본 공격마다 앞으로 / 3연타 셋째는 부채꼴로
+  if (key === 'atk' && R.wave > 0) spray(s, p.x + Math.cos(p.face) * 6, p.y + Math.sin(p.face) * 6, 1 + R.waveCount, Math.max(1, Math.round(s.skills.atk.dmg * R.wave * mul)), { dir: p.face, spread: 0.22 });
+  if (key === 'atk' && combo === 2 && R.thirdWave > 0) spray(s, p.x, p.y, R.thirdWave, Math.max(1, Math.round(s.skills.atk.dmg * 0.7 * mul)), { dir: p.face, spread: 0.4 });
+  // 메아리 종: 찌르기·휘두르기가 조금 뒤 한 번 더
+  if ((key === 'q' || key === 'w') && R.echo > 0) p.echo = { at: s.t + 0.3, key, sk, mul: mul * R.echo, knock };
   return true;
 }
 
@@ -239,6 +319,8 @@ function useDodge(s, input, ev) {
   p.dodgeCd = s.dodgeCd;
   p.recover = 0; p.guard = 0;
   ev.push({ type: 'dodge', x: p.x, y: p.y, dir: a });
+  if (s.R.dodgeCharge > 0) p.charged = true;
+  if (s.R.dodgeRing > 0) spray(s, p.x, p.y, s.R.dodgeRing, Math.max(1, Math.round(s.skills.atk.dmg * 0.5 * pMul(s))), { speed: 140, life: 0.5, off: s.t });
   return true;
 }
 
@@ -379,6 +461,8 @@ export function step(s, dt, input) {
   p.hurtT = Math.max(0, p.hurtT - dt);
   p.recover = Math.max(0, p.recover - dt);
   p.dodgeCd = Math.max(0, p.dodgeCd - dt);
+  p.leechCap = Math.min(6, p.leechCap + 6 * dt);
+  if (p.echo && s.t >= p.echo.at) { const e = p.echo; p.echo = null; ev.push({ type: 'skill', key: e.key, name: e.sk.name, shape: e.sk.shape, x: p.x, y: p.y, face: p.face, range: e.sk.range, arc: e.sk.arc, width: e.sk.width, echo: true }); strike(s, e.key, e.sk, e.mul, e.knock, ev); }
   if (p.guard > 0) p.guard = Math.max(0, p.guard - dt);
 
   // 조준: 마우스 쪽을 본다
@@ -391,7 +475,7 @@ export function step(s, dt, input) {
     const d = p.dash;
     p.x = clamp(p.x + d.vx * dt, PLAYER.radius, ARENA.w - PLAYER.radius);
     p.y = clamp(p.y + d.vy * dt, PLAYER.radius, ARENA.h - PLAYER.radius);
-    if (!d.dodge) for (const f of alive(s)) if (!d.hit.has(f.uid) && Math.hypot(p.x - f.x, p.y - f.y) < f.def.radius + PLAYER.radius + 4) { d.hit.add(f.uid); hurtFoe(s, f, s.skills.r.dmg, ev, { skill: 'r', knock: 120 }); }
+    if (!d.dodge) for (const f of alive(s)) if (!d.hit.has(f.uid) && Math.hypot(p.x - f.x, p.y - f.y) < f.def.radius + PLAYER.radius + 4) { d.hit.add(f.uid); hurtFoe(s, f, Math.round(s.skills.r.dmg * pMul(s)), ev, { skill: 'r', knock: 120 * (1 + s.R.knock), p: true }); }
     d.left -= dt;
     // 구르기·돌진이 끝나면 그 빠르기의 일부를 남겨 미끄러지듯 선다
     if (d.left <= 0) { p.dash = null; p.vx = d.vx * 0.25; p.vy = d.vy * 0.25; }
@@ -402,7 +486,7 @@ export function step(s, dt, input) {
     const m = Math.min(1, Math.hypot(mx, my));
     let tx = 0, ty = 0;
     if (m > 0.05) {
-      const sp = PLAYER.speed * s.mods.speedMul * (p.status.slow ? STATUS.slow.slow : 1) * (p.guard > 0 ? 0.45 : 1) * (p.recover > 0 ? FEEL.recoverMul : 1);
+      const sp = PLAYER.speed * s.mods.speedMul * (1 + s.R.speed) * (p.status.slow ? STATUS.slow.slow : 1) * (p.guard > 0 ? 0.45 : 1) * (p.recover > 0 ? FEEL.recoverMul : 1);
       const l = len(mx, my);
       tx = (mx / l) * m * sp; ty = (my / l) * m * sp;
     }
@@ -471,6 +555,15 @@ export function step(s, dt, input) {
 
   // 탄
   for (const sh of s.shots) {
+    if (sh.seek && sh.from === 'player') { // 쫓는 눈: 가까운 적 쪽으로 튼다
+      const t = alive(s).filter((x) => !sh.hits?.has(x.uid)).sort((a, b) => Math.hypot(a.x - sh.x, a.y - sh.y) - Math.hypot(b.x - sh.x, b.y - sh.y))[0];
+      if (t) {
+        const want = Math.atan2(t.y - sh.y, t.x - sh.x), cur = Math.atan2(sh.vy, sh.vx);
+        let d = want - cur; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+        const turn = clamp(d, -7 * dt, 7 * dt);
+        sh.vx = Math.cos(cur + turn) * sh.speed; sh.vy = Math.sin(cur + turn) * sh.speed;
+      }
+    }
     if (sh.home) { // 쫓아오는 탄: 조금씩 방향을 튼다
       const want = Math.atan2(p.y - sh.y, p.x - sh.x), cur = Math.atan2(sh.vy, sh.vx);
       let d = want - cur; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
@@ -482,11 +575,16 @@ export function step(s, dt, input) {
     if (sh.life <= 0) continue;
     if (sh.from !== 'player' && Math.hypot(p.x - sh.x, p.y - sh.y) < PLAYER.radius + sh.r) {
       const r = hurtPlayer(s, sh.dmg, ev, { dir: Math.atan2(-sh.vy, -sh.vx), shot: true, status: sh.status });
-      if (r === 'blocked' && s.skills.e.reflect) { sh.vx *= -1.4; sh.vy *= -1.4; sh.from = 'player'; sh.home = 0; sh.life = 2; ev.push({ type: 'reflect', x: sh.x, y: sh.y }); continue; }
+      if (r === 'blocked' && s.skills.e.reflect) { sh.vx *= -1.4; sh.vy *= -1.4; sh.from = 'player'; sh.home = 0; sh.life = 2; sh.reflect = true; ev.push({ type: 'reflect', x: sh.x, y: sh.y }); continue; }
       if (r) sh.life = 0;
     } else if (sh.from === 'player') {
-      const f = alive(s).find((x) => Math.hypot(x.x - sh.x, x.y - sh.y) < x.def.radius + sh.r);
-      if (f) { hurtFoe(s, f, sh.dmg * 2, ev, { skill: 'reflect' }); sh.life = 0; }
+      const f = alive(s).find((x) => !sh.hits?.has(x.uid) && Math.hypot(x.x - sh.x, x.y - sh.y) < x.def.radius + sh.r);
+      if (f) {
+        if (sh.reflect) { hurtFoe(s, f, sh.dmg * 2, ev, { skill: 'reflect', p: true }); sh.life = 0; continue; }
+        sh.hits.add(f.uid);
+        hurtFoe(s, f, sh.dmg, ev, { skill: sh.kind ?? 'wave', p: true, knock: 50 * (1 + s.R.knock) });
+        if (sh.pierce > 0) sh.pierce -= 1; else sh.life = 0;
+      }
     }
   }
   s.shots = s.shots.filter((x) => x.life > 0);

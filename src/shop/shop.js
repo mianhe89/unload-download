@@ -1,6 +1,6 @@
 // 가게 규칙(순수): 열린 시간, 오늘 파는 것, 사기·팔기. 가게 데이터는 content/shop/shops.js.
 // 세이브 run.shop = { purse: 닢, sold: { '가게.아이템': { day, n } } } — 하루에 파는 수가 정해진 물건은 그날 판 만큼 줄어든다.
-// 물건이 들어가는 곳은 가방과 같다: 먹을 것 run.bag, 전투 소모품·재료 run.farm.items, 장비 run.gear (src/life/bag.js의 listBag)
+// 물건이 들어가는 곳은 가방과 같다: 먹을 것 run.bag, 전투 소모품·재료 run.farm.items, 장비 run.gear, 유물 run.relics (src/life/bag.js의 listBag)
 import { SHOPS, PRICES, SELL_RATE, START_PURSE } from '../../content/shop/shops.js';
 import { ITEMS } from '../../content/items.js';
 import { addItem, takeItem, MAX_STACK } from '../life/bag.js';
@@ -40,6 +40,7 @@ export function ownedCount(run, id) {
   const def = ITEMS[id];
   if (!def) return 0;
   if (def.kind === 'gear') return run.gear?.[id] ?? 0;
+  if (def.kind === 'relic') return run.relics?.[id] ?? 0;
   if (def.farm) return run.farm?.items?.[id] ?? 0;
   return run.bag?.items?.[id] ?? 0;
 }
@@ -58,10 +59,11 @@ export function sellableOf(shopId, run, equip = {}) {
   return out;
 }
 
-// 물건을 넣고 빼기: 바뀐 { bag, farm, gear }만 돌려준다
+// 물건을 넣고 빼기: 바뀐 { bag, farm, gear, relics }만 돌려준다
 function put(run, id, n) {
   const def = ITEMS[id];
   if (def.kind === 'gear') return { gear: { ...(run.gear ?? {}), [id]: Math.max(0, (run.gear?.[id] ?? 0) + n) } };
+  if (def.kind === 'relic') return { relics: { ...(run.relics ?? {}), [id]: Math.max(0, (run.relics?.[id] ?? 0) + n) } };
   if (def.farm) {
     const farm = run.farm ?? { items: {} };
     return { farm: { ...farm, items: { ...farm.items, [id]: Math.min(99, Math.max(0, (farm.items?.[id] ?? 0) + n)) } } };
@@ -78,7 +80,7 @@ export function buy(run, shopId, id, day = 1, passes = () => true) {
   if (entry.left <= 0) return { ok: false, reason: 'soldout' };
   if (state.purse < entry.price) return { ok: false, reason: 'poor' };
   const def = ITEMS[id];
-  if (def.kind !== 'gear' && !def.farm && (run.bag?.items?.[id] ?? 0) >= MAX_STACK) return { ok: false, reason: 'full' };
+  if (def.kind !== 'gear' && def.kind !== 'relic' && !def.farm && (run.bag?.items?.[id] ?? 0) >= MAX_STACK) return { ok: false, reason: 'full' };
   const key = `${shopId}.${id}`;
   const rec = state.sold?.[key];
   const sold = { ...(state.sold ?? {}), [key]: { day, n: (rec?.day === day ? rec.n : 0) + 1 } };

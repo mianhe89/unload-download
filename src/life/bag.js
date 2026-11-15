@@ -33,17 +33,18 @@ export function takeItem(bag, id) {
 
 // 가방에 보이는 목록: [{ id, def, count, worn }] — 먹을 것, 전투, 장비, 재료, 소중한 것 순
 // gear: 가진 장비 { id: n } (run.gear), equip: 입은 장비 (content/action/action.js의 EQUIP_SLOTS)
-export function listBag(bag, { farmItems = {}, flags = {}, gear = {}, equip = {} } = {}) {
+export function listBag(bag, { farmItems = {}, flags = {}, gear = {}, equip = {}, relics = {} } = {}) {
   const out = [];
   const worn = new Set(Object.values(equip).filter(Boolean));
   for (const [id, def] of Object.entries(ITEMS)) {
     let count;
     if (def.kind === 'key') count = flags[def.has] ? 1 : 0;
     else if (def.kind === 'gear') count = (gear[id] ?? 0) || (worn.has(id) ? 1 : 0);
+    else if (def.kind === 'relic') count = relics[id] ?? 0;
     else count = def.farm ? farmItems[id] ?? 0 : bag?.items?.[id] ?? 0;
     if (count > 0) out.push({ id, def, count, worn: worn.has(id) });
   }
-  const order = { food: 0, battle: 1, gear: 2, material: 3, key: 4 };
+  const order = { food: 0, battle: 1, gear: 2, relic: 3, material: 4, key: 5 };
   return out.sort((a, b) => order[a.def.kind] - order[b.def.kind]);
 }
 

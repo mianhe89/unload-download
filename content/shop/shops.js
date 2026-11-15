@@ -24,7 +24,9 @@ export const PRICES = {
   // 전투에 쓰는 것
   bandage: 4, herb: 7, antidote: 5, ointment: 8, potion: 45,
   // 장비
-  leatherBoots: 30, leatherVest: 48, ironSword: 55, dwarfBlade: 160, frostCloak: 120, crystalCharm: 110, furHat: 26, strawHat: 8, hornHelm: 70, dwarfHelm: 44, travelCape: 38, redCape: 90,
+  leatherBoots: 30, leatherVest: 48, ironSword: 55, dwarfBlade: 160, frostCloak: 120, crystalCharm: 110, furHat: 26, strawHat: 8, hornHelm: 70,
+  // 유물: 흔한 것 60, 고급 90, 희귀 140, 영웅 220 언저리
+  whetstone: 60, featherShoe: 65, ironHeart: 90, needle: 85, soulCandle: 80, bladeWave: 140, frostShard: 140, calmHeart: 150, echoBell: 230, dwarfHelm: 44, travelCape: 38, redCape: 90,
   wanderCoat: 60, orcGloves: 40,
   // 재료
   wood: 3, stone: 3,
@@ -61,7 +63,7 @@ export const SHOPS = {
     closed: '조합 문은 닫았네. 내일 오게.',
     stock: [
       { item: 'potion', n: 2 }, { item: 'herb' }, { item: 'ointment' }, { item: 'jerky' },
-      { item: 'churu', n: 2 }, { item: 'wanderCoat', n: 1 }, { item: 'travelCape', n: 1 },
+      { item: 'churu', n: 2 }, { item: 'wanderCoat', n: 1 }, { item: 'travelCape', n: 1 }, { item: 'whetstone', n: 1 }, { item: 'featherShoe', n: 1 },
     ],
     buys: ['food', 'battle', 'gear', 'material'],
   },
@@ -70,7 +72,7 @@ export const SHOPS = {
     name: '브로크의 대장간', keeper: 'brok', map: 'dwarf', hours: ['06:00', '21:00'],
     greet: ['쇠를 보러 왔나. 만지는 건 공짜다.', '[mood=neutral]소집용 검을 벼리느라 손이 모자라. 그래도 [y]하나쯤[/y]은 내주지.'],
     closed: '불을 껐다. 아침에 다시 지핀다.',
-    stock: [{ item: 'ironSword', n: 1 }, { item: 'dwarfBlade', n: 1 }, { item: 'leatherBoots', n: 1 }, { item: 'dwarfHelm', n: 1 }, { item: 'bandage' }],
+    stock: [{ item: 'ironSword', n: 1 }, { item: 'dwarfBlade', n: 1 }, { item: 'leatherBoots', n: 1 }, { item: 'dwarfHelm', n: 1 }, { item: 'bandage' }, { item: 'ironHeart', n: 1 }, { item: 'needle', n: 1 }],
     buys: ['gear', 'material'],
   },
   // 항구 넬의 생선 가게
@@ -86,7 +88,7 @@ export const SHOPS = {
     name: '서리 마을 여관', keeper: 'gord', map: 'frost', hours: ['06:00', '23:00'],
     greet: ['파이 막 구웠다! 오크 막아 주는 사람한텐 [y]값을 덜[/y] 받고 싶은데… 장사는 장사라.', '털 망토? 우리 마을 겨울을 나 본 사람은 하나씩 걸치지.'],
     closed: '오늘은 닫았다. 국은 내일 끓이마.',
-    stock: [{ item: 'pie' }, { item: 'jerky' }, { item: 'frostCloak', n: 1 }, { item: 'furHat', n: 1 }, { item: 'ointment' }],
+    stock: [{ item: 'pie' }, { item: 'jerky' }, { item: 'frostCloak', n: 1 }, { item: 'furHat', n: 1 }, { item: 'ointment' }, { item: 'soulCandle', n: 1 }],
     buys: ['food', 'material'],
   },
   // 아스테라 키라의 물약 가게
@@ -94,7 +96,8 @@ export const SHOPS = {
     name: '키라의 물약 가게', keeper: 'kira', map: 'magic', hours: ['09:00', '21:00'],
     greet: ['물약은 [y]수정 물[/y]로 달여요. 그래서 비싸요.', '[mood=smile]수정 부적? 도란 씨가 깎은 거예요. 쥐면 맞은 데가 덜 아파요.'],
     closed: '오늘 솥은 식었어요. 내일 오세요.',
-    stock: [{ item: 'potion', n: 3 }, { item: 'herb' }, { item: 'antidote' }, { item: 'crystalCharm', n: 1 }],
+    // 마법 도시라 이상한 물건(유물)이 하루 하나씩 들어온다
+    stock: [{ item: 'potion', n: 3 }, { item: 'herb' }, { item: 'antidote' }, { item: 'crystalCharm', n: 1 }, { item: 'bladeWave', n: 1 }, { item: 'frostShard', n: 1 }, { item: 'calmHeart', n: 1 }, { item: 'echoBell', n: 1 }],
     buys: ['battle', 'material'],
   },
 };

@@ -18,7 +18,7 @@ import { Sound } from '../core/audio/Sound.js';
 
 const TABS = [
   { id: 'all', label: '전체' }, { id: 'food', label: '먹을 것' }, { id: 'battle', label: '전투' },
-  { id: 'gear', label: '장비' }, { id: 'material', label: '재료' }, { id: 'key', label: '소중한 것' },
+  { id: 'gear', label: '장비' }, { id: 'relic', label: '유물' }, { id: 'material', label: '재료' }, { id: 'key', label: '소중한 것' },
 ];
 // 장비 칸: 왼쪽 줄(투구·목걸이·갑옷·장갑·신발), 오른쪽 줄(무기 1·무기 2·보조장비·배낭·망토), 아래(악세사리 1·2)
 const SLOTS = [
@@ -68,7 +68,7 @@ export class BagPanel {
 
   list() {
     const run = WorldMemory.run;
-    const all = listBag(run.bag, { farmItems: run.farm?.items ?? {}, flags: run.flags, gear: run.gear ?? {}, equip: this.equip() });
+    const all = listBag(run.bag, { farmItems: run.farm?.items ?? {}, flags: run.flags, gear: run.gear ?? {}, equip: this.equip(), relics: run.relics ?? {} });
     const t = TABS[this.tab].id;
     return t === 'all' ? all : all.filter((it) => it.def.kind === t);
   }

@@ -1,6 +1,7 @@
 import { CONSUMABLES, EQUIPMENT } from './action/action.js';
+import { RELICS } from './action/relics.js';
 // 가방에 드는 것들. 선택창 대신, 사람 곁에서 가방(I)을 열고 Enter로 건넨다(src/ui/BagPanel.js).
-//   kind: 'food'(먹을 것, 건넬 수 있다) | 'material'(재료, 행동 파밍) | 'key'(소중한 것 — 건네지 않는다)
+//   kind: 'food'(먹을 것, 건넬 수 있다) | 'material'(재료, 행동 파밍) | 'key'(소중한 것 — 건네지 않는다) | 'relic'(유물, 지니면 싸움이 바뀐다)
 //   likes: { 인물: n }  그 사람이 얼마나 반가워하나 (2 반가움, 1 고마움, 0 그저 그럼, -1 난처함). 없으면 base
 //   lines: { 인물: '받았을 때 하는 말' }  없으면 반가움 정도에 맞는 기본 말
 //   has: 플래그 (key 아이템: 그 플래그가 켜져 있으면 가방에 보인다)
@@ -65,6 +66,8 @@ export const ITEMS = {
 
 // 전투 소모품(행동 파밍처럼 run.farm.items에 쌓인다)과 장비(run.gear)도 가방에 보인다
 for (const [id, c] of Object.entries(CONSUMABLES)) ITEMS[id] = { name: c.name, kind: 'battle', rarity: c.rarity, desc: c.desc, farm: true };
+// 유물(지니면 싸움이 바뀌는 물건)은 run.relics에 쌓인다(겹치면 수)
+for (const [id, r] of Object.entries(RELICS)) ITEMS[id] = { name: r.name, kind: 'relic', rarity: r.rarity, desc: r.desc };
 for (const [id, e] of Object.entries(EQUIPMENT)) ITEMS[id] = { name: e.name, kind: 'gear', rarity: e.rarity, desc: e.desc, slot: e.slot, atk: e.atk ?? 0, def: e.def ?? 0 };
 
 // 받았을 때 반가움 정도별 기본 말

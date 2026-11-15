@@ -70,6 +70,27 @@ export class BattleFx {
     this.fade(g, 200);
   }
 
+  // 번개(번개 못): 꺾인 빛줄기가 번쩍
+  bolt(x1, y1, x2, y2) {
+    const g = this.add(this.scene.add.graphics());
+    if (!g) return;
+    const pts = [[x1, y1]];
+    for (let i = 1; i < 5; i += 1) { const k = i / 5; pts.push([x1 + (x2 - x1) * k + (Math.random() - 0.5) * 8, y1 + (y2 - y1) * k + (Math.random() - 0.5) * 8]); }
+    pts.push([x2, y2]);
+    for (const [w, c, a] of [[4, 0x8ab8ff, 0.4], [2, 0xffffff, 1]]) { g.lineStyle(w, c, a).beginPath().moveTo(...pts[0]); for (const q of pts.slice(1)) g.lineTo(...q); g.strokePath(); }
+    this.fade(g, 160);
+  }
+
+  // 터짐(터지는 씨앗): 주황 둥근 불꽃이 번지고 먼지
+  blast(x, y, r) {
+    const sc = this.scene;
+    const c = this.add(sc.add.circle(x, y, r * 0.3, 0xffd070, 0.8));
+    if (c) sc.tweens.add({ targets: c, radius: r, alpha: 0, duration: 260, ease: 'Cubic.out', onComplete: () => c.destroy() });
+    const ring = this.add(sc.add.circle(x, y, r * 0.5, 0xffffff, 0).setStrokeStyle(2, 0xff8a3a, 1));
+    if (ring) sc.tweens.add({ targets: ring, radius: r * 1.1, alpha: 0, duration: 300, onComplete: () => ring.destroy() });
+    this.puff(x, y + 2, 6, 1.4);
+  }
+
   // 구르기: 파르스름한 잔상이 남고 발밑에 먼지
   dodge(e, player) {
     const sc = this.scene;

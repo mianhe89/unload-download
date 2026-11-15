@@ -115,6 +115,7 @@ export class ShopPanel {
     if (c.bag) WorldMemory.setBag(c.bag);
     if (c.farm) WorldMemory.setFarm(c.farm);
     if (c.gear) WorldMemory.setGear(c.gear);
+    if (c.relics) WorldMemory.setRelics(c.relics);
     Sound.sfx(this.scene, 'pickup');
     this.note = this.tab === 0 ? { text: `${josa(it.def.name, '을/를')} 샀다.  −${it.price}${COIN}` } : { text: `${josa(it.def.name, '을/를')} 팔았다.  +${it.price}${COIN}` };
     if (this.tab === 1) this.pick = Math.min(this.pick, Math.max(0, this.list().length - 1));

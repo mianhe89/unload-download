@@ -66,6 +66,15 @@ export const WorldMemory = {
     SaveRepository.update((d) => { d.run.look = look; });
   },
 
+  setRelics(relics) {
+    SaveRepository.update((d) => { if (d.run) d.run.relics = relics; });
+  },
+
+  // 유물 하나를 더 얻는다(겹친다)
+  addRelic(id, n = 1) {
+    SaveRepository.update((d) => { if (!d.run) return; d.run.relics = { ...(d.run.relics ?? {}), [id]: (d.run.relics?.[id] ?? 0) + n }; });
+  },
+
   setGear(gear) {
     SaveRepository.update((d) => { d.run.gear = gear; });
   },

@@ -30,7 +30,7 @@ import { freshShop } from '../../shop/shop.js';
 //   meta: { createdAt, updatedAt, playerId },  // 서버 연동 시 계정과 묶을 자리
 // }
 
-export const VERSION = 13;
+export const VERSION = 14;
 
 export const freshSave = () => ({
   version: VERSION,
@@ -50,6 +50,7 @@ export const freshRun = (chapter = 'prologue', phase = 'prep') => ({
   bag: freshBag(),
   shop: freshShop(),
   look: {},
+  relics: {},
   flags: {},
   quests: {},
   clues: [],
@@ -101,6 +102,8 @@ const MIGRATIONS = {
     if (look.armor === 'frostCloak') { delete look.armor; look.cape = 'frostCloak'; }
     return { ...s, version: 13, run: { ...s.run, ...(equip ? { equip } : {}), look } };
   },
+  // v14: 유물(지니면 싸움이 바뀌는 물건) { id: 수 }
+  13: (s) => ({ ...s, version: 14, run: s.run ? { ...s.run, relics: s.run.relics ?? {} } : null }),
 };
 
 export function migrate(raw) {

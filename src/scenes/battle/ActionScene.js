@@ -26,6 +26,8 @@ import { BattleArena } from './BattleArena.js';
 import { BattleHud } from './BattleHud.js';
 import { BattleFx } from './BattleFx.js';
 import { BattleAnim } from './BattleAnim.js';
+import { RELICS, RELIC_DROP } from '../../../content/action/relics.js';
+import { pickRelic } from '../../battle/encounters.js';
 import { PlayLog } from '../../core/playtest/PlayLog.js';
 
 export default class ActionScene extends Phaser.Scene {
@@ -51,16 +53,20 @@ export default class ActionScene extends Phaser.Scene {
     // 주인공의 몸: 체형·마음가짐·피로·히든 스킬이 체력·힘·빠르기·돌진을 바꾼다
     const life = WorldMemory.run?.life ?? freshLife();
     const mods = bodyMods(applySkills(battleStats(PARTY.me, life), WorldMemory.run?.farm?.skills ?? []));
-    this.engine = createAction({ enemies: this.data0.enemies ?? ['slime'], equip, bag: farm.items, quick: this.quick, seed: (this.data0.seed ?? 1) * 7 + 3, mods });
+    this.engine = createAction({ enemies: this.data0.enemies ?? ['slime'], equip, bag: farm.items, quick: this.quick, seed: (this.data0.seed ?? 1) * 7 + 3, mods, relics: WorldMemory.run?.relics ?? {} });
     const st = this.engine.state;
     this.bossId = (this.data0.enemies ?? []).find((id) => FOES[id]?.boss) ?? null;
     if (!this.data0.seedRetry) PlayLog.log('battle', { foes: this.data0.enemies, boss: this.bossId ?? undefined });
 
     // 싸움터: 화면에 맞춰
-    const Z = (this.Z = Math.min((W - 40 * s) / ARENA.w, (H - 130 * s) / ARENA.h));
+    // 카메라: 싸움터를 조금 크게(1.15배) 그리고 주인공 쪽(+ 노리는 쪽 조금)을 부드럽게 따라간다. 화면 위아래의 창을 가리지 않는 띠 안에서
+    const Z0 = Math.min((W - 40 * s) / ARENA.w, (H - 130 * s) / ARENA.h);
+    const Z = (this.Z = Z0 * 1.15);
+    this.view = { top: 38 * s, bottom: H - 86 * s };
     this.ox = (W - ARENA.w * Z) / 2;
-    this.oy = 46 * s;
+    this.oy = this.view.top;
     this.world = this.add.container(this.ox, this.oy).setScale(Z);
+    this.follow(1, true);
     const biome = this.data0.boss && this.bossId === 'sweeper' ? 'shadow' : this.data0.from?.biome ?? 'temperate';
     this.arena = new BattleArena(this, this.world, biome, (this.data0.seed ?? 1) * 13 + 5);
     this.fx = new BattleFx(this, this.world, { biome, s, toScreen: (x, y) => ({ x: this.ox + x * this.Z, y: this.oy + y * this.Z }) });
@@ -181,8 +187,28 @@ export default class ActionScene extends Phaser.Scene {
       }
     }
     this.alpha = this.paused || this.engine.over || this.hitStop > 0 ? 1 : Math.min(1, this.acc / STEP);
+    this.follow(dt);
     this.draw(dt);
     this.hud.refresh(this.engine.state, dt);
+  }
+
+  // 카메라 따라가기: 그릇(싸움터)을 옮긴다. 싸움터 밖은 둘레 숲까지(24칸)만 보이게 막는다
+  follow(dt, snap = false) {
+    const st = this.engine?.state;
+    if (!st) return;
+    const { width: W } = this.scale, Z = this.Z, M = 24;
+    const p = this.at(st.p);
+    const ptr = this.input.activePointer;
+    const aim = this.toWorld(ptr.x, ptr.y);
+    const moved = ptr.x || ptr.y; // 마우스를 움직이기 전엔 앞쪽 보기 없이
+    const ax = moved ? Phaser.Math.Clamp(aim.x - p.x, -80, 80) * 0.18 : 0, ay = moved ? Phaser.Math.Clamp(aim.y - p.y, -80, 80) * 0.18 : 0;
+    const vw = W, vh = this.view.bottom - this.view.top;
+    const fit = (want, size, span, lo) => (span * Z + 2 * M * Z <= size ? lo + (size - span * Z) / 2 : Phaser.Math.Clamp(want, lo + size - (span + M) * Z, lo + M * Z));
+    const tx = fit(W / 2 - (p.x + ax) * Z, vw, ARENA.w, 0);
+    const ty = fit(this.view.top + vh / 2 - (p.y + ay) * Z, vh, ARENA.h, this.view.top);
+    const k = snap ? 1 : 1 - Math.exp(-6 * dt);
+    this.ox += (tx - this.ox) * k; this.oy += (ty - this.oy) * k;
+    this.world.setPosition(Math.round(this.ox), Math.round(this.oy));
   }
 
   // 걸음 전 자리를 적어 둔다(보간용)
@@ -235,6 +261,11 @@ export default class ActionScene extends Phaser.Scene {
       else if (e.type === 'foeAttack') { this.anim.onFoeAttack(this.sprites[e.uid], e); if (e.boss && e.kind === 'sweep') this.cameras.main.shake(110, 0.004); }
       else if (e.type === 'block' || e.type === 'parry') { fx.text(e.x, e.y - 16, e.type === 'parry' ? '완벽한 막기!' : '막았다', '#9ad0ff', e.type === 'parry' ? 1.3 : 1); fx.spark(e.x, e.y - 4, st.p.face + Math.PI, e.type === 'parry'); Sound.sfx(this, 'cancel', { volume: 0.5 }); if (e.type === 'parry') { this.cameras.main.flash(80, 160, 200, 255); this.hitStop = 0.08; } }
       else if (e.type === 'reflect') fx.text(e.x, e.y, '반사', '#ffe066');
+      else if (e.type === 'chain') { fx.bolt(e.x1, e.y1 - 6, e.x2, e.y2 - 6); Sound.sfx(this, 'cancel', { volume: 0.25, rate: 1.6 }); }
+      else if (e.type === 'blast') { fx.blast(e.x, e.y, e.r); this.cameras.main.shake(90, 0.004); Sound.sfx(this, 'heavy', { volume: 0.35, rate: 1.3 }); }
+      else if (e.type === 'regen' && (e.leech || e.soul)) fx.num(st.p.x, st.p.y - 14, `+${e.amount}`, { color: '#7affa0' });
+      else if (e.type === 'charged') fx.text(st.p.x, st.p.y - 22, '기습!', '#c8b8ff');
+      else if (e.type === 'calm') fx.text(st.p.x, st.p.y - 22, '고요한 일격', '#a0d8ff');
       else if (e.type === 'resist') fx.text(e.x, e.y - 20, '버텼다', '#9ad0ff');
       else if (e.type === 'status') { const d = STATUS[e.id]; const who = e.to === 'p' ? st.p : this.foeOf(e.to); if (who) fx.text(who.x, who.y - 22, d.name, d.color); }
       else if (e.type === 'heal') { fx.num(e.x, e.y - 12, `+${e.amount}`, { color: '#7affa0' }); fx.heal(e.x, e.y); Sound.sfx(this, 'heal', { volume: 0.4 }); }
@@ -354,6 +385,21 @@ export default class ActionScene extends Phaser.Scene {
     for (const sh0 of st.shots) {
       const sp = this.at(sh0), sh = { ...sh0, x: sp.x, y: sp.y };
       const mine = sh.from === 'player';
+      // 칼바람: 날아가는 쪽으로 휜 초승달 칼날 + 잔상 / 가시: 짧은 초록 바늘
+      if (mine && sh.kind === 'wave') {
+        const a = Math.atan2(sh.vy, sh.vx), R = sh.r * 1.6;
+        for (let i = 2; i >= 0; i -= 1) {
+          const bx = sh.x - Math.cos(a) * i * 3, by = sh.y - Math.sin(a) * i * 3;
+          sg.lineStyle(i ? 1.5 : 2.5, i ? 0x9af0d0 : 0xffffff, i ? 0.35 - i * 0.1 : 0.95).beginPath().arc(bx - Math.cos(a) * R * 0.6, by - Math.sin(a) * R * 0.6, R, a - 1.1, a + 1.1).strokePath();
+        }
+        continue;
+      }
+      if (mine && sh.kind === 'thorn') {
+        const a = Math.atan2(sh.vy, sh.vx);
+        sg.lineStyle(2, 0x2a3a18, 1).lineBetween(sh.x - Math.cos(a) * 4, sh.y - Math.sin(a) * 4, sh.x + Math.cos(a) * 2, sh.y + Math.sin(a) * 2);
+        sg.lineStyle(1, 0xc8e090, 1).lineBetween(sh.x - Math.cos(a) * 3, sh.y - Math.sin(a) * 3, sh.x + Math.cos(a) * 2, sh.y + Math.sin(a) * 2);
+        continue;
+      }
       const col = mine ? 0xffe066 : sh.home ? 0x8ad04a : 0xff9a8a;
       const v = Math.hypot(sh.vx, sh.vy) || 1, tx = -sh.vx / v, ty = -sh.vy / v;
       for (let i = 1; i <= 4; i += 1) sg.fillStyle(col, 0.22 - i * 0.04).fillCircle(sh.x + tx * i * 3, sh.y + ty * i * 3, sh.r * (1 - i * 0.15));
@@ -383,7 +429,7 @@ export default class ActionScene extends Phaser.Scene {
       if (from.key) WorldMemory.setFlag(`beat.${beatKey(from.key, this.data0.boss, worldDate(WorldMemory.run))}`);
       if (this.data0.winFlag) WorldMemory.setFlag(this.data0.winFlag);
       this.hud.banner('이겼다', this.data0.winLine ?? (this.bossId === 'sweeper' ? '그림자가 먼지처럼 흩어졌다. 빗자루만 남았다.' : null));
-      const n = this.loot() + this.bossLoot() + this.bounty();
+      const n = this.loot() + this.bossLoot() + this.relicLoot() + this.bounty();
       this.time.delayedCall(1500 + n * 700, () => this.leave('win'));
       return;
     }
@@ -434,6 +480,32 @@ export default class ActionScene extends Phaser.Scene {
       Sound.sfx(this, 'pickup');
     }));
     return drops.length;
+  }
+
+  // 유물: 이긴 싸움마다 무리 수만큼 확률(최대 RELIC_DROP.max), 보스는 처음 이길 때 하나 확정. 같은 씨앗이면 같은 것
+  relicLoot() {
+    if (!WorldMemory.run) return 0;
+    const n = (this.data0.enemies ?? []).length;
+    const seed = (this.data0.seed ?? 1) * 31 + WorldMemory.world.loads * 7 + n;
+    const bossFirst = this.bossId && !WorldMemory.run.flags[`relic.${this.bossId}`];
+    const id = pickRelic({ seed, chance: bossFirst ? 1 : Math.min(RELIC_DROP.max, n * RELIC_DROP.perFoe), boss: bossFirst });
+    if (!id) return 0;
+    if (bossFirst) WorldMemory.setFlag(`relic.${this.bossId}`);
+    WorldMemory.addRelic(id);
+    const r = RELICS[id], col = RARITY[r.rarity].glow;
+    const { width: W, height: H } = this.scale;
+    this.time.delayedCall(700, () => {
+      const y = H * 0.3;
+      const glow = this.add.circle(W / 2, y, 30 * this.s, Number.parseInt(col.slice(1), 16), 0.25).setDepth(59);
+      this.tweens.add({ targets: glow, scale: 1.6, alpha: 0, duration: 700, repeat: 1 });
+      const icon = this.textures.exists(`icon.${id}`) ? this.add.image(W / 2, y, `icon.${id}`).setScale(0.5 * this.s).setDepth(60) : null;
+      if (icon) this.tweens.add({ targets: icon, scale: 3.5 * this.s, duration: 300, ease: 'Back.out' });
+      const t = this.add.text(W / 2, y + 36 * this.s, `유물 — ${r.name}`, { fontFamily: FONT_TALK, fontSize: `${17 * this.s}px`, color: col }).setOrigin(0.5).setDepth(60).setShadow(1, 1, '#000', 0);
+      const d = this.add.text(W / 2, y + 58 * this.s, r.desc.split('.')[0] + '.', { fontFamily: FONT, fontSize: `${12 * this.s}px`, color: '#ffffff' }).setOrigin(0.5).setDepth(60).setShadow(1, 1, '#000', 0);
+      [t, d].forEach((o) => { o.setAlpha(0); this.tweens.add({ targets: o, alpha: 1, duration: 260 }); });
+      Sound.sfx(this, 'secret');
+    });
+    return 2;
   }
 
   // 보스를 처음 이기면 장비를 떨군다. 같은 칸이 비었거나 기본 장비면 바로 낀다

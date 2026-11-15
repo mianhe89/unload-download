@@ -1,6 +1,7 @@
 // 마주침 규칙 (순수 함수 — 테스트 가능)
 import { ENCOUNTER_CHANCE, POOLS, BOSSES, DROPS } from '../../content/battles/encounters.js';
 import { dropBase } from '../../content/action/foes.js';
+import { RELICS } from '../../content/action/relics.js';
 
 const hash = (s) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
 export const dayOf = (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -37,4 +38,16 @@ export function rollDrops(enemies, seed = 1, owned = () => false) {
     }
   });
   return out;
+}
+
+// 유물 고르기 (같은 씨앗이면 같은 것): chance를 넘기면 null. 흔할수록 잘 나온다(일반 5 · 고급 3 · 희귀 2 · 영웅 1)
+//   boss: 보스가 주는 유물 중에서
+const RELIC_WEIGHT = { common: 5, uncommon: 3, rare: 2, epic: 1, legendary: 0.5 };
+export function pickRelic({ seed = 1, chance = 1, boss = false } = {}) {
+  if (hash(`relic|${seed}`) >= chance) return null;
+  const pool = Object.entries(RELICS).filter(([, r]) => r.where.includes(boss ? 'boss' : 'drop'));
+  const total = pool.reduce((a, [, r]) => a + (RELIC_WEIGHT[r.rarity] ?? 1), 0);
+  let x = hash(`relic.pick|${seed}`) * total;
+  for (const [id, r] of pool) { x -= RELIC_WEIGHT[r.rarity] ?? 1; if (x < 0) return id; }
+  return pool.at(-1)[0];
 }
