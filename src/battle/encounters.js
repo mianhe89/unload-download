@@ -29,7 +29,9 @@ export const beatKey = (key, boss, date = new Date()) => (boss ? `boss.${key}` :
 export function rollDrops(enemies, seed = 1, owned = () => false) {
   const out = [];
   enemies.forEach((id, i) => {
-    for (const d of DROPS[dropBase(id)] ?? []) {
+    // 그 갈래만의 전리품(DROPS[id]) + 바탕 무리의 것(DROPS[base])
+    const table = [...(dropBase(id) !== id ? DROPS[id] ?? [] : []), ...(DROPS[dropBase(id)] ?? [])];
+    for (const d of table) {
       if (d.once && (owned(d.item) || out.some((o) => o.item === d.item))) continue;
       if (hash(`drop|${seed}|${i}|${d.item}`) < d.p) out.push({ item: d.item, n: d.n ?? 1, text: d.text });
     }

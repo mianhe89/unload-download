@@ -50,6 +50,7 @@ export const STARTER_KIT = { bandage: 5, herb: 3, potion: 1, antidote: 2, ointme
 //   mods: 스킬을 바꾼다 — { skill, ...덮어쓸 값 } (form: 이름·모양까지 바꾸는 변형)
 //   set: 세트 이름
 //   look: 주인공 도트에 입힐 색 (장비 외형) — body: [밝은 색, 어두운 색] 옷 두 톤을 바꾼다, head: [밝은, 어두운, 테두리] 머리 두 톤을 투구·모자 색으로(테두리는 이마 위 한 줄), cape: [밝은, 어두운] 망토,
+//         shape: 투구 모양 'brim'(챙) | 'horns'(뿔) — 그 이름의 칸에 [밝은, 어두운] 색 (예: horns: ['e8dcc0', 'a08c64']),
 //         blade: 칼날 색(액션 전투에서 보인다)
 export const EQUIPMENT = {
   woodSword:   { name: '목검', slot: 'weapon', rarity: 'common', atk: 0, desc: '허수아비를 치던 목검.' },
@@ -67,6 +68,8 @@ export const EQUIPMENT = {
   },
   wanderCoat:  { name: '나그네 외투', slot: 'armor', rarity: 'uncommon', def: 0.05, desc: '받는 피해 -5%. 눈길에서 얻은 두꺼운 외투.', look: { body: ['b89a6a', '6a5236'] } },
   oldHelm:     { name: '빈 기사의 투구', slot: 'head', rarity: 'rare', def: 0.06, desc: '받는 피해 -6%. 길 잃은 기사의 투구. 안쪽에 영주 기사단의 옛 문장이 있다.', look: { head: ['c4cad2', '6a7280', '2e343c'] } },
+  strawHat:    { name: '밀짚모자', slot: 'head', rarity: 'common', def: 0.01, desc: '받는 피해 -1%. 수확 철에 들에서 쓰는 챙 넓은 모자. 햇볕을 가린다.', look: { head: ['e8c868', 'b08a3a', '8a5a2a'], shape: 'brim', brim: ['f0d070', 'b08a3a'] } },
+  hornHelm:    { name: '뿔 투구', slot: 'head', rarity: 'rare', def: 0.07, atk: 1, desc: '받는 피해 -7%. 오크 장정이 쓰던 쇠 투구. 무슨 짐승인지 모를 뿔을 박아 넣었다.', look: { head: ['8a9098', '50565e', '2e343c'], shape: 'horns', horns: ['f0e6cc', 'b8a888'] } },
   furHat:      { name: '털모자', slot: 'head', rarity: 'uncommon', def: 0.03, desc: '받는 피해 -3%. 서리 마을 여관에서 파는 양털 모자. 귀까지 덮는다.', look: { head: ['ece4d4', 'a8987e', 'a83a3a'] } },
   dwarfHelm:   { name: '드워프 철모', slot: 'head', rarity: 'uncommon', def: 0.05, desc: '받는 피해 -5%. 갱도에서 쓰는 둥근 철모. 머리 위로 떨어지는 돌을 막는다.', look: { head: ['b8904e', '7a5a2c', '3a2a18'] } },
   // 가게에서 파는 것 (content/shop/shops.js)

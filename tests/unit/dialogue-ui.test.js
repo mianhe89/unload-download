@@ -248,3 +248,32 @@ describe('망토', () => {
     expect(s.run.look).toEqual({ cape: 'frostCloak' });
   });
 });
+
+describe('투구 모양', () => {
+  it('뿔은 머리 꼭대기 위로 솟고, 챙은 이마 줄 양옆으로 나온다', async () => {
+    const { drawHeadShape, HAIR, SKIN } = await import('../../src/art/equipLook.js');
+    const hex = (h) => [0, 2, 4].map((k) => Number.parseInt(h.slice(k, k + 2), 16));
+    // 한 칸(16×16, 앞모습 하나): 2~5줄 x=4..11 머리, 6줄 얼굴
+    const make = () => {
+      const d = new Uint8ClampedArray(16 * 16 * 4);
+      for (let y = 2; y <= 5; y += 1) for (let x = 4; x <= 11; x += 1) d.set([...hex(HAIR[0]), 255], (y * 16 + x) * 4);
+      for (let x = 4; x <= 11; x += 1) d.set([...hex(SKIN), 255], (6 * 16 + x) * 4);
+      return d;
+    };
+    const alpha = (d, x, y) => d[(y * 16 + x) * 4 + 3];
+    const horns = drawHeadShape(make(), 16, 'horns', ['ffffff', 'cccccc'], 16, { down: 0 });
+    expect(alpha(horns, 5, 1)).toBe(255);   // 왼쪽 뿔 끝 (꼭대기 한 줄 위)
+    expect(alpha(horns, 10, 1)).toBe(255);  // 오른쪽 뿔 끝
+    const brim = drawHeadShape(make(), 16, 'brim', ['ffffff', 'cccccc'], 16, { down: 0 });
+    expect(alpha(brim, 3, 5)).toBe(255);    // 이마 줄(5줄) 왼쪽 밖
+    expect(alpha(brim, 12, 5)).toBe(255);
+    expect(alpha(brim, 3, 4)).toBe(255);    // 챙 위 외곽선
+  });
+  it('오크 장정은 오크 무리의 전리품에 더해 뿔 투구를 떨굴 수 있다(한 번만)', async () => {
+    const { rollDrops } = await import('../../src/battle/encounters.js');
+    const got = Array.from({ length: 40 }, (_, s) => rollDrops(['orc_brute'], s + 1).map((d) => d.item)).flat();
+    expect(got).toContain('hornHelm');
+    expect(got).toContain('bandage');
+    expect(rollDrops(['orc_brute', 'orc_brute'], 3, (id) => id === 'hornHelm').some((d) => d.item === 'hornHelm')).toBe(false);
+  });
+});

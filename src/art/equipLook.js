@@ -38,13 +38,74 @@ export function headPalette(equip = {}, look = {}) {
   if (!head) return null;
   return { [HAIR[0]]: head[0], [HAIR[1]]: head[1] };
 }
+// 순수: 투구 모양 — 머리 색만 바꾸면 둥근 쇠 모자처럼 보여서, 모양이 다른 투구는 테두리 밖으로 덧그린다
+//   brim(챙): 이마 줄을 양옆으로 한 칸씩 내민다 / horns(뿔): 머리 꼭대기 양쪽에서 뿔이 위로 솟는다
+//   머리가 걸음마다 오르내려서, 이마 줄은 그 줄(같은 동작)의 앞모습 칸에서 찾아 네 방향에 같이 쓴다
+export const headShape = (equip = {}, look = {}) => EQUIPMENT[shownHead(equip, look)]?.look?.shape ?? null;
+export function drawHeadShape(data, w, shape, colors, frame = CHAR.frame, dirs = CHAR.dirs) {
+  if (!shape || !colors) return data;
+  const num = (h) => Number.parseInt(h, 16);
+  const O = num(OUTLINE), hair = new Set(HAIR.map(num)), skin = num(SKIN);
+  const h = data.length / 4 / w;
+  const src = Uint8ClampedArray.from(data);
+  const at = (x, y) => { if (x < 0 || y < 0 || x >= w || y >= h) return -2; const i = (y * w + x) * 4; return src[i + 3] ? (src[i] << 16) | (src[i + 1] << 8) | src[i + 2] : -1; };
+  const cur = (x, y) => { const i = (y * w + x) * 4; return data[i + 3]; };
+  const put = (x, y, c, fx) => {
+    if (x < fx || x >= fx + frame || y < 0 || y >= h) return false;
+    const i = (y * w + x) * 4; data[i] = c >> 16; data[i + 1] = (c >> 8) & 255; data[i + 2] = c & 255; data[i + 3] = 255; return true;
+  };
+  // 새로 칠한 칸 둘레의 빈칸에 외곽선
+  const ring = (cells, fx) => {
+    const own = new Set(cells.map(([x, y]) => `${x},${y}`));
+    for (const [x, y] of cells) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (own.has(`${nx},${ny}`) || nx < fx || nx >= fx + frame || ny < 0 || ny >= h) continue;
+      if (at(nx, ny) === -1 && !cur(nx, ny)) put(nx, ny, O, fx);
+    }
+  };
+  const down = dirs.down ?? 0;
+  const ncol = Object.keys(dirs).length;
+  for (let fy = 0; fy + frame <= h; fy += frame) {
+    // 이 동작의 이마 줄(앞모습에서 머리카락 바로 아래가 얼굴인 첫 줄)과 머리 꼭대기
+    const fxDown = down * frame;
+    let rim = -1, top = -1;
+    for (let r = 0; r < HEAD_ROWS && rim < 0; r += 1) for (let x = fxDown; x < fxDown + frame; x += 1) {
+      if (top < 0 && at(x, fy + r) >= 0) top = r;
+      if (hair.has(at(x, fy + r)) && at(x, fy + r + 1) === skin) { rim = r; break; }
+    }
+    if (rim < 0 || top < 0) continue;
+    for (let c = 0; c < ncol && (c + 1) * frame <= w; c += 1) {
+      const fx = c * frame;
+      const row = (r) => { const xs = []; for (let x = fx; x < fx + frame; x += 1) if (at(x, fy + r) >= 0) xs.push(x); return xs; };
+      const cells = [];
+      if (shape === 'brim') {
+        const xs = row(rim);
+        if (!xs.length) continue;
+        for (const x of [xs[0] - 1, xs.at(-1) + 1]) if (put(x, fy + rim, num(colors[1]), fx)) cells.push([x, fy + rim]);
+        // 원래 외곽선 자리도 챙 색으로 (챙이 머리에서 이어져 보이게)
+        for (const x of [xs[0], xs.at(-1)]) if (at(x, fy + rim) === O) put(x, fy + rim, num(colors[1]), fx);
+      } else if (shape === 'horns') {
+        // 머리 꼭대기 양쪽에서 위로 솟는 뿔(밑동 두 칸 + 끝 한 칸). 칸 옆은 머리가 꽉 차 있어 위로 낸다
+        const xs = row(top);
+        const t = fy + top;
+        if (!xs.length || t - 1 < fy) continue;
+        const L = xs[0], R = xs.at(-1);
+        const horn = [[L + 1, t, 1], [L + 2, t, 1], [L + 1, t - 1, 0], [R - 1, t, 1], [R - 2, t, 1], [R - 1, t - 1, 0]];
+        for (const [x, yy, base] of horn) if (put(x, yy, num(base ? colors[1] : colors[0]), fx)) cells.push([x, yy]);
+      }
+      ring(cells, fx);
+    }
+  }
+  return data;
+}
+
 export const headRim = (equip = {}, look = {}) => EQUIPMENT[shownHead(equip, look)]?.look?.head?.[2] ?? null;
 
 // 순수: 겉모습 이름 (텍스처 키에 쓴다) — 바뀌는 것이 없으면 ''
 export function lookId(equip = {}, look = {}) {
   const parts = [];
   if (equipPalette(equip, look)) parts.push(shownArmor(equip, look));
-  if (headPalette(equip, look)) parts.push(shownHead(equip, look));
+  if (headPalette(equip, look) || headShape(equip, look)) parts.push(shownHead(equip, look));
   if (capeColors(equip, look)) parts.push(shownCape(equip, look));
   return parts.join('+');
 }
@@ -148,6 +209,9 @@ export function equipSkin(scene, baseSkin, equip, look = WorldMemoryLook()) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(src, 0, 0);
     const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // 모양 먼저(원래 머리·얼굴 색으로 이마 줄을 찾는다), 그다음 색
+    const hs = headShape(equip, look);
+    drawHeadShape(img.data, canvas.width, hs, EQUIPMENT[shownHead(equip, look)]?.look?.[hs]);
     recolorPixels(img.data, canvas.width, equipPalette(equip, look), headPalette(equip, look), CHAR.frame, HEAD_ROWS, headRim(equip, look));
     drawCape(img.data, canvas.width, capeColors(equip, look));
     ctx.putImageData(img, 0, 0);
